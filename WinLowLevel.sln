@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34112.27
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinLowLevel", "WinLowLevel\WinLowLevel.vcxproj", "{C6DEC756-D2E2-4965-AF79-AB24866ABB03}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CsTaskMgr", "CsTaskMgr\CsTaskMgr.vcxproj", "{FEC6BE7C-7757-4549-96FD-57526FA7D718}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C6DEC756-D2E2-4965-AF79-AB24866ABB03}.Debug|x64.ActiveCfg = Debug|x64
+		{C6DEC756-D2E2-4965-AF79-AB24866ABB03}.Debug|x64.Build.0 = Debug|x64
+		{C6DEC756-D2E2-4965-AF79-AB24866ABB03}.Release|x64.ActiveCfg = Release|x64
+		{C6DEC756-D2E2-4965-AF79-AB24866ABB03}.Release|x64.Build.0 = Release|x64
+		{FEC6BE7C-7757-4549-96FD-57526FA7D718}.Debug|x64.ActiveCfg = Debug|x64
+		{FEC6BE7C-7757-4549-96FD-57526FA7D718}.Debug|x64.Build.0 = Debug|x64
+		{FEC6BE7C-7757-4549-96FD-57526FA7D718}.Release|x64.ActiveCfg = Release|x64
+		{FEC6BE7C-7757-4549-96FD-57526FA7D718}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1EC610EC-EDCF-4A5D-A6F3-ADCBF31DCF1D}
+	EndGlobalSection
+EndGlobal
