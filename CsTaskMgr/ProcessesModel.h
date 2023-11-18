@@ -54,6 +54,7 @@ public:
     };
 
     ProcessesModel();
+    ProcessInfoEx* GetProcess(int row) const;
 
     std::vector<ColumnInfo>& GetColumns() { return m_Columns; }
 
@@ -67,6 +68,7 @@ public:
 
     void OnTick();
     void DoUpdate();
+    bool KillProcess(int row);
 
 private:
     QString const& GetImagePath(ProcessInfoEx* proc) const;
@@ -79,6 +81,8 @@ private:
     std::vector<std::shared_ptr<ProcessInfoEx>> m_Processes;
     std::vector<std::shared_ptr<ProcessInfoEx>> m_NewProcesses;
     std::vector<std::shared_ptr<ProcessInfoEx>> m_TerminatedProcesses;
+    mutable std::map<QString, QIcon> m_ImageIcons;
+    QIcon m_DefaultIcon;
 };
 
 DEFINE_ENUM_FLAG_OPERATORS(ProcessesModel::ColumnFlags);

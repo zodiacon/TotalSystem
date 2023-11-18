@@ -2,6 +2,11 @@
 #include "ProcessesModel.h"
 #include <WinLowLevel.h>
 #include "FormatHelper.h"
+#include "IconHelper.h"
+
+using namespace WinLL;
+
+QPixmap qt_pixmapFromWinHICON(HICON icon);
 
 ProcessesModel::ProcessesModel() {
 	std::vector<ColumnInfo> columns{
@@ -31,9 +36,14 @@ ProcessesModel::ProcessesModel() {
 	m_Processes = m_ProcMgr.GetProcesses();
 	m_Timer.setInterval(1000);
 
+	m_DefaultIcon = QIcon(qt_pixmapFromWinHICON(::LoadIcon(nullptr, IDI_APPLICATION)));
 	connect(&m_Timer, &QTimer::timeout, this, &ProcessesModel::OnTick);
 
 	m_Timer.start();
+}
+
+ProcessesModel::ProcessInfoEx* ProcessesModel::GetProcess(int row) const {
+	return m_Processes[row].get();
 }
 
 void ProcessesModel::OnTick() {
@@ -79,6 +89,7 @@ void ProcessesModel::DoUpdate() {
 	for (auto& proc : m_ProcMgr.GetTerminatedProcesses()) {
 		proc->State = ProcessState::Terminated;
 		proc->TargetTime = tick + 2000;
+		proc->CPU = 0;
 		m_TerminatedProcesses.push_back(proc);
 	}
 
@@ -86,10 +97,17 @@ void ProcessesModel::DoUpdate() {
 	dataChanged(createIndex(0, 0), createIndex(rowCount() - 1, columnCount() - 1), roles);
 }
 
+bool ProcessesModel::KillProcess(int row) {
+	Process p;
+	if(!p.Open(m_Processes[row]->Id, ProcessAccessMask::Terminate))
+		return false;
+	return p.Terminate(1);
+}
+
 QString const& ProcessesModel::GetImagePath(ProcessInfoEx* proc) const {
 	if (proc->ImagePath.isEmpty()) {
-		WinLL::Process p;
-		if (p.Open(proc->Id, WinLL::ProcessAccessMask::QueryLimitedInformation))
+		Process p;
+		if (p.Open(proc->Id, ProcessAccessMask::QueryLimitedInformation))
 			proc->ImagePath = QString::fromStdWString(p.GetImagePath());
 	}
 	return proc->ImagePath;
@@ -97,8 +115,8 @@ QString const& ProcessesModel::GetImagePath(ProcessInfoEx* proc) const {
 
 QString const& ProcessesModel::GetCommandLine(ProcessInfoEx* proc) const {
 	if (proc->CommandLine.isEmpty()) {
-		WinLL::Process p;
-		if (p.Open(proc->Id, WinLL::ProcessAccessMask::QueryLimitedInformation))
+		Process p;
+		if (p.Open(proc->Id, ProcessAccessMask::QueryLimitedInformation))
 			proc->CommandLine = QString::fromStdWString(p.GetCommandLine());
 	}
 	return proc->CommandLine;
@@ -126,6 +144,22 @@ QVariant ProcessesModel::data(const QModelIndex& index, int role) const {
 	switch (role) {
 		case Qt::TextAlignmentRole:
 			return QVariant(m_Columns[index.column()].Align | Qt::AlignVCenter);
+
+		case Qt::DecorationRole:
+		{
+			if (index.column())
+				return QVariant();
+			auto proc = m_Processes[index.row()].get();
+			if(auto it = m_ImageIcons.find(GetImagePath(proc)); it != m_ImageIcons.end())
+				return QVariant(it->second);
+
+			auto hIcon = IconHelper::GetIconFromImagePath(GetImagePath(proc));
+			if (hIcon == nullptr)
+				return m_DefaultIcon;
+			QIcon icon(qt_pixmapFromWinHICON(hIcon));
+			m_ImageIcons.insert({ GetImagePath(proc), icon });
+			return QVariant(icon);
+		}
 
 		case Qt::BackgroundRole:
 		{

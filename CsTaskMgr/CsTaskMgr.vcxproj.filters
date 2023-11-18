@@ -45,6 +45,9 @@
     <ClInclude Include="Resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
+    <ClInclude Include="IconHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CsTaskMgr.cpp">
@@ -64,6 +67,9 @@
     </ClCompile>
     <ClCompile Include="Resources.cpp">
       <Filter>Resource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IconHelper.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
