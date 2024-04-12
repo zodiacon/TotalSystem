@@ -4,6 +4,14 @@
 #undef CreateProcess
 #endif
 
+#ifdef GetUserName
+#undef GetUserName
+#endif
+
+#ifdef GetCommandLine
+#undef GetCommandLine
+#endif
+
 #include <wil\resource.h>
 
 //#define DEFINE_ENUM(Name, Type) \
@@ -196,13 +204,18 @@ namespace WinLL {
 
 		HANDLE Attach(HANDLE hObject);
 		HANDLE Detach();
+
 		bool ChangeAccess(AccessMask newAccess);
 		static HANDLE Duplicate(Process const& srcProcess, KernelObject const& srcObject, Process const& targetProcess,
-			DuplicateHandleOptions options = DuplicateHandleOptions::SameAccess);
+			AccessMask access = 0, DuplicateHandleOptions options = DuplicateHandleOptions::SameAccess);
 		HANDLE Duplicate(Process const& srcProcess, Process const& targetProcess,
-			DuplicateHandleOptions options = DuplicateHandleOptions::SameAccess);
+			AccessMask access = 0, DuplicateHandleOptions options = DuplicateHandleOptions::SameAccess);
+
 		template<typename TAccess>
-		static HANDLE Duplicate(Process const& srcProcess, KernelObject const& srcObject, Process const& targetProcess, TAccess access, bool closeSource = false);
+		static HANDLE Duplicate(Process const& srcProcess, KernelObject const& srcObject, Process const& targetProcess, TAccess access, bool closeSource = false) {
+			return Duplicate(srcProcess, srcObject, targetProcess, (DWORD)access, closeSource ? DuplicateHandleOptions::CloseSource : DuplicateHandleOptions::None);
+		}
+
 		bool IsSameObject(KernelObject const& other) const;
 		wstring GetName() const;
 
@@ -360,9 +373,20 @@ namespace WinLL {
 		PriorityClass GetPriorityClass() const;
 		bool SetPriorityClass(PriorityClass pc);
 		bool Terminate(int32_t exitCode = 0);
+		std::wstring GetFullImageName() const;
 
 		bool Suspend();
 		bool Resume();
+
+		bool IsImmersive() const noexcept;
+		bool IsProtected() const;
+		bool IsSecure() const;
+		bool IsInJob(HANDLE hJob = nullptr) const;
+		bool IsWow64Process() const;
+		bool IsManaged() const;
+
+	private:
+		bool GetExtendedInfo(PROCESS_EXTENDED_BASIC_INFORMATION* info) const;
 	};
 
 	enum class ThreadPriorityLevel {

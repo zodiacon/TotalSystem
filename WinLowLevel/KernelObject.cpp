@@ -35,6 +35,22 @@ namespace WinLL {
 		return true;
 	}
 
+	HANDLE KernelObject::Duplicate(Process const& srcProcess, KernelObject const& srcObject, Process const& targetProcess, AccessMask access, DuplicateHandleOptions options) {
+		wil::unique_handle hSrcProcess, hDstProcess;
+		if (!::DuplicateHandle(::GetCurrentProcess(), srcProcess.Handle(), ::GetCurrentProcess(), hSrcProcess.addressof(), PROCESS_DUP_HANDLE, FALSE, 0))
+			return nullptr;
+
+		if (!::DuplicateHandle(::GetCurrentProcess(), targetProcess.Handle(), ::GetCurrentProcess(), hSrcProcess.addressof(), PROCESS_DUP_HANDLE, FALSE, 0))
+			return nullptr;
+
+		HANDLE hTarget;
+		return ::DuplicateHandle(hSrcProcess.get(), srcObject.Handle(), hDstProcess.get(), &hTarget, access, FALSE, static_cast<DWORD>(options)) ? hTarget : nullptr;
+	}
+
+	HANDLE KernelObject::Duplicate(Process const& srcProcess, Process const& targetProcess, AccessMask access, DuplicateHandleOptions options) {
+		return Duplicate(srcProcess, *this, targetProcess, options);
+	}
+
 	bool KernelObject::IsSameObject(KernelObject const& other) const {
 		auto const static pCompareObjectHandles = (decltype(&::CompareObjectHandles))::GetProcAddress(::GetModuleHandle(L"kernelbase"), "CompareObjectHandles");
 		return pCompareObjectHandles(m_hObject.get(), other.Handle());

@@ -5,6 +5,10 @@
 #include <memory>
 #include "Keys.h"
 
+#ifdef GetUserName
+#undef GetUserName
+#endif
+
 namespace WinLL {
 	struct ThreadInfo;
 
