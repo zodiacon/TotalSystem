@@ -19,34 +19,31 @@
 	FIELD_OFFSET( struct { char x; t test; }, test )
 #endif
 
-#ifdef EnumProcesses
-#undef EnumProcesses
-#endif
-
 namespace WinLL {
+	using namespace std;
 	template<typename TProcessInfo = ProcessInfo, typename TThreadInfo = ThreadInfo>
 	class ProcessManager {
-		static_assert(std::is_base_of_v<ProcessInfo, TProcessInfo>);
-		static_assert(std::is_base_of_v<ThreadInfo, TThreadInfo>);
+		static_assert(is_base_of_v<ProcessInfo, TProcessInfo>);
+		static_assert(is_base_of_v<ThreadInfo, TThreadInfo>);
 	public:
 		ProcessManager(const ProcessManager&) = delete;
 		ProcessManager& operator=(const ProcessManager&) = delete;
 
-		size_t EnumProcesses() {
-			return EnumProcesses(false, 0);
+		void Update() {
+			Update(false, 0);
 		}
-		size_t EnumProcessesAndThreads(uint32_t pid = 0) {
-			return EnumProcesses(true, pid);
+		void UpdateWithThreads(uint32_t pid = 0) {
+			Update(true, pid);
 		}
 
-		[[nodiscard]] std::vector<std::shared_ptr<TProcessInfo>> const& GetTerminatedProcesses() const {
+		[[nodiscard]] vector<shared_ptr<TProcessInfo>> const& GetTerminatedProcesses() const {
 			return m_terminatedProcesses;
 		}
-		[[nodiscard]] std::vector<std::shared_ptr<TProcessInfo>> const& GetNewProcesses() const {
+		[[nodiscard]] vector<shared_ptr<TProcessInfo>> const& GetNewProcesses() const {
 			return m_newProcesses;
 		}
 
-		[[nodiscard]] std::wstring GetProcessNameById(uint32_t pid) const {
+		[[nodiscard]] wstring GetProcessNameById(uint32_t pid) const {
 			if (pid == 0)
 				return L"";
 			auto pi = GetProcessById(pid);
@@ -60,8 +57,8 @@ namespace WinLL {
 			}
 		}
 
-		size_t EnumProcesses(bool includeThreads, uint32_t pid) {
-			std::vector<std::shared_ptr<TProcessInfo>> processes;
+		void Update(bool includeThreads, uint32_t pid) {
+			vector<shared_ptr<TProcessInfo>> processes;
 			processes.reserve(m_processes.empty() ? 512 : m_processes.size() + 10);
 			ProcessMap processesByKey;
 			processesByKey.reserve(m_processes.size() == 0 ? 512 : m_processes.size() + 10);
@@ -109,7 +106,7 @@ namespace WinLL {
 				for (;;) {
 					if (pid == 0 || pid == HandleToULong(p->UniqueProcessId)) {
 						ProcessOrThreadKey key = { p->CreateTime.QuadPart, HandleToULong(p->UniqueProcessId) };
-						std::shared_ptr<TProcessInfo> pi;
+						shared_ptr<TProcessInfo> pi;
 						if (auto it = m_processesByKey.find(key); it == m_processesByKey.end()) {
 							// new process
 							pi = BuildProcessInfo(p, includeThreads, threadsByKey, delta, pi, extended);
@@ -139,7 +136,7 @@ namespace WinLL {
 					p = reinterpret_cast<SYSTEM_PROCESS_INFORMATION*>((BYTE*)p + p->NextEntryOffset);
 				}
 			}
-			m_processes = std::move(processes);
+			m_processes = move(processes);
 
 			//
 			// remaining processes are terminated ones
@@ -149,7 +146,7 @@ namespace WinLL {
 			for (const auto& [key, pi] : m_processesByKey)
 				m_terminatedProcesses.push_back(pi);
 
-			m_processesByKey = std::move(processesByKey);
+			m_processesByKey = move(processesByKey);
 
 			if (includeThreads) {
 				m_terminatedThreads.clear();
@@ -157,7 +154,7 @@ namespace WinLL {
 				for (const auto& [key, ti] : m_threadsByKey)
 					m_terminatedThreads.push_back(ti);
 
-				m_threadsByKey = std::move(threadsByKey);
+				m_threadsByKey = move(threadsByKey);
 			}
 
 			m_prevTicks = ticks;
@@ -165,25 +162,25 @@ namespace WinLL {
 			return static_cast<uint32_t>(m_processes.size());
 		}
 
-		[[nodiscard]] std::vector<std::shared_ptr<TProcessInfo>> const& GetProcesses() const {
+		[[nodiscard]] vector<shared_ptr<TProcessInfo>> const& GetProcesses() const {
 			return m_processes;
 		}
 
-		[[nodiscard]] std::shared_ptr<TProcessInfo> GetProcessInfo(int index) const {
+		[[nodiscard]] shared_ptr<TProcessInfo> GetProcessInfo(int index) const {
 			return m_processes[index];
 		}
 
-		[[nodiscard]] std::shared_ptr<TProcessInfo> GetProcessById(uint32_t pid) const {
+		[[nodiscard]] shared_ptr<TProcessInfo> GetProcessById(uint32_t pid) const {
 			auto it = m_processesById.find(pid);
 			return it == m_processesById.end() ? nullptr : it->second;
 		}
 
-		[[nodiscard]] std::shared_ptr<TProcessInfo> GetProcessByKey(const ProcessOrThreadKey& key) const {
+		[[nodiscard]] shared_ptr<TProcessInfo> GetProcessByKey(const ProcessOrThreadKey& key) const {
 			auto it = m_processesByKey.find(key);
 			return it == m_processesByKey.end() ? nullptr : it->second;
 		}
 
-		std::vector<std::shared_ptr<TThreadInfo>> const& GetThreads() const {
+		vector<shared_ptr<TThreadInfo>> const& GetThreads() const {
 			return m_threads;
 		}
 
@@ -191,20 +188,20 @@ namespace WinLL {
 			return m_processes.size();
 		}
 
-		[[nodiscard]] std::shared_ptr<TThreadInfo> GetThreadInfo(int index) const {
+		[[nodiscard]] shared_ptr<TThreadInfo> GetThreadInfo(int index) const {
 			return m_threads[index];
 		}
 
-		[[nodiscard]] std::shared_ptr<TThreadInfo> GetThreadByKey(const ProcessOrThreadKey& key) const {
+		[[nodiscard]] shared_ptr<TThreadInfo> GetThreadByKey(const ProcessOrThreadKey& key) const {
 			auto it = m_threadsByKey.find(key);
 			return it == m_threadsByKey.end() ? nullptr : it->second;
 		}
 
-		[[nodiscard]] const std::vector<std::shared_ptr<TThreadInfo>>& GetTerminatedThreads() const {
+		[[nodiscard]] const vector<shared_ptr<TThreadInfo>>& GetTerminatedThreads() const {
 			return m_terminatedThreads;
 		}
 
-		[[nodiscard]] const std::vector<std::shared_ptr<TThreadInfo>>& GetNewThreads() const {
+		[[nodiscard]] const vector<shared_ptr<TThreadInfo>>& GetNewThreads() const {
 			return m_newThreads;
 		}
 
@@ -212,9 +209,9 @@ namespace WinLL {
 			return m_threads.size();
 		}
 
-		[[nodiscard]] std::vector<std::pair<std::shared_ptr<TProcessInfo>, int>> BuildProcessTree() {
-			std::vector<std::pair<std::shared_ptr<TProcessInfo>, int>> tree;
-			auto count = EnumProcesses(false, 0);
+		[[nodiscard]] vector<pair<shared_ptr<TProcessInfo>, int>> BuildProcessTree() {
+			vector<pair<shared_ptr<TProcessInfo>, int>> tree;
+			auto count = Update(false, 0);
 			tree.reserve(count);
 
 			auto map = m_processesById;
@@ -223,23 +220,23 @@ namespace WinLL {
 				if (p->ParentId == 0 || it == m_processesById.end() || (it != m_processesById.end() && it->second->CreateTime > p->CreateTime)) {
 					// root
 					DbgPrint((PSTR)"Root: %ws (%u) (Parent: %u)\n", p->GetImageName().c_str(), p->Id, p->ParentId);
-					tree.push_back(std::make_pair(p, 0));
+					tree.push_back(make_pair(p, 0));
 					map.erase(p->Id);
 					if (p->Id == 0)
 						continue;
 					auto children = FindChildren(map, p.get(), 1);
 					for (auto& child : children)
-						tree.push_back(std::make_pair(m_processesById[child.first], child.second));
+						tree.push_back(make_pair(m_processesById[child.first], child.second));
 				}
 			}
 			return tree;
 		}
 
-		std::vector<std::pair<uint32_t, int>> FindChildren(std::unordered_map<uint32_t, std::shared_ptr<TProcessInfo>>& map, TProcessInfo* parent, int indent) {
-			std::vector<std::pair<uint32_t, int>> children;
+		vector<pair<uint32_t, int>> FindChildren(unordered_map<uint32_t, shared_ptr<TProcessInfo>>& map, TProcessInfo* parent, int indent) {
+			vector<pair<uint32_t, int>> children;
 			for (auto& p : m_processes) {
 				if (p->ParentId == parent->Id && p->CreateTime > parent->CreateTime) {
-					children.push_back(std::make_pair(p->Id, indent));
+					children.push_back(make_pair(p->Id, indent));
 					map.erase(p->Id);
 					auto children2 = FindChildren(map, p.get(), indent + 1);
 					children.insert(children.end(), children2.begin(), children2.end());
@@ -249,13 +246,13 @@ namespace WinLL {
 		}
 
 	private:
-		using ProcessMap = std::unordered_map<ProcessOrThreadKey, std::shared_ptr<TProcessInfo>>;
-		using ThreadMap = std::unordered_map<ProcessOrThreadKey, std::shared_ptr<TThreadInfo>>;
+		using ProcessMap = unordered_map<ProcessOrThreadKey, shared_ptr<TProcessInfo>>;
+		using ThreadMap = unordered_map<ProcessOrThreadKey, shared_ptr<TThreadInfo>>;
 
-		std::shared_ptr<TProcessInfo> BuildProcessInfo(const SYSTEM_PROCESS_INFORMATION* info, bool includeThreads,
-			ThreadMap& threadsByKey, int64_t delta, std::shared_ptr<TProcessInfo> pi, bool extended) {
+		shared_ptr<TProcessInfo> BuildProcessInfo(const SYSTEM_PROCESS_INFORMATION* info, bool includeThreads,
+			ThreadMap& threadsByKey, int64_t delta, shared_ptr<TProcessInfo> pi, bool extended) {
 			if (pi == nullptr) {
-				pi = std::make_shared<TProcessInfo>();
+				pi = make_shared<TProcessInfo>();
 				pi->Id = HandleToULong(info->UniqueProcessId);
 				pi->SessionId = info->SessionId;
 				pi->CreateTime = info->CreateTime.QuadPart;
@@ -263,14 +260,14 @@ namespace WinLL {
 				pi->Key.Id = pi->Id;
 				pi->ParentId = HandleToULong(info->InheritedFromUniqueProcessId);
 				pi->ClearThreads();
-				auto name = info->UniqueProcessId == 0 ? L"(Idle)" : std::wstring(info->ImageName.Buffer, info->ImageName.Length / sizeof(WCHAR));
+				auto name = info->UniqueProcessId == 0 ? L"(Idle)" : wstring(info->ImageName.Buffer, info->ImageName.Length / sizeof(WCHAR));
 				if (extended && info->UniqueProcessId) {
 					auto ext = (SYSTEM_PROCESS_INFORMATION_EXTENSION*)((BYTE*)info +
 						FIELD_OFFSET(SYSTEM_PROCESS_INFORMATION, Threads) + sizeof(SYSTEM_EXTENDED_THREAD_INFORMATION) * info->NumberOfThreads);
 					pi->JobObjectId = ext->JobObjectId;
 					auto index = name.rfind(L'\\');
 					::memcpy(pi->UserSid, (BYTE*)info + ext->UserSidOffset, sizeof(pi->UserSid));
-					pi->m_ProcessName = index == std::wstring::npos ? name : name.substr(index + 1);
+					pi->m_ProcessName = index == wstring::npos ? name : name.substr(index + 1);
 					pi->m_NativeImagePath = name;
 					if (ext->PackageFullNameOffset > 0) {
 						pi->m_PackageFullName = (const wchar_t*)((BYTE*)ext + ext->PackageFullNameOffset);
@@ -315,8 +312,8 @@ namespace WinLL {
 					auto tinfo = (SYSTEM_EXTENDED_THREAD_INFORMATION*)info->Threads + i;
 					const auto& baseInfo = tinfo->ThreadInfo;
 					ProcessOrThreadKey key = { baseInfo.CreateTime.QuadPart, HandleToULong(baseInfo.ClientId.UniqueThread) };
-					std::shared_ptr<TThreadInfo> thread;
-					std::shared_ptr<TThreadInfo> ti2;
+					shared_ptr<TThreadInfo> thread;
+					shared_ptr<TThreadInfo> ti2;
 					bool newobject = true;
 					int64_t cpuTime;
 					if (auto it = m_threadsByKey.find(key); it != m_threadsByKey.end()) {
@@ -325,7 +322,7 @@ namespace WinLL {
 						newobject = false;
 					}
 					if (newobject) {
-						thread = std::make_shared<TThreadInfo>();
+						thread = make_shared<TThreadInfo>();
 						thread->m_processName = pi->GetImageName();
 						thread->Id = HandleToULong(baseInfo.ClientId.UniqueThread);
 						thread->ProcessId = HandleToULong(baseInfo.ClientId.UniqueProcess);
@@ -358,8 +355,8 @@ namespace WinLL {
 						thread->CPU = delta == 0 ? 0 : (int32_t)((thread->KernelTime + thread->UserTime - cpuTime) * 1000000LL / delta / 1/*_totalProcessors*/);
 						m_threadsByKey.erase(thread->Key);
 					}
-					threadsByKey.insert(std::make_pair(thread->Key, thread));
-					m_threadsById.insert(std::make_pair(thread->Id, thread));
+					threadsByKey.insert(make_pair(thread->Key, thread));
+					m_threadsById.insert(make_pair(thread->Id, thread));
 				}
 			}
 			return pi;
@@ -367,18 +364,18 @@ namespace WinLL {
 
 		// processes
 
-		std::unordered_map<uint32_t, std::shared_ptr<TProcessInfo>> m_processesById;
-		std::vector<std::shared_ptr<TProcessInfo>> m_processes;
-		std::vector<std::shared_ptr<TProcessInfo>> m_terminatedProcesses;
-		std::vector<std::shared_ptr<TProcessInfo>> m_newProcesses;
+		unordered_map<uint32_t, shared_ptr<TProcessInfo>> m_processesById;
+		vector<shared_ptr<TProcessInfo>> m_processes;
+		vector<shared_ptr<TProcessInfo>> m_terminatedProcesses;
+		vector<shared_ptr<TProcessInfo>> m_newProcesses;
 		ProcessMap m_processesByKey;
 
 		// threads
 
-		std::vector<std::shared_ptr<TThreadInfo>> m_threads;
-		std::vector<std::shared_ptr<TThreadInfo>> m_newThreads;
-		std::vector<std::shared_ptr<TThreadInfo>> m_terminatedThreads;
-		std::unordered_map<uint32_t, std::shared_ptr<TThreadInfo>> m_threadsById;
+		vector<shared_ptr<TThreadInfo>> m_threads;
+		vector<shared_ptr<TThreadInfo>> m_newThreads;
+		vector<shared_ptr<TThreadInfo>> m_terminatedThreads;
+		unordered_map<uint32_t, shared_ptr<TThreadInfo>> m_threadsById;
 		ThreadMap m_threadsByKey;
 
 		LARGE_INTEGER m_prevTicks{};

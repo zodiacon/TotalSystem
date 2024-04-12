@@ -65,7 +65,7 @@ namespace WinLL {
 		friend class ProcessManager;
 	public:
 		const std::wstring& GetProcessImageName() const {
-			return m_processName;
+			return m_ProcessName;
 		}
 
 		uint64_t KernelTime;
@@ -87,7 +87,7 @@ namespace WinLL {
 		ProcessOrThreadKey Key;
 
 	private:
-		std::wstring m_processName;
+		std::wstring m_ProcessName;
 	};
 }
 

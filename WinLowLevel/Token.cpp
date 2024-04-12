@@ -2,6 +2,8 @@
 #include "WinLowLevel.h"
 
 namespace WinLL {
+	using namespace std;
+
 	bool Token::Open(TokenAccessMask access, uint32_t pid) {
 		wil::unique_handle hProcess;
 		if (pid) {
@@ -16,7 +18,7 @@ namespace WinLL {
 		return NT_SUCCESS(::NtOpenProcessToken(hProcess.get(), access, m_hObject.addressof()));
 	}
 
-	std::wstring Token::GetUserName(bool includeDomain) const {
+	wstring Token::GetUserName(bool includeDomain) const {
 		BYTE buffer[512];
 		ULONG len;
 		if (NT_SUCCESS(::NtQueryInformationToken(Handle(), TokenUser, buffer, sizeof(buffer), &len))) {
@@ -25,7 +27,7 @@ namespace WinLL {
 			WCHAR name[257], domain[64];
 			DWORD lname = _countof(name), ldomain = _countof(domain);
 			::LookupAccountSid(nullptr, pti->User.Sid, name, &lname, domain, &ldomain, &use);
-			return includeDomain ? std::wstring(domain) + L"\\" + name : name;
+			return includeDomain ? wstring(domain) + L"\\" + name : name;
 		}
 		return L"";
 	}

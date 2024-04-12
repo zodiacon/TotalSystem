@@ -23,8 +23,8 @@ ProcessesModel::ProcessesModel() {
 		{ "Pri", Qt::AlignRight, 40, ColumnFlags::Visible | ColumnFlags::Fixed },
 		{ "Created", Qt::AlignRight, 140 },
 		{ "Pri Cls", Qt::AlignLeft, 100, ColumnFlags::Fixed },
-		{ "Command Line", Qt::AlignLeft, 300 },
-		{ "Image Path", Qt::AlignLeft, 250, ColumnFlags::None },
+		{ "Command Line", Qt::AlignLeft, 300, ColumnFlags::None },
+		{ "Image Path", Qt::AlignLeft, 250, ColumnFlags::Visible },
 		{ "Package Name", Qt::AlignLeft, 200, ColumnFlags::None  },
 		{ "CPU Time", Qt::AlignRight, 80, ColumnFlags::None  },
 		{ "Kernel Time", Qt::AlignRight, 80, ColumnFlags::None  },
@@ -34,8 +34,11 @@ ProcessesModel::ProcessesModel() {
 	m_Columns = std::move(columns);
 	m_ProcMgr.EnumProcesses();
 	m_Processes = m_ProcMgr.GetProcesses();
+#ifdef _DEBUG
+	m_Timer.setInterval(2000);
+#else
 	m_Timer.setInterval(1000);
-
+#endif
 	m_DefaultIcon = QIcon(qt_pixmapFromWinHICON(::LoadIcon(nullptr, IDI_APPLICATION)));
 	connect(&m_Timer, &QTimer::timeout, this, &ProcessesModel::OnTick);
 

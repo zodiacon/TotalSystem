@@ -8,6 +8,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 	auto sb = statusBar();
 	sb->showMessage("Ready");
 	auto mb = menuBar();
+
+	//
+	// File menu
+	//
 	auto fileMenu = mb->addMenu("&File");
 	if (!WinLL::SecurityHelper::IsRunningElevated()) {
 		fileMenu->addAction(QIcon(":/Icons/shield.ico"), "&Run as administrator", this, &MainWindow::RunAsAdmin);
@@ -15,8 +19,31 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 	}
 	fileMenu->addAction("&Exit", this, &MainWindow::close, QKeySequence::Quit);
 
-	auto killProcessAction = new QAction(QIcon(":/Icons/process_kill.ico"), "&Kill Process", this);
+	//
+	// View menu
+	//
+	auto viewMenu = mb->addMenu("&View");
+	auto viewGridAction = new QAction("&Grid", this);
+	viewGridAction->setCheckable(true);
+	viewGridAction->setChecked(true);
+	connect(viewGridAction, &QAction::toggled, this, [=]() {
+		m_ProcessesView.setShowGrid(viewGridAction->isChecked());
+		});
+	viewMenu->addAction(viewGridAction);
 
+	auto viewToolbarAction = new QAction("&Toolbar", this);
+	viewToolbarAction->setCheckable(true);
+	viewToolbarAction->setChecked(true);
+	connect(viewToolbarAction, &QAction::toggled, this, [=]() {
+		m_ToolBar.setVisible(viewToolbarAction->isChecked());
+		});
+	
+	viewMenu->addAction(viewToolbarAction);
+
+	//
+	// Process menu
+	//
+	auto killProcessAction = new QAction(QIcon(":/Icons/process_kill.ico"), "&Kill Process", this);
 	auto processMenu = mb->addMenu("&Process");
 	processMenu->addAction(killProcessAction);
 

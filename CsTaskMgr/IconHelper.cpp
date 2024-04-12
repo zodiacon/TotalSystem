@@ -9,5 +9,4 @@ HICON IconHelper::GetIconFromImagePath(QString const& path) {
     std::string spath(path.toStdString());
     WORD index = 0;
     return ::ExtractAssociatedIconA(nullptr, spath.data(), &index);
-
 }

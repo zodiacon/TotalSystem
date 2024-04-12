@@ -87,6 +87,8 @@
 //END_ENUM()
 
 namespace WinLL {
+	using namespace std;
+
 	struct AccessMask {
 		AccessMask(ULONG access = 0) : Access(access) {}
 		operator ULONG() const {
@@ -202,7 +204,7 @@ namespace WinLL {
 		template<typename TAccess>
 		static HANDLE Duplicate(Process const& srcProcess, KernelObject const& srcObject, Process const& targetProcess, TAccess access, bool closeSource = false);
 		bool IsSameObject(KernelObject const& other) const;
-		std::wstring GetName() const;
+		wstring GetName() const;
 
 	protected:
 		wil::unique_any_handle_null<decltype(&::NtClose), ::NtClose> m_hObject;
@@ -347,14 +349,14 @@ namespace WinLL {
 		int32_t GetExitCode() const;
 		uint32_t GetId() const;
 		PPEB GetPeb() const;
-		std::wstring GetCommandLine() const;
+		wstring GetCommandLine() const;
 		int32_t GetSessionId() const;
-		std::wstring GetImagePath() const;
-		std::wstring GetImageName() const;
-		std::wstring GetUserName(bool includeDomain = false) const;
-		std::wstring GetPackageName() const;
-		std::wstring GetAppUserModelId() const;
-		std::wstring GetAppId() const;
+		wstring GetImagePath() const;
+		wstring GetImageName() const;
+		wstring GetUserName(bool includeDomain = false) const;
+		wstring GetPackageName() const;
+		wstring GetAppUserModelId() const;
+		wstring GetAppId() const;
 		PriorityClass GetPriorityClass() const;
 		bool SetPriorityClass(PriorityClass pc);
 		bool Terminate(int32_t exitCode = 0);
@@ -411,7 +413,7 @@ namespace WinLL {
 
 		bool Open(TokenAccessMask access, uint32_t pid = 0);
 
-		std::wstring GetUserName(bool includeDomain = false) const;
+		wstring GetUserName(bool includeDomain = false) const;
 		//Sid GetUserSid() const;
 	};
 
