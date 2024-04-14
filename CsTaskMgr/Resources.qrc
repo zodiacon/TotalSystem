@@ -1,8 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>Icons/Processes.ico</file>
-        <file>Icons/app.ico</file>
-		<file>Icons/process_kill.ico</file>
-		<file>Icons/shield.ico</file>
-	</qresource>
-</RCC>

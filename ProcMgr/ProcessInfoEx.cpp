@@ -3,8 +3,8 @@
 #include <WinLowLevel.h>
 #include <shellapi.h>
 //#include "colors.h"
-//#include "ProcessManager.h"
-//#include "Globals.h"
+#include "ProcessManager.h"
+#include "Globals.h"
 //#include "Settings.h"
 //#include "ProcessColor.h"
 #include <wincodec.h>
@@ -49,6 +49,10 @@ using namespace WinLL;
 ProcessAttributes ProcessInfoEx::Attributes() const {
 	if (m_Attributes == ProcessAttributes::NotComputed) {
 		m_Attributes = ProcessAttributes::None;
+		auto parent = Globals::ProcessManager().GetProcessById(ParentId);
+		if (parent && _wcsicmp(parent->GetImageName().c_str(), L"services.exe") == 0)
+			m_Attributes |= ProcessAttributes::Service;
+
 		Process process;
 		if(process.Open(Id, ProcessAccessMask::QueryLimitedInformation)) {
 			if (process.IsManaged())
@@ -61,11 +65,6 @@ ProcessAttributes ProcessInfoEx::Attributes() const {
 				m_Attributes |= ProcessAttributes::Secure;
 			if (process.IsInJob())
 				m_Attributes |= ProcessAttributes::InJob;
-			Process parent;
-			if (parent.Open(ParentId, ProcessAccessMask::QueryLimitedInformation)) {
-				if (::_wcsicmp(parent.GetImageName().c_str(), L"services.exe") == 0)
-					m_Attributes |= ProcessAttributes::Service;
-			}
 		}
 	}
 	return m_Attributes;
@@ -116,15 +115,9 @@ void ProcessInfoEx::Term(uint32_t ms) {
 
 const std::wstring& ProcessInfoEx::GetExecutablePath() const {
 	if (m_ExecutablePath.empty() && Id != 0) {
-		const auto& path = GetNativeImagePath();
-		if (path[0] == L'\\') {
-			Process process;
-			if (process.Open(Id, ProcessAccessMask::QueryLimitedInformation)) {
-				m_ExecutablePath = process.GetFullImageName();
-			}
-		}
-		else {
-			m_ExecutablePath = path;
+		Process process;
+		if (process.Open(Id, ProcessAccessMask::QueryLimitedInformation)) {
+			m_ExecutablePath = process.GetFullImageName();
 		}
 	}
 	return m_ExecutablePath;

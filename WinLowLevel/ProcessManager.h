@@ -9,6 +9,7 @@
 #include "ProcessInfo.h"
 #include "ThreadInfo.h"
 #include "SecurityHelper.h"
+#include <VersionHelpers.h>
 
 #ifdef __cplusplus
 #if _MSC_VER >= 1300
@@ -80,7 +81,7 @@ namespace WinLL {
 			int size = 1 << 22;
 			wil::unique_virtualalloc_ptr<BYTE> buffer((BYTE*)::VirtualAlloc(nullptr, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 			if (!buffer)
-				return 0;
+				return;
 
 			ULONG len;
 
@@ -158,8 +159,6 @@ namespace WinLL {
 			}
 
 			m_prevTicks = ticks;
-
-			return static_cast<uint32_t>(m_processes.size());
 		}
 
 		[[nodiscard]] vector<shared_ptr<TProcessInfo>> const& GetProcesses() const {
@@ -323,7 +322,7 @@ namespace WinLL {
 					}
 					if (newobject) {
 						thread = make_shared<TThreadInfo>();
-						thread->m_processName = pi->GetImageName();
+						thread->m_ProcessName = pi->GetImageName();
 						thread->Id = HandleToULong(baseInfo.ClientId.UniqueThread);
 						thread->ProcessId = HandleToULong(baseInfo.ClientId.UniqueProcess);
 						thread->CreateTime = baseInfo.CreateTime.QuadPart;

@@ -81,6 +81,10 @@ namespace WinLL {
 		return PriorityClass(::GetPriorityClass(m_hObject.get()));
 	}
 
+	bool Process::SetPriorityClass(PriorityClass pc) {
+		return ::SetPriorityClass(Handle(), static_cast<DWORD>(pc));
+	}
+
 	bool Process::Terminate(int32_t exitCode) {
 		return NT_SUCCESS(NtTerminateProcess(m_hObject.get(), exitCode));
 	}
