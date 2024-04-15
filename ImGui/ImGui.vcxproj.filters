@@ -51,7 +51,7 @@
     <ClInclude Include="ImGuiExt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Image.h">
+    <ClInclude Include="d3d11Image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -83,7 +83,7 @@
     <ClCompile Include="ImGuiExt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Image.cpp">
+    <ClCompile Include="d3d11Image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

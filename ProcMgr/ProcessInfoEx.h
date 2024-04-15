@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ProcessInfo.h>
+#include <D3D11Image.h>
 
 enum class ProcessAttributes {
 	NotComputed = -1,
@@ -37,6 +38,7 @@ public:
 	bool Filtered{ false };
 
 private:
+	mutable D3D11Image m_Icon;
 	mutable wil::com_ptr<ID3D11ShaderResourceView> m_spIcon;
 	DWORD64 m_ExpiryTime;
 	mutable std::wstring m_ExecutablePath;

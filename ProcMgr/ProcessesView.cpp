@@ -4,12 +4,12 @@
 #include "resource.h"
 #include "Globals.h"
 #include <ProcessManager.h>
-#include <MessageBox.h>
-#include <chrono>
+#include <WinLowLevel.h>
 #include <Colors.h>
 #include <ImGuiExt.h>
 #include <Shlwapi.h>
 #include "FormatHelpers.h"
+#include "Resource.h"
 
 #pragma comment(lib, "Shlwapi.lib")
 
@@ -20,61 +20,31 @@ using namespace WinLL;
 extern ID3D11Device* g_pd3dDevice;
 extern ID3D11DeviceContext* g_pd3dDeviceContext;
 
-bool LoadTextureFromFile(const char* filename, ID3D11ShaderResourceView** out_srv, int* out_width, int* out_height);
-
 ProcessesView::ProcessesView() {
-	UINT width, height;
-	wil::com_ptr<IWICImagingFactory> spFactory = wil::CoCreateInstance<IWICImagingFactory>(CLSID_WICImagingFactory);
-	wil::com_ptr<IWICBitmap> spBitmap;
-	spFactory->CreateBitmapFromHICON(::LoadIcon(::GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_PROCMGR)), &spBitmap);
-	spBitmap->GetSize(&width, &height);
+	UINT icons[]{ IDI_PAUSE };
 
-	// Create texture
-	D3D11_TEXTURE2D_DESC desc;
-	ZeroMemory(&desc, sizeof(desc));
-	desc.Width = width;
-	desc.Height = height;
-	desc.MipLevels = 1;
-	desc.ArraySize = 1;
-	desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; //DXGI_FORMAT_R8G8B8A8_UNORM;
-	desc.SampleDesc.Count = 1;
-	desc.Usage = D3D11_USAGE_DEFAULT;
-	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	desc.CPUAccessFlags = 0;
-
-	wil::com_ptr<ID3D11Texture2D> pTexture;
-	D3D11_SUBRESOURCE_DATA subResource;
-	wil::com_ptr<IWICBitmapLock> spLock;
-	spBitmap->Lock(nullptr, WICBitmapLockRead, &spLock);
-	UINT size;
-	WICInProcPointer ptr;
-	spLock->GetDataPointer(&size, &ptr);
-	subResource.pSysMem = ptr;
-	subResource.SysMemPitch = desc.Width * 4;
-	subResource.SysMemSlicePitch = 0;
-	g_pd3dDevice->CreateTexture2D(&desc, &subResource, pTexture.addressof());
-
-	// Create texture view
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-	ZeroMemory(&srvDesc, sizeof(srvDesc));
-	srvDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;	//DXGI_FORMAT_R8G8B8A8_UNORM;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = desc.MipLevels;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	g_pd3dDevice->CreateShaderResourceView(pTexture.get(), &srvDesc, &m_spImage);
+	for (auto& icon : icons) {
+		auto hIcon = (HICON)::LoadImage(::GetModuleHandle(nullptr), MAKEINTRESOURCE(icon), IMAGE_ICON, 16, 16, LR_COPYFROMRESOURCE | LR_CREATEDIBSECTION);
+		m_Icons.insert({ icon, D3D11Image::FromIcon(hIcon) });
+	}
 }
 
 void ProcessesView::BuildWindow() {
-	if (Begin("Processes", nullptr, ImGuiWindowFlags_MenuBar)) {
-		if (BeginMenuBar()) {
-			BuildProcessMenu();
-			BuildViewMenu();
-			EndMenuBar();
+	if (m_Open) {
+		SetNextWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
+		SetNextWindowPos(ImVec2(10, 20), ImGuiCond_FirstUseEver);
+		if (Begin("Processes", &m_Open, ImGuiWindowFlags_MenuBar)) {
+			if (BeginMenuBar()) {
+				BuildProcessMenu();
+				BuildViewMenu();
+				EndMenuBar();
+			}
+			BuildToolBar();
+			BuildTable();
 		}
-		BuildToolBar();
-		BuildTable();
+		ImGui::End();
 	}
-	ImGui::End();
+
 
 	//std::vector<WinSys::ProcessOrThreadKey> keys;
 	//for (const auto& [key, p] : _processProperties) {
@@ -88,28 +58,37 @@ void ProcessesView::BuildWindow() {
 	//	_processProperties.erase(key);
 }
 
+bool ProcessesView::IsOpen() const {
+	return m_Open;
+}
+
+void ProcessesView::Open(bool open) {
+	m_Open = true;
+}
+
 void ProcessesView::DoSort(int col, bool asc) {
 	ranges::sort(m_Processes, [&](const auto& p1, const auto& p2) {
-		switch (col) {
-			case 0: return SortHelper::Sort(p1->GetImageName(), p2->GetImageName(), asc);
-			case 1: return SortHelper::Sort(p1->Id, p2->Id, asc);
-			case 2: return SortHelper::Sort(p1->UserName(), p2->UserName(), asc);
-			case 3: return SortHelper::Sort(p1->SessionId, p2->SessionId, asc);
-			case 4: return SortHelper::Sort(p1->CPU, p2->CPU, asc);
-			case 5: return SortHelper::Sort(p1->ParentId, p2->ParentId, asc);
-			case 6: return SortHelper::Sort(p1->CreateTime, p2->CreateTime, asc);
-			case 7: return SortHelper::Sort(p1->PrivatePageCount, p2->PrivatePageCount, asc);
-			case 8: return SortHelper::Sort(p1->BasePriority, p2->BasePriority, asc);
-			case 9: return SortHelper::Sort(p1->ThreadCount, p2->ThreadCount, asc);
-			case 10: return SortHelper::Sort(p1->HandleCount, p2->HandleCount, asc);
-			case 11: return SortHelper::Sort(p1->WorkingSetSize, p2->WorkingSetSize, asc);
-			case 12: return SortHelper::Sort(p1->GetExecutablePath(), p2->GetExecutablePath(), asc);
-			case 13: return SortHelper::Sort(p1->KernelTime + p1->UserTime, p2->KernelTime + p2->UserTime, asc);
-			case 14: return SortHelper::Sort(p1->PeakThreads, p2->PeakThreads, asc);
-			case 15: return SortHelper::Sort(p1->VirtualSize, p2->VirtualSize, asc);
-			case 16: return SortHelper::Sort(p1->PeakWorkingSetSize, p2->PeakWorkingSetSize, asc);
-			case 17: return SortHelper::Sort(p1->Attributes(), p2->Attributes(), asc);
-			case 18: return SortHelper::Sort(p1->PagedPoolUsage, p2->PagedPoolUsage, asc);
+		switch (static_cast<Column>(col)) {
+			case Column::ProcessName: return SortHelper::Sort(p1->GetImageName(), p2->GetImageName(), asc);
+			case Column::Pid: return SortHelper::Sort(p1->Id, p2->Id, asc);
+			case Column::UserName: return SortHelper::Sort(p1->UserName(), p2->UserName(), asc);
+			case Column::Session: return SortHelper::Sort(p1->SessionId, p2->SessionId, asc);
+			case Column::CPU: return SortHelper::Sort(p1->CPU, p2->CPU, asc);
+			case Column::ParentPid: return SortHelper::Sort(p1->ParentId, p2->ParentId, asc);
+			case Column::CreateTime: return SortHelper::Sort(p1->CreateTime, p2->CreateTime, asc);
+			case Column::Commit: return SortHelper::Sort(p1->PrivatePageCount, p2->PrivatePageCount, asc);
+			case Column::BasePriority: return SortHelper::Sort(p1->BasePriority, p2->BasePriority, asc);
+			case Column::Threads: return SortHelper::Sort(p1->ThreadCount, p2->ThreadCount, asc);
+			case Column::Handles: return SortHelper::Sort(p1->HandleCount, p2->HandleCount, asc);
+			case Column::WorkingSet: return SortHelper::Sort(p1->WorkingSetSize, p2->WorkingSetSize, asc);
+			case Column::ExePath: return SortHelper::Sort(p1->GetExecutablePath(), p2->GetExecutablePath(), asc);
+			case Column::CPUTime: return SortHelper::Sort(p1->KernelTime + p1->UserTime, p2->KernelTime + p2->UserTime, asc);
+			case Column::PeakThreads: return SortHelper::Sort(p1->PeakThreads, p2->PeakThreads, asc);
+			case Column::VirtualSize: return SortHelper::Sort(p1->VirtualSize, p2->VirtualSize, asc);
+			case Column::PeakWS: return SortHelper::Sort(p1->PeakWorkingSetSize, p2->PeakWorkingSetSize, asc);
+			case Column::Attributes: return SortHelper::Sort(p1->Attributes(), p2->Attributes(), asc);
+			case Column::PagedPool: return SortHelper::Sort(p1->PagedPoolUsage, p2->PagedPoolUsage, asc);
+			case Column::NonPagedPool: return SortHelper::Sort(p1->NonPagedPoolUsage, p2->NonPagedPoolUsage, asc);
 
 		}
 		return false;
@@ -136,55 +115,174 @@ bool ProcessesView::KillProcess(uint32_t id) {
 	return process.Terminate();
 }
 
-bool ProcessesView::TryKillProcess(ProcessInfo& pi, bool& success) {
-	m_ModalOpen = true;
-	const std::string name(pi.GetImageName().begin(), pi.GetImageName().end());
-	auto text = format("Kill process {} ({})?", pi.Id, name);
+void ProcessesView::TryKillProcess(ProcessInfo& pi) {
+	if (m_KillDlg.IsEmpty()) {
+		const std::string name(pi.GetImageName().begin(), pi.GetImageName().end());
+		auto text = format("Kill process {} ({})?", pi.Id, name);
 
-	auto result = SimpleMessageBox::ShowModal("Kill Process?", text.c_str(), MessageBoxButtons::OkCancel);
-	if (result != MessageBoxResult::StillOpen) {
-		m_ModalOpen = false;
-		if (result == MessageBoxResult::OK) {
-			success = KillProcess(m_SelectedProcess->Id);
-			if (success)
-				m_SelectedProcess.reset();
-		}
-		return true;
+		m_KillDlg.Init("Kill Process?", move(text), MessageBoxButtons::OkCancel);
 	}
-	return false;
 }
 
 void ProcessesView::BuildTable() {
-	auto& pm = Globals::ProcessManager();
 
-	//(ImVec2(size.x, size.y / 2));
 	if (BeginTable("processes", 19, ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | 0 * ImGuiTableFlags_NoSavedSettings |
 		ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit)) {
 		TableSetupScrollFreeze(2, 1);
-		TableSetupColumn("Name", ImGuiTableColumnFlags_NoHide | ImGuiTableColumnFlags_NoReorder);
-		TableSetupColumn("Id", ImGuiTableColumnFlags_NoHide | ImGuiTableColumnFlags_NoReorder);
-		TableSetupColumn("User Name", 0, 110.0f);
-		TableSetupColumn("Session", ImGuiTableColumnFlags_NoResize, 60.0f);
-		TableSetupColumn("CPU (%)");
-		TableSetupColumn("Parent", ImGuiTableColumnFlags_None);
-		TableSetupColumn("Created", ImGuiTableColumnFlags_NoResize);
-		TableSetupColumn("Private Bytes");
-		TableSetupColumn("Priority");
-		TableSetupColumn("Threads");
-		TableSetupColumn("Handles");
-		TableSetupColumn("Working Set");
-		TableSetupColumn("Executable Path", ImGuiTableColumnFlags_None);
-		TableSetupColumn("CPU Time");
-		TableSetupColumn("Peak Thr");
-		TableSetupColumn("Virtual Size");
-		TableSetupColumn("Peak WS");
-		TableSetupColumn("Attributes");
-		TableSetupColumn("Paged Pool");
+
+		auto orgBackColor = GetStyle().Colors[ImGuiCol_TableRowBg];
+		auto& pm = Globals::ProcessManager();
+
+		static const ColumnInfo columns[] = {
+			{ "Name", [this](auto& p) {
+				Image(p->Icon(), ImVec2(16, 16)); SameLine();
+				const std::string name(p->GetImageName().begin(), p->GetImageName().end());
+				auto str = format("{}##{} {}", name, p->Id, p->ParentId);
+				Selectable(str.c_str(), m_SelectedProcess.get() == p.get(), ImGuiSelectableFlags_SpanAllColumns);
+
+				if (IsItemClicked()) {
+					m_SelectedProcess = p;
+				}
+
+				auto item = format("{} {}", p->Id, p->ParentId);
+				if (BeginPopupContextItem(item.c_str())) {
+					if (m_UpdateInterval) {
+						TogglePause();
+						m_Paused = true;
+					}
+					m_SelectedProcess = p;
+					if (BuildPriorityClassMenu(*p)) {
+						Separator();
+					}
+					if (m_SelectedProcess->Id > 4) {
+						if (MenuItem("Kill", "DEL")) {
+							TryKillProcess(*p);
+						}
+						Separator();
+					}
+					if (MenuItem("Go to file location...")) {
+						GotoFileLocation(*p);
+					}
+					Separator();
+					if (MenuItem("Properties...")) {
+					//	GetOrAddProcessProperties(p);
+					}
+					EndPopup();
+				}
+				if (m_SelectedProcess) {
+					item = format("{} {}", m_SelectedProcess->Id, m_SelectedProcess->ParentId);
+					if (!IsPopupOpen(item.c_str())) {
+						if (m_Paused) {
+							TogglePause();
+							m_Paused = false;
+						}
+					}
+				}
+
+				}, ImGuiTableColumnFlags_NoHide | ImGuiTableColumnFlags_NoReorder },
+			{ "PID", [](auto& p) {
+				Text("%7u (0x%05X)", p->Id, p->Id);
+				}, 0, 130.0f },
+			{ "User Name", [](auto p) {
+				auto& username = p->GetUserName(true);
+				if (username.empty())
+					TextColored(StandardColors::Gray, "<access denied>");
+				else
+					Text("%ws", username.c_str());
+				}, 0, 110.0f },
+			{ "Session", [](auto p) {
+				Text("%4u", p->SessionId);
+				}, ImGuiTableColumnFlags_NoResize, 50.0f },
+			{ "CPU %", [&](auto p) {
+				if (p->CPU > 0 && !p->IsTerminated()) {
+					auto value = p->CPU / 10000.0f;
+					auto str = format("{:7.2f}  ", value);
+					ImVec4 color;
+					auto customColors = p->Id && value > 1.0f;
+					if (customColors) {
+						color = ImColor::HSV(.6f, value / 100 + .3f, .3f).Value;
+					}
+					else {
+						color = orgBackColor;
+					}
+					if (customColors) {
+						TableSetBgColor(ImGuiTableBgTarget_CellBg, ColorConvertFloat4ToU32(color));
+						TextColored(ImVec4(1, 1, 1, 1), str.c_str());
+					}
+					else {
+						TextUnformatted(str.c_str());
+					}
+				}
+			} },
+			{ "Parent", [&](auto p) {
+				if (p->ParentId > 0) {
+					Text("%6d", p->ParentId);
+					auto parent = pm.GetProcessById(p->ParentId);
+					if (parent && parent->CreateTime < p->CreateTime) {
+						SameLine();
+						Text("(%ws)", parent->GetImageName().c_str());
+					}
+				}
+			}, 0, 140.0f },
+			{ "Created", [](auto& p) {
+				Text(FormatHelpers::FormatDateTime(p->CreateTime).c_str()); 
+				},ImGuiTableColumnFlags_NoResize },
+			{ "Private Bytes", [](auto& p) {
+				Text("%12ws K", FormatHelpers::FormatNumber(p->PrivatePageCount >> 10).c_str()); 
+				}, },
+			{ "Pri", [](auto& p) {
+				Text("%5d", p->BasePriority); 
+				}, },
+			{ "Threads", [](auto& p) {
+				Text("%6ws", FormatHelpers::FormatNumber(p->ThreadCount).c_str()); 
+				}, },
+			{ "Handles", [](auto& p) {
+				Text("%6ws", FormatHelpers::FormatNumber(p->HandleCount).c_str());
+				}, },
+			{ "Working Set", [](auto& p) {
+				Text("%12ws K", FormatHelpers::FormatNumber(p->WorkingSetSize >> 10).c_str()); 
+				}, },
+			{ "Executable Path", [](auto& p) {
+				Text("%ws", p->GetExecutablePath().c_str()); 
+				}, 0, 150.0f },
+			{ "CPU Time", [](auto& p) {
+				TextUnformatted(FormatHelpers::FormatTimeSpan(p->UserTime + p->KernelTime).c_str()); 
+				}, },
+			{ "Peak Thr", [](auto &p) {
+				Text("%7ws", FormatHelpers::FormatNumber(p->PeakThreads).c_str()); 
+				}, },
+			{ "Virtual Size", [](auto& p) {
+				Text("%14ws K", FormatHelpers::FormatNumber(p->VirtualSize >> 10).c_str()); 
+				}, },
+			{ "Peak WS", [](auto& p) {
+				Text("%12ws K", FormatHelpers::FormatNumber(p->PeakWorkingSetSize >> 10).c_str()); 
+				}, },
+			{ "Attributes", [](auto& p) {
+				TextUnformatted(ProcessAttributesToString(p->Attributes()).c_str()); 
+				}, },
+			{ "Paged Pool", [](auto& p) {
+				Text("%9ws K", FormatHelpers::FormatNumber(p->PagedPoolUsage >> 10).c_str()); 
+				}, },
+		};
+
+		int i = 0;
+		for (auto& ci : columns)
+			TableSetupColumn(ci.Header, ci.Flags, ci.Width, i++);
 
 		TableHeadersRow();
 
 		if (IsKeyPressed(ImGuiKey_Space)) {
 			TogglePause();
+		}
+
+		auto result = m_KillDlg.ShowModal();
+		if (result == MessageBoxResult::OK) {
+			auto success = KillProcess(m_SelectedProcess->Id);
+			if (success)
+				m_SelectedProcess.reset();
+			else {
+				//SimpleMessageBox::ShowModal("Terminate Process", format("Process {} termination failed.", m_SelectedProcess->Id).c_str());
+			}
 		}
 
 		if (m_UpdateInterval > 0 && ::GetTickCount64() - m_Tick >= m_UpdateInterval) {
@@ -249,17 +347,11 @@ void ProcessesView::BuildTable() {
 		count = static_cast<int>(indices.size());
 		clipper.Begin(count);
 		auto special = false;
-		static char buffer[64];
-		std::string str;
-
 		int popCount = 3;
-		static bool selected = false;
 
-		auto orgBackColor = GetStyle().Colors[ImGuiCol_TableRowBg];
-
-		if (m_KillFailed && MessageBoxResult::StillOpen != SimpleMessageBox::ShowModal("Kill Process", "Failed to kill process!")) {
-			m_KillFailed = false;
-		}
+		//if (m_KillFailed && MessageBoxResult::StillOpen != SimpleMessageBox::ShowModal("Kill Process", "Failed to kill process!")) {
+		//	m_KillFailed = false;
+		//}
 		while (clipper.Step()) {
 			for (int j = clipper.DisplayStart; j < clipper.DisplayEnd; j++) {
 				int i = indices[j];
@@ -289,145 +381,23 @@ void ProcessesView::BuildTable() {
 				//	}
 				//}
 
-				TableSetColumnIndex(0);
-				Image(p->Icon(), ImVec2(16, 16)); SameLine();
-				const std::string name(p->GetImageName().begin(), p->GetImageName().end());
-				str = format("{}##{}", name.c_str(), i);
-				Selectable(str.c_str(), m_SelectedProcess.get() == p.get(), ImGuiSelectableFlags_SpanAllColumns);
-
-				::StringCchPrintfA(buffer, sizeof(buffer), "##%d", i);
-
-				if (IsItemClicked()) {
-					m_SelectedProcess = p;
-				}
-
-				if (m_SelectedProcess != nullptr && IsKeyPressed(ImGuiKey_Delete) && GetIO().KeyShift)
-					m_ModalOpen = true;
-
-				if (BeginPopupContextItem(buffer)) {
-					m_SelectedProcess = p;
-					if (BuildPriorityClassMenu(*p)) {
-						Separator();
-					}
-					if (m_SelectedProcess->Id > 4 && MenuItem("Kill", "Shift+DEL")) {
-						m_ModalOpen = true;
-						Separator();
-					}
-					if (MenuItem("Go to file location...")) {
-						GotoFileLocation(*m_SelectedProcess);
-					}
-					Separator();
-					//if (MenuItem("Properties...")) {
-					//	GetOrAddProcessProperties(p);
-					//}
-					EndPopup();
-				}
-
-				TableSetColumnIndex(1);
-				Text("%6u (0x%05X)", p->Id, p->Id);
-
-				if (TableSetColumnIndex(2)) {
-					auto& username = p->GetUserName(true);
-					if (username.empty())
-						TextColored(StandardColors::Gray, "<access denied>");
-					else
-						Text("%ws", username.c_str());
-				}
-
-				if (TableSetColumnIndex(3)) {
-					Text("%4u", p->SessionId);
-				}
-
-				if (TableSetColumnIndex(4)) {
-					if (p->CPU > 0 && !p->IsTerminated()) {
-						auto value = p->CPU / 10000.0f;
-						str = format("{:7.2f}  ", value);
-						ImVec4 color;
-						auto customColors = p->Id && value > 1.0f;
-						if (customColors) {
-							color = ImColor::HSV(.6f, value / 100 + .3f, .3f).Value;
-						}
-						else {
-							color = orgBackColor;
-						}
-						if (customColors) {
-							TableSetBgColor(ImGuiTableBgTarget_CellBg, ColorConvertFloat4ToU32(color));
-							TextColored(ImVec4(1, 1, 1, 1), str.c_str());
-						}
-						else {
-							TextUnformatted(str.c_str());
-						}
+				for (int i = 0; i < _countof(columns); i++) {
+					if (TableSetColumnIndex(i)) {
+						columns[i].Callback(p);
 					}
 				}
 
-				if (TableSetColumnIndex(5)) {
-					if (p->ParentId > 0) {
-						auto parent = pm.GetProcessById(p->ParentId);
-						if (parent && parent->CreateTime < p->CreateTime) {
-							Text("%6d ", parent->Id);
-							SameLine();
-							Text("(%ws)", parent->GetImageName().c_str());
-						}
-						else {
-							Text("%6d", p->ParentId);
-						}
-					}
-				}
 
-				if (TableSetColumnIndex(6)) {
-					DWORD flags = FDTF_DEFAULT;
-					Text(FormatHelpers::FormatDateTime(p->CreateTime).c_str());
-				}
-
-				if (TableSetColumnIndex(7)) {
-					Text("%12ws K", FormatHelpers::FormatNumber(p->PrivatePageCount >> 10).c_str());
-				}
-				if (TableSetColumnIndex(8)) {
-					Text("%5d", p->BasePriority);
-				}
-				if (TableSetColumnIndex(9)) {
-					Text("%6ws", FormatHelpers::FormatNumber(p->ThreadCount).c_str());
-				}
-				if (TableSetColumnIndex(10)) {
-					Text("%6ws", FormatHelpers::FormatNumber(p->HandleCount).c_str());
-				}
-				if (TableSetColumnIndex(11)) {
-					Text("%12ws K", FormatHelpers::FormatNumber(p->WorkingSetSize >> 10).c_str());
-				}
-				if (TableSetColumnIndex(12))
-					Text("%ws", p->GetExecutablePath().c_str());
-
-				if (TableSetColumnIndex(13)) {
-					TextUnformatted(FormatHelpers::FormatTimeSpan(p->UserTime + p->KernelTime).c_str());
-				}
-				if (TableSetColumnIndex(14)) {
-					Text("%7ws", FormatHelpers::FormatNumber(p->PeakThreads).c_str());
-				}
-
-				if (TableSetColumnIndex(15)) {
-					Text("%14ws K", FormatHelpers::FormatNumber(p->VirtualSize >> 10).c_str());
-				}
-
-				if (TableSetColumnIndex(16)) {
-					Text("%12ws K", FormatHelpers::FormatNumber(p->PeakWorkingSetSize >> 10).c_str());
-				}
-
-				if (TableSetColumnIndex(17))
-					TextUnformatted(ProcessAttributesToString(p->Attributes()).c_str());
-
-				if (TableSetColumnIndex(18)) {
-					Text("%9ws K", FormatHelpers::FormatNumber(p->PagedPoolUsage >> 10).c_str());
-				}
 			}
 		}
 		if (special)
 			PopStyleColor(popCount);
 		EndTable();
 
-		if (m_ModalOpen) {
-			bool success;
-			m_ModalOpen = TryKillProcess(*m_SelectedProcess, success);
+		if (m_SelectedProcess && IsKeyPressed(ImGuiKey_Delete)) {
+			TryKillProcess(*m_SelectedProcess);
 		}
+
 	}
 }
 
@@ -443,8 +413,9 @@ void ProcessesView::BuildViewMenu() {
 			if (MenuItem("5 seconds", nullptr, m_UpdateInterval == 5000))
 				m_UpdateInterval = 5000;
 			Separator();
-			if (MenuItem("Paused", "SPACE", m_UpdateInterval == 0))
+			if (MenuItem("Paused", "SPACE", m_UpdateInterval == 0)) {
 				TogglePause();
+			}
 			ImGui::EndMenu();
 		}
 		ImGui::EndMenu();
@@ -458,9 +429,7 @@ void ProcessesView::BuildProcessMenu() {
 			Separator();
 		}
 		if (MenuItem("Kill", "Delete", false, m_SelectedProcess != nullptr)) {
-			bool success;
-			if (TryKillProcess(*m_SelectedProcess, success) && !success)
-				m_KillFailed = true;
+			TryKillProcess(*m_SelectedProcess);
 		}
 		//Separator();
 		ImGui::EndMenu();
@@ -468,7 +437,10 @@ void ProcessesView::BuildProcessMenu() {
 }
 
 void ProcessesView::BuildToolBar() {
-	Separator();
+	if (ImageButton("Pause", m_Icons[IDI_PAUSE].Get(), ImVec2(16, 16))) {
+		TogglePause();
+	}
+	SameLine();
 	SetNextItemWidth(100);
 	if (GetIO().KeyCtrl && IsKeyPressed(ImGuiKey_F))
 		SetKeyboardFocusHere();
@@ -480,8 +452,7 @@ void ProcessesView::BuildToolBar() {
 	PushStyleColor(ImGuiCol_Text, StandardColors::White);
 
 	if (ButtonEnabled("Kill", m_SelectedProcess != nullptr, ImVec2(40, 0))) {
-		bool success;
-		TryKillProcess(*m_SelectedProcess, success);
+		TryKillProcess(*m_SelectedProcess);
 	}
 	PopStyleColor(2);
 	SameLine();

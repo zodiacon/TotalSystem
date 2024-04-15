@@ -1,23 +1,38 @@
 #pragma once
 
 #include "ProcessInfoEx.h"
-#include <WinLowLevel.h>
+#include <functional>
+#include <MessageBox.h>
 
 //#include "ProcessProperties.h"
 
 struct ImGuiTableSortSpecsColumn;
-class TabManager;
 
 class ProcessesView {
+	enum class Column {
+		ProcessName, Pid, UserName, Session, CPU, ParentPid, CreateTime, Commit, BasePriority, Threads,
+		Handles, WorkingSet, ExePath, CPUTime, PeakThreads, VirtualSize, PeakWS, Attributes,
+		PagedPool, NonPagedPool,
+	};
+
+	struct ColumnInfo {
+		PCSTR Header;
+		std::function<void(std::shared_ptr<ProcessInfoEx>& pi)> Callback{ };
+		ImGuiTableColumnFlags Flags{ ImGuiTableColumnFlags_None };
+		float Width{ 0.0f };
+	};
+
 public:
 	ProcessesView();
 	void BuildWindow();
+	bool IsOpen() const;
+	void Open(bool open = true);
 
 private:
 	void DoSort(int col, bool asc);
 	void DoUpdate();
 	bool KillProcess(uint32_t id);
-	bool TryKillProcess(WinLL::ProcessInfo& pi, bool& success);
+	void TryKillProcess(WinLL::ProcessInfo& pi);
 
 	void BuildTable();
 	void BuildViewMenu();
@@ -35,12 +50,14 @@ private:
 	static std::string ProcessAttributesToString(ProcessAttributes attributes);
 
 private:
-	wil::com_ptr<ID3D11ShaderResourceView> m_spImage;
 	DWORD64 m_Tick = 0;
 	char m_FilterText[24]{};
 	std::vector<std::shared_ptr<ProcessInfoEx>> m_Processes;
 	const ImGuiTableColumnSortSpecs* m_Specs = nullptr;
 	std::shared_ptr<ProcessInfoEx> m_SelectedProcess;
 	int m_UpdateInterval{ 1000 }, m_OldInterval{ 0 };
-	bool m_ModalOpen : 1 = false, m_KillFailed : 1 = false;
+	std::unordered_map<UINT, D3D11Image> m_Icons;
+	SimpleMessageBox m_KillDlg;
+	bool m_Paused : 1 { false };
+	bool m_Open { true };
 };

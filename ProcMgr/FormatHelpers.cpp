@@ -20,7 +20,7 @@ std::wstring FormatHelpers::FormatNumber(int64_t number) {
 		::GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_STHOUSAND, sep, _countof(sep));
 		::GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SGROUPING, group, _countof(group));
 	}
-	static const NUMBERFMT fmt{ 0, 0, _wtoi(group), (PWSTR)L".", sep, 0 };
+	static const NUMBERFMT fmt{ 0, 0, (UINT)_wtoi(group), (PWSTR)L".", sep, 0 };
 	WCHAR result[32];
 	int r = ::GetNumberFormatEx(LOCALE_NAME_USER_DEFAULT, 0, std::to_wstring(number).c_str(), &fmt, result, _countof(result));
 	return result;

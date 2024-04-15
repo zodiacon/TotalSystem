@@ -177,8 +177,8 @@
     <ResourceCompile Include="ProcMgr.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Icons\Waiting.ico" />
     <Image Include="ProcMgr.ico" />
-    <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ImGui\ImGui.vcxproj">

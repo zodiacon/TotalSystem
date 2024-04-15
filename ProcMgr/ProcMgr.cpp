@@ -5,7 +5,6 @@
 
 #include <imgui_impl_win32.h>
 #include <imgui_impl_dx11.h>
-#include "ProcessesView.h"
 #include "MainWindow.h"
 
 #pragma comment(lib, "d3d11.lib")
@@ -68,7 +67,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
     // - Read 'docs/FONTS.md' for more instructions and details.
     // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
     //io.Fonts->AddFontDefault();
-    io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\consola.ttf", 15.0f);
+    io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\consola.ttf", 14.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
@@ -80,7 +79,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.2f, 0.2f, 0.2f, 1.00f);
 
-    ProcessesView processView;
     MainWindow mainWindow(hwnd);
 
     // Main loop
@@ -112,7 +110,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
         ImGui::NewFrame();
 
         mainWindow.BuildWindow();
-        processView.BuildWindow();
 
         // Rendering
         ImGui::Render();

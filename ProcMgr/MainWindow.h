@@ -1,4 +1,7 @@
 #pragma once
+
+#include "ProcessesView.h"
+
 class MainWindow {
 public:
 	explicit MainWindow(HWND hWnd);
@@ -6,5 +9,6 @@ public:
 
 private:
 	HWND m_hWnd;
+	ProcessesView m_ProcessesView;
 };
 

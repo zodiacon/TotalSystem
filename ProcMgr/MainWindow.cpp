@@ -23,6 +23,14 @@ void MainWindow::BuildWindow() {
 			}
 			ImGui::EndMenu();
 		}
+		if (BeginMenu("View")) {
+			if (MenuItem("Processes", "F4", m_ProcessesView.IsOpen(), !m_ProcessesView.IsOpen())) {
+				m_ProcessesView.Open();
+			}
+			if (MenuItem("Split Process View")) {
+			}
+			ImGui::EndMenu();
+		}
 		if (BeginMenu("Options")) {
 			if (BeginMenu("Theme")) {
 				if (MenuItem("Dark")) {
@@ -45,4 +53,5 @@ void MainWindow::BuildWindow() {
 		}
 		EndMainMenuBar();
 	}
+	m_ProcessesView.BuildWindow();
 }
