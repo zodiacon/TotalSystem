@@ -2,49 +2,48 @@
 #include "ProcessInfoEx.h"
 #include <WinLowLevel.h>
 #include <shellapi.h>
-//#include "colors.h"
-#include "ProcessManager.h"
 #include "Globals.h"
-//#include "Settings.h"
-//#include "ProcessColor.h"
-#include <wincodec.h>
-#include "resource.h"
+#include "ProcessColor.h"
+#include "ProcMgrSettings.h"
 
 using namespace std;
 using namespace WinLL;
 
-//std::pair<const ImVec4&, const ImVec4&> ProcessInfoEx::GetColors(WinSys::ProcessManager& pm) const {
-//	using namespace ImGui;
-//	auto& colors = Globals::Get().GetSettings().ProcessColors;
-//
-//	if (colors[Settings::DeletedObjects].Enabled && IsTerminated())
-//		return { colors[Settings::DeletedObjects].Color, colors[Settings::DeletedObjects].TextColor };
-//
-//	if (colors[Settings::NewObjects].Enabled && IsNew())
-//		return { colors[Settings::NewObjects].Color, colors[Settings::NewObjects].TextColor };
-//
-//	auto attributes = GetAttributes(pm);
-//	if (colors[Settings::Manageed].Enabled && (attributes & ProcessAttributes::Managed) == ProcessAttributes::Managed) {
-//		return { colors[Settings::Manageed].Color, colors[Settings::Manageed].TextColor };
-//	}
-//	if (colors[Settings::Immersive].Enabled && (attributes & ProcessAttributes::Immersive) == ProcessAttributes::Immersive) {
-//		return { colors[Settings::Immersive].Color, colors[Settings::Immersive].TextColor };
-//	}
-//	if (colors[Settings::Secure].Enabled && (attributes & ProcessAttributes::Secure) == ProcessAttributes::Secure) {
-//		return { colors[Settings::Secure].Color, colors[Settings::Secure].TextColor };
-//	}
-//	if (colors[Settings::Protected].Enabled && (attributes & ProcessAttributes::Protected) == ProcessAttributes::Protected) {
-//		return { colors[Settings::Protected].Color, colors[Settings::Protected].TextColor };
-//	}
-//	if (colors[Settings::Services].Enabled && (attributes & ProcessAttributes::Service) == ProcessAttributes::Service) {
-//		return { colors[Settings::Services].Color, colors[Settings::Services].TextColor };
-//	}
-//	if (colors[Settings::InJob].Enabled && (attributes & ProcessAttributes::InJob) == ProcessAttributes::InJob) {
-//		return { colors[Settings::InJob].Color, colors[Settings::InJob].TextColor };
-//	}
-//
-//	return { ImVec4(-1, 0, 0, 0), ImVec4() };
-//}
+std::pair<const ImVec4&, const ImVec4&> ProcessInfoEx::Colors() const {
+	using namespace ImGui;
+	auto& colors = Globals::Settings().ProcessColors;
+
+	if (colors[ProcMgrSettings::DeletedObjects].Enabled && IsTerminated())
+		return { colors[ProcMgrSettings::DeletedObjects].Color, colors[ProcMgrSettings::DeletedObjects].TextColor };
+
+	if (colors[ProcMgrSettings::NewObjects].Enabled && IsNew())
+		return { colors[ProcMgrSettings::NewObjects].Color, colors[ProcMgrSettings::NewObjects].TextColor };
+
+	auto attributes = Attributes();
+	if (colors[ProcMgrSettings::Manageed].Enabled && (attributes & ProcessAttributes::Managed) == ProcessAttributes::Managed) {
+		return { colors[ProcMgrSettings::Manageed].Color, colors[ProcMgrSettings::Manageed].TextColor };
+	}
+	if (colors[ProcMgrSettings::Immersive].Enabled && (attributes & ProcessAttributes::Immersive) == ProcessAttributes::Immersive) {
+		return { colors[ProcMgrSettings::Immersive].Color, colors[ProcMgrSettings::Immersive].TextColor };
+	}
+	if (colors[ProcMgrSettings::Secure].Enabled && (attributes & ProcessAttributes::Secure) == ProcessAttributes::Secure) {
+		return { colors[ProcMgrSettings::Secure].Color, colors[ProcMgrSettings::Secure].TextColor };
+	}
+	if (colors[ProcMgrSettings::Protected].Enabled && (attributes & ProcessAttributes::Protected) == ProcessAttributes::Protected) {
+		return { colors[ProcMgrSettings::Protected].Color, colors[ProcMgrSettings::Protected].TextColor };
+	}
+	if (colors[ProcMgrSettings::Services].Enabled && (attributes & ProcessAttributes::Service) == ProcessAttributes::Service) {
+		return { colors[ProcMgrSettings::Services].Color, colors[ProcMgrSettings::Services].TextColor };
+	}
+	if (colors[ProcMgrSettings::InJob].Enabled && (attributes & ProcessAttributes::InJob) == ProcessAttributes::InJob) {
+		return { colors[ProcMgrSettings::InJob].Color, colors[ProcMgrSettings::InJob].TextColor };
+	}
+	if (colors[ProcMgrSettings::Suspended].Enabled && IsSuspended()) {
+		return { colors[ProcMgrSettings::Suspended].Color, colors[ProcMgrSettings::Suspended].TextColor };
+	}
+
+	return { ImVec4(-1, 0, 0, 0), ImVec4() };
+}
 
 ProcessAttributes ProcessInfoEx::Attributes() const {
 	if (m_Attributes == ProcessAttributes::NotComputed) {
@@ -100,6 +99,19 @@ bool ProcessInfoEx::Update() {
 		return term;
 	}
 	return false;
+}
+
+bool ProcessInfoEx::IsSuspended() const {
+	return m_Suspended;
+}
+
+bool ProcessInfoEx::SuspendResume() {
+	Process p;
+	if (!p.Open(Id, ProcessAccessMask::SuspendResume))
+		return false;
+
+	m_Suspended = !m_Suspended;
+	return m_Suspended ? p.Suspend() : p.Resume();
 }
 
 void ProcessInfoEx::New(uint32_t ms) {

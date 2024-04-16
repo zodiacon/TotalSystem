@@ -2,7 +2,7 @@
 
 #include "ProcessInfoEx.h"
 #include <functional>
-#include <MessageBox.h>
+#include <SimpleMessageBox.h>
 
 //#include "ProcessProperties.h"
 
@@ -12,7 +12,8 @@ class ProcessesView {
 	enum class Column {
 		ProcessName, Pid, UserName, Session, CPU, ParentPid, CreateTime, Commit, BasePriority, Threads,
 		Handles, WorkingSet, ExePath, CPUTime, PeakThreads, VirtualSize, PeakWS, Attributes,
-		PagedPool, NonPagedPool,
+		PagedPool, NonPagedPool, KernelTime, UserTime,
+		PeakPagedPool, PeakNonPagedPool,
 	};
 
 	struct ColumnInfo {
@@ -36,7 +37,7 @@ private:
 
 	void BuildTable();
 	void BuildViewMenu();
-	void BuildProcessMenu();
+	void BuildProcessMenu(ProcessInfoEx& pi);
 	void BuildToolBar();
 
 	bool BuildPriorityClassMenu(WinLL::ProcessInfo& pi);

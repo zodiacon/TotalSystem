@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "FormatHelpers.h"
+#include <shellapi.h>
 
 std::string FormatHelpers::FormatDateTime(int64_t time) {
 	TIME_FIELDS tf;
@@ -24,4 +25,8 @@ std::wstring FormatHelpers::FormatNumber(int64_t number) {
 	WCHAR result[32];
 	int r = ::GetNumberFormatEx(LOCALE_NAME_USER_DEFAULT, 0, std::to_wstring(number).c_str(), &fmt, result, _countof(result));
 	return result;
+}
+
+ImVec4 FormatHelpers::ColorWithAlpha(const ImVec4& color, float alpha) {
+	return ImVec4(color.x, color.y, color.z, alpha);
 }

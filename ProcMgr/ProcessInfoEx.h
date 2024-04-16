@@ -30,6 +30,8 @@ public:
 	const std::wstring& UserName() const;
 
 	bool Update();
+	bool IsSuspended() const;
+	bool SuspendResume();
 	void New(uint32_t ms);
 	void Term(uint32_t ms);
 	const std::wstring& GetExecutablePath() const;
@@ -44,6 +46,6 @@ private:
 	mutable std::wstring m_ExecutablePath;
 	mutable ProcessAttributes m_Attributes = ProcessAttributes::NotComputed;
 	mutable std::wstring m_UserName;
-	bool m_IsNew : 1 = false, m_IsTerminated : 1 = false;
+	bool m_IsNew : 1 = false, m_IsTerminated : 1 = false, m_Suspended : 1 { false};
 };
 

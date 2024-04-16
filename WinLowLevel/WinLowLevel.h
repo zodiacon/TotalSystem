@@ -294,7 +294,6 @@ namespace WinLL {
 	};
 
 	enum class PriorityClass {
-		Error = 0,
 		Normal = NORMAL_PRIORITY_CLASS,
 		BelowNormal = BELOW_NORMAL_PRIORITY_CLASS,
 		AboveNormal = ABOVE_NORMAL_PRIORITY_CLASS,

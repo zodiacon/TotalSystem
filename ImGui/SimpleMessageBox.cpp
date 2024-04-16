@@ -1,4 +1,4 @@
-#include "MessageBox.h"
+#include "SimpleMessageBox.h"
 #include "imgui.h"
 
 using namespace ImGui;
