@@ -9,7 +9,7 @@
 using namespace std;
 using namespace WinLL;
 
-std::pair<const ImVec4&, const ImVec4&> ProcessInfoEx::Colors() const {
+std::pair<const ImVec4, const ImVec4> ProcessInfoEx::Colors() const {
 	using namespace ImGui;
 	auto& colors = Globals::Settings().ProcessColors;
 

@@ -25,7 +25,7 @@ public:
 		return m_IsTerminated;
 	}
 
-	std::pair<const ImVec4&, const ImVec4&> Colors() const;
+	std::pair<const ImVec4, const ImVec4> Colors() const;
 	ProcessAttributes Attributes() const;
 	const std::wstring& UserName() const;
 
