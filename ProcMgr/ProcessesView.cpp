@@ -8,7 +8,7 @@
 #include <StandardColors.h>
 #include <ImGuiExt.h>
 #include <Shlwapi.h>
-#include "FormatHelpers.h"
+#include "FormatHelper.h"
 #include "Resource.h"
 #include <ShellApi.h>
 #include "ProcMgrSettings.h"
@@ -69,6 +69,14 @@ bool ProcessesView::IsOpen() const {
 
 void ProcessesView::Open(bool open) {
 	m_Open = true;
+}
+
+void ProcessesView::ShowLowerPane(bool show) {
+	m_ShowLowerPane = show;
+}
+
+void ProcessesView::BuildThreadTable(std::shared_ptr<ProcessInfoEx>& p) {
+
 }
 
 void ProcessesView::DoSort(int col, bool asc) {
@@ -213,65 +221,69 @@ void ProcessesView::BuildTable() {
 			}
 		}, 0, 140.0f },
 		{ "Created", [](auto& p) {
-			Text(FormatHelpers::FormatDateTime(p->CreateTime).c_str());
+			Text(FormatHelper::FormatDateTime(p->CreateTime).c_str());
 			},ImGuiTableColumnFlags_NoResize },
 		{ "Private Bytes", [](auto& p) {
-			Text("%12ws K", FormatHelpers::FormatNumber(p->PrivatePageCount >> 10).c_str());
+			Text("%12ws K", FormatHelper::FormatNumber(p->PrivatePageCount >> 10).c_str());
 			}, },
 		{ "Pri", [](auto& p) {
 			Text("%5d", p->BasePriority);
 			}, },
 		{ "Threads", [](auto& p) {
-			Text("%6ws", FormatHelpers::FormatNumber(p->ThreadCount).c_str());
+			Text("%6ws", FormatHelper::FormatNumber(p->ThreadCount).c_str());
 			}, },
 		{ "Handles", [](auto& p) {
-			Text("%6ws", FormatHelpers::FormatNumber(p->HandleCount).c_str());
+			Text("%6ws", FormatHelper::FormatNumber(p->HandleCount).c_str());
 			}, },
 		{ "Working Set", [](auto& p) {
-			Text("%12ws K", FormatHelpers::FormatNumber(p->WorkingSetSize >> 10).c_str());
+			Text("%12ws K", FormatHelper::FormatNumber(p->WorkingSetSize >> 10).c_str());
 			}, },
 		{ "Executable Path", [](auto& p) {
 			Text("%ws", p->GetExecutablePath().c_str());
 			}, 0, 150.0f },
 		{ "CPU Time", [](auto& p) {
-			TextUnformatted(FormatHelpers::FormatTimeSpan(p->UserTime + p->KernelTime).c_str());
+			TextUnformatted(FormatHelper::FormatTimeSpan(p->UserTime + p->KernelTime).c_str());
 			}, },
 		{ "Peak Thr", [](auto& p) {
-			Text("%7ws", FormatHelpers::FormatNumber(p->PeakThreads).c_str());
+			Text("%7ws", FormatHelper::FormatNumber(p->PeakThreads).c_str());
 			}, },
 		{ "Virtual Size", [](auto& p) {
-			Text("%14ws K", FormatHelpers::FormatNumber(p->VirtualSize >> 10).c_str());
+			Text("%14ws K", FormatHelper::FormatNumber(p->VirtualSize >> 10).c_str());
 			}, },
 		{ "Peak WS", [](auto& p) {
-			Text("%12ws K", FormatHelpers::FormatNumber(p->PeakWorkingSetSize >> 10).c_str());
+			Text("%12ws K", FormatHelper::FormatNumber(p->PeakWorkingSetSize >> 10).c_str());
 			}, },
 		{ "Attributes", [](auto& p) {
 			TextUnformatted(ProcessAttributesToString(p->Attributes()).c_str());
 			}, },
 		{ "Paged Pool", [](auto& p) {
-			Text("%9ws K", FormatHelpers::FormatNumber(p->PagedPoolUsage >> 10).c_str());
+			Text("%9ws K", FormatHelper::FormatNumber(p->PagedPoolUsage >> 10).c_str());
 			}, },
 		{ "NP Pool", [](auto& p) {
-			Text("%9ws K", FormatHelpers::FormatNumber(p->NonPagedPoolUsage >> 10).c_str());
+			Text("%9ws K", FormatHelper::FormatNumber(p->NonPagedPoolUsage >> 10).c_str());
 			}, },
 		{ "kernel Time", [](auto& p) {
-			TextUnformatted(FormatHelpers::FormatTimeSpan(p->KernelTime).c_str());
+			TextUnformatted(FormatHelper::FormatTimeSpan(p->KernelTime).c_str());
 			}, },
 		{ "User Time", [](auto& p) {
-			TextUnformatted(FormatHelpers::FormatTimeSpan(p->UserTime).c_str());
+			TextUnformatted(FormatHelper::FormatTimeSpan(p->UserTime).c_str());
 			}, },
 		{ "Peak Paged", [](auto& p) {
-			Text("%9ws K", FormatHelpers::FormatNumber(p->PeakPagedPoolUsage >> 10).c_str());
+			Text("%9ws K", FormatHelper::FormatNumber(p->PeakPagedPoolUsage >> 10).c_str());
 			}, },
 		{ "Peak Non-Paged", [](auto& p) {
-			Text("%9ws K", FormatHelpers::FormatNumber(p->PeakNonPagedPoolUsage >> 10).c_str());
+			Text("%9ws K", FormatHelper::FormatNumber(p->PeakNonPagedPoolUsage >> 10).c_str());
 			}, },
 	};
 
+	float y = 0;
+	if (m_ShowLowerPane) {
+		y = GetWindowSize().y / 2;
+		BeginChild("upper", ImVec2(0, y), ImGuiChildFlags_ResizeY);
+	}
 	if (BeginTable("processes", _countof(columns), ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | 0 * ImGuiTableFlags_NoSavedSettings |
-		ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit)) {
+		ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersOuterV)) {
 		TableSetupScrollFreeze(2, 1);
-
 
 		int i = 0;
 		for (auto& ci : columns)
@@ -298,7 +310,10 @@ void ProcessesView::BuildTable() {
 			if (empty) {
 				m_Processes.reserve(1024);
 			}
-			pm.Update();
+			if (m_SelectedProcess && m_ShowLowerPane)
+				pm.UpdateWithThreads(0);
+			else
+				pm.Update();
 			if (empty) {
 				m_Processes = pm.GetProcesses();
 			}
@@ -321,27 +336,36 @@ void ProcessesView::BuildTable() {
 
 		auto count = static_cast<int>(m_Processes.size());
 		for (int i = 0; i < count; i++) {
-			auto& p = *m_Processes[i];
-			p.Filtered = false;
-			if (p.Update()) {
+			auto& p = m_Processes[i];
+			if (p->Update()) {
 				// process terminated
+				if (p == m_SelectedProcess)
+					m_SelectedProcess.reset();
 				m_Processes.erase(m_Processes.begin() + i);
 				i--;
 				count--;
 				continue;
 			}
+			p->Filtered = false;
 			if (filter[0]) {
-				std::wstring name(p.GetImageName());
+				p->Filtered = true;
+				std::wstring name(p->GetImageName());
 				if (!name.empty()) {
 					_wcslwr_s(name.data(), name.length() + 1);
 					wstring wfilter(filter.begin(), filter.end());
-					if (name.find(wfilter.c_str()) == wstring::npos) {
-						p.Filtered = true;
-						continue;
+					if (name.find(wfilter) != wstring::npos) {
+						p->Filtered = false;
 					}
 				}
+				if (p->Filtered && to_string(p->Id).find(filter) != string::npos) {
+					p->Filtered = false;
+				}
+				if (p->Filtered && format("{:x}", p->Id).find(filter) != string::npos) {
+					p->Filtered = false;
+				}
 			}
-			indices.push_back(i);
+			if (!p->Filtered)
+				indices.push_back(i);
 		}
 
 		auto specs = TableGetSortSpecs();
@@ -367,7 +391,7 @@ void ProcessesView::BuildTable() {
 
 				auto popCount = 0;
 				auto colors = p->Colors();
-				if(colors.first.x >= 0) {
+				if (colors.first.x >= 0) {
 					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(colors.first));
 					PushStyleColor(ImGuiCol_Text, colors.second);
 					popCount = 1;
@@ -376,6 +400,8 @@ void ProcessesView::BuildTable() {
 				for (int i = 0; i < _countof(columns); i++) {
 					if (TableSetColumnIndex(i)) {
 						columns[i].Callback(p);
+						if (i == 0 && IsItemFocused())
+							m_SelectedProcess = p;
 					}
 				}
 
@@ -390,10 +416,20 @@ void ProcessesView::BuildTable() {
 		}
 
 	}
+	if (m_ShowLowerPane) {
+		EndChild();
+		BuildLowerPane();
+	}
 }
 
 void ProcessesView::BuildViewMenu() {
+	if (IsKeyPressed(ImGuiKey_L) && GetIO().KeyCtrl) {
+		m_ShowLowerPane = !m_ShowLowerPane;
+	}
 	if (BeginMenu("View")) {
+		if (MenuItem("Show Lower Pane", "Ctrl+L", m_ShowLowerPane)) {
+			m_ShowLowerPane = !m_ShowLowerPane;
+		}
 		if (BeginMenu("Update Interval")) {
 			if (MenuItem("500 ms", nullptr, m_UpdateInterval == 500))
 				m_UpdateInterval = 500;
@@ -443,20 +479,19 @@ void ProcessesView::BuildToolBar() {
 		TogglePause();
 	}
 	SameLine();
-	SetNextItemWidth(100);
+	SetNextItemWidth(120);
 	if (GetIO().KeyCtrl && IsKeyPressed(ImGuiKey_F))
 		SetKeyboardFocusHere();
 
-	InputText("Filter", m_FilterText, _countof(m_FilterText), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll);
+	InputTextWithHint("##Filter", "Filter (Ctrl+F)", m_FilterText, _countof(m_FilterText), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll);
 
 	SameLine(0, 20);
 	PushStyleColor(ImGuiCol_Button, StandardColors::DarkRed);
-	PushStyleColor(ImGuiCol_Text, StandardColors::White);
 
 	if (ButtonEnabled("Kill", m_SelectedProcess != nullptr, ImVec2(40, 0))) {
 		TryKillProcess(*m_SelectedProcess);
 	}
-	PopStyleColor(2);
+	PopStyleColor(1);
 	SameLine();
 	static const struct {
 		const char* Text;
@@ -515,6 +550,30 @@ void ProcessesView::BuildToolBar() {
 		}
 
 		EndPopup();
+	}
+}
+
+void ProcessesView::BuildLowerPane() {
+	if (m_ShowLowerPane) {
+		if (BeginChild("lowerpane", ImVec2(0, 0), ImGuiChildFlags_None, ImGuiWindowFlags_NoTitleBar)) {
+			if (BeginTabBar("lowertabs", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_Reorderable)) {
+				if (m_SelectedProcess) {
+					SameLine(200);
+					Text("PID: %u (%ws)", m_SelectedProcess->Id, m_SelectedProcess->GetImageName().c_str()); SameLine();
+				}
+				if (BeginTabItem("Threads", nullptr, ImGuiTabItemFlags_None)) {
+					if (m_SelectedProcess) {
+						m_ThreadsView.BuildTable(m_SelectedProcess);
+					}
+					EndTabItem();
+				}
+				if (BeginTabItem("DLLs", nullptr, ImGuiTabItemFlags_None)) {
+					EndTabItem();
+				}
+				EndTabBar();
+			}
+		}
+		EndChild();
 	}
 }
 

@@ -3,6 +3,7 @@
 #include "ProcessInfoEx.h"
 #include <functional>
 #include <SimpleMessageBox.h>
+#include "ThreadsView.h"
 
 //#include "ProcessProperties.h"
 
@@ -28,6 +29,8 @@ public:
 	void BuildWindow();
 	bool IsOpen() const;
 	void Open(bool open = true);
+	void ShowLowerPane(bool show);
+	void BuildThreadTable(std::shared_ptr<ProcessInfoEx>& p);
 
 private:
 	void DoSort(int col, bool asc);
@@ -39,6 +42,7 @@ private:
 	void BuildViewMenu();
 	void BuildProcessMenu(ProcessInfoEx& pi);
 	void BuildToolBar();
+	void BuildLowerPane();
 
 	bool BuildPriorityClassMenu(WinLL::ProcessInfo& pi);
 	bool GotoFileLocation(WinLL::ProcessInfo const& pi);
@@ -51,6 +55,7 @@ private:
 	static std::string ProcessAttributesToString(ProcessAttributes attributes);
 
 private:
+	ThreadsView m_ThreadsView;
 	DWORD64 m_Tick = 0;
 	char m_FilterText[24]{};
 	std::vector<std::shared_ptr<ProcessInfoEx>> m_Processes;
@@ -59,6 +64,6 @@ private:
 	int m_UpdateInterval{ 1000 }, m_OldInterval{ 0 };
 	std::unordered_map<UINT, D3D11Image> m_Icons;
 	SimpleMessageBox m_KillDlg;
-	bool m_Paused : 1 { false };
+	bool m_Paused : 1 { false }, m_ShowLowerPane: 1{ false };
 	bool m_Open { true };
 };

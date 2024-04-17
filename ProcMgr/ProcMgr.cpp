@@ -82,6 +82,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.2f, 0.2f, 0.2f, 1.00f);
 
+    ThreadsView::Init();
     MainWindow mainWindow(hwnd);
 
     // Main loop

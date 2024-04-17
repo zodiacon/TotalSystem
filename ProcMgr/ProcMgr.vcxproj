@@ -223,7 +223,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="FormatHelpers.h" />
+    <ClInclude Include="FormatHelper.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="pch.h" />
@@ -235,9 +235,11 @@
     <ClInclude Include="ProcMgrSettings.h" />
     <ClInclude Include="SortHelper.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="ThreadInfoEx.h" />
+    <ClInclude Include="ThreadsView.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="FormatHelpers.cpp" />
+    <ClCompile Include="FormatHelper.cpp" />
     <ClCompile Include="Globals.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="pch.cpp">
@@ -254,11 +256,19 @@
     <ClCompile Include="ProcMgr.cpp" />
     <ClCompile Include="ProcMgrSettings.cpp" />
     <ClCompile Include="SortHelper.cpp" />
+    <ClCompile Include="ThreadInfoEx.cpp" />
+    <ClCompile Include="ThreadsView.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ProcMgr.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Icons\Initialized.ico" />
+    <Image Include="Icons\Ready.ico" />
+    <Image Include="Icons\Running.ico" />
+    <Image Include="Icons\Standby.ico" />
+    <Image Include="Icons\Terminated.ico" />
+    <Image Include="Icons\transition.ico" />
     <Image Include="Icons\Waiting.ico" />
     <Image Include="ProcMgr.ico" />
   </ItemGroup>

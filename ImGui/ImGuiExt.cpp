@@ -3,7 +3,7 @@
 namespace ImGui {
 	bool ButtonEnabled(const char* label, bool enabled, const ImVec2& size) {
 		if (!enabled) {
-			PushStyleColor(ImGuiCol_Text, GetStyle().Colors[ImGuiCol_TextDisabled]);
+			PushStyleColor(ImGuiCol_Button, GetStyle().Colors[ImGuiCol_TextDisabled]);
 			PushStyleColor(ImGuiCol_ButtonHovered, GetStyle().Colors[ImGuiCol_Button]);
 		}
 		auto clicked = Button(label, size);

@@ -27,17 +27,20 @@ void MainWindow::BuildWindow() {
 			if (MenuItem("Processes", "F4", m_ProcessesView.IsOpen(), !m_ProcessesView.IsOpen())) {
 				m_ProcessesView.Open();
 			}
-			if (MenuItem("Split Process View")) {
-			}
 			ImGui::EndMenu();
 		}
 		if (BeginMenu("Options")) {
+			if (MenuItem("Always on Top", nullptr, IsAlwaysOnTop())) {
+				ToggleAlwaysOnTop();
+			}
 			if (BeginMenu("Theme")) {
-				if (MenuItem("Dark")) {
+				if (MenuItem("Dark", nullptr, m_Dark)) {
 					StyleColorsDark();
+					m_Dark = true;
 				}
-				if (MenuItem("Light")) {
+				if (MenuItem("Light", nullptr, !m_Dark)) {
 					ImGui::StyleColorsLight();
+					m_Dark = false;
 				}
 				Separator();
 				if (MenuItem("As System")) {
@@ -53,5 +56,17 @@ void MainWindow::BuildWindow() {
 		}
 		EndMainMenuBar();
 	}
+
 	m_ProcessesView.BuildWindow();
 }
+
+bool MainWindow::IsAlwaysOnTop() const {
+	return (::GetWindowLongPtr(m_hWnd, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0;
+}
+
+bool MainWindow::ToggleAlwaysOnTop() {
+	auto onTop = !IsAlwaysOnTop();
+	::SetWindowPos(m_hWnd, onTop ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+	return onTop;
+}
+

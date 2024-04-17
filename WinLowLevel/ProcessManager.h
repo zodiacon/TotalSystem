@@ -56,6 +56,8 @@ namespace WinLL {
 				s_totalProcessors = ::GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
 				s_isElevated = SecurityHelper::IsRunningElevated();
 			}
+			m_BufferSize = 1 << 22;
+			m_Buffer.reset((BYTE*)::VirtualAlloc(nullptr, m_BufferSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 		}
 
 		void Update(bool includeThreads, uint32_t pid) {
@@ -63,8 +65,8 @@ namespace WinLL {
 			processes.reserve(m_processes.empty() ? 512 : m_processes.size() + 10);
 			ProcessMap processesByKey;
 			processesByKey.reserve(m_processes.size() == 0 ? 512 : m_processes.size() + 10);
-			m_processesById.clear();
-			m_processesById.reserve(m_processes.capacity());
+			m_ProcessesById.clear();
+			m_ProcessesById.reserve(m_processes.capacity());
 
 			m_newProcesses.clear();
 
@@ -78,11 +80,6 @@ namespace WinLL {
 				m_threadsById.clear();
 			}
 
-			int size = 1 << 22;
-			wil::unique_virtualalloc_ptr<BYTE> buffer((BYTE*)::VirtualAlloc(nullptr, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
-			if (!buffer)
-				return;
-
 			ULONG len;
 
 			// get timing info as close as possible to the API call
@@ -94,21 +91,21 @@ namespace WinLL {
 			NTSTATUS status;
 			bool extended;
 			if (s_isElevated && IsWindows8OrGreater()) {
-				status = NtQuerySystemInformation(SystemFullProcessInformation, buffer.get(), size, &len);
+				status = NtQuerySystemInformation(SystemFullProcessInformation, m_Buffer.get(), m_BufferSize, &len);
 				extended = true;
 			}
 			else {
 				extended = false;
-				status = NtQuerySystemInformation(SystemExtendedProcessInformation, buffer.get(), size, &len);
+				status = NtQuerySystemInformation(SystemExtendedProcessInformation, m_Buffer.get(), m_BufferSize, &len);
 			}
 			if (NT_SUCCESS(status)) {
-				auto p = reinterpret_cast<SYSTEM_PROCESS_INFORMATION*>(buffer.get());
+				auto p = reinterpret_cast<SYSTEM_PROCESS_INFORMATION*>(m_Buffer.get());
 
 				for (;;) {
 					if (pid == 0 || pid == HandleToULong(p->UniqueProcessId)) {
 						ProcessOrThreadKey key = { p->CreateTime.QuadPart, HandleToULong(p->UniqueProcessId) };
 						shared_ptr<TProcessInfo> pi;
-						if (auto it = m_processesByKey.find(key); it == m_processesByKey.end()) {
+						if (auto it = m_ProcessesByKey.find(key); it == m_ProcessesByKey.end()) {
 							// new process
 							pi = BuildProcessInfo(p, includeThreads, threadsByKey, delta, pi, extended);
 							m_newProcesses.push_back(pi);
@@ -123,14 +120,14 @@ namespace WinLL {
 							pi->KernelCPU = kcpu;
 
 							// remove from known processes
-							m_processesByKey.erase(key);
+							m_ProcessesByKey.erase(key);
 						}
 						processes.push_back(pi);
 						//
 						// add process to maps
 						//
 						processesByKey.insert({ key, pi });
-						m_processesById.insert({ pi->Id, pi });
+						m_ProcessesById.insert({ pi->Id, pi });
 					}
 					if (p->NextEntryOffset == 0)
 						break;
@@ -143,11 +140,11 @@ namespace WinLL {
 			// remaining processes are terminated ones
 			//
 			m_terminatedProcesses.clear();
-			m_terminatedProcesses.reserve(m_processesByKey.size());
-			for (const auto& [key, pi] : m_processesByKey)
+			m_terminatedProcesses.reserve(m_ProcessesByKey.size());
+			for (const auto& [key, pi] : m_ProcessesByKey)
 				m_terminatedProcesses.push_back(pi);
 
-			m_processesByKey = move(processesByKey);
+			m_ProcessesByKey = move(processesByKey);
 
 			if (includeThreads) {
 				m_terminatedThreads.clear();
@@ -170,13 +167,13 @@ namespace WinLL {
 		}
 
 		[[nodiscard]] shared_ptr<TProcessInfo> GetProcessById(uint32_t pid) const {
-			auto it = m_processesById.find(pid);
-			return it == m_processesById.end() ? nullptr : it->second;
+			auto it = m_ProcessesById.find(pid);
+			return it == m_ProcessesById.end() ? nullptr : it->second;
 		}
 
 		[[nodiscard]] shared_ptr<TProcessInfo> GetProcessByKey(const ProcessOrThreadKey& key) const {
-			auto it = m_processesByKey.find(key);
-			return it == m_processesByKey.end() ? nullptr : it->second;
+			auto it = m_ProcessesByKey.find(key);
+			return it == m_ProcessesByKey.end() ? nullptr : it->second;
 		}
 
 		vector<shared_ptr<TThreadInfo>> const& GetThreads() const {
@@ -213,10 +210,10 @@ namespace WinLL {
 			auto count = Update(false, 0);
 			tree.reserve(count);
 
-			auto map = m_processesById;
+			auto map = m_ProcessesById;
 			for (auto& p : m_processes) {
-				auto it = m_processesById.find(p->ParentId);
-				if (p->ParentId == 0 || it == m_processesById.end() || (it != m_processesById.end() && it->second->CreateTime > p->CreateTime)) {
+				auto it = m_ProcessesById.find(p->ParentId);
+				if (p->ParentId == 0 || it == m_ProcessesById.end() || (it != m_ProcessesById.end() && it->second->CreateTime > p->CreateTime)) {
 					// root
 					DbgPrint((PSTR)"Root: %ws (%u) (Parent: %u)\n", p->GetImageName().c_str(), p->Id, p->ParentId);
 					tree.push_back(make_pair(p, 0));
@@ -225,7 +222,7 @@ namespace WinLL {
 						continue;
 					auto children = FindChildren(map, p.get(), 1);
 					for (auto& child : children)
-						tree.push_back(make_pair(m_processesById[child.first], child.second));
+						tree.push_back(make_pair(m_ProcessesById[child.first], child.second));
 				}
 			}
 			return tree;
@@ -273,7 +270,7 @@ namespace WinLL {
 					}
 				}
 				else {
-					pi->m_ProcessName = name;
+					pi->m_ProcessName = move(name);
 					pi->JobObjectId = 0;
 				}
 			}
@@ -305,10 +302,12 @@ namespace WinLL {
 			pi->PeakPagedPoolUsage = info->QuotaPeakPagedPoolUsage;
 			pi->PrivatePageCount = info->PrivatePageCount;
 
-			if (includeThreads && pi->Id > 0) {
+			if (includeThreads) {
 				auto threadCount = info->NumberOfThreads;
 				for (ULONG i = 0; i < threadCount; i++) {
-					auto tinfo = (SYSTEM_EXTENDED_THREAD_INFORMATION*)info->Threads + i;
+					auto tinfo = ((SYSTEM_EXTENDED_THREAD_INFORMATION*)info->Threads) + i;
+					if (pi->Id == 0)
+						tinfo->ThreadInfo.ClientId.UniqueThread = ULongToHandle(i);
 					const auto& baseInfo = tinfo->ThreadInfo;
 					ProcessOrThreadKey key = { baseInfo.CreateTime.QuadPart, HandleToULong(baseInfo.ClientId.UniqueThread) };
 					shared_ptr<TThreadInfo> thread;
@@ -332,6 +331,7 @@ namespace WinLL {
 						thread->Win32StartAddress = tinfo->Win32StartAddress;
 						thread->TebBase = tinfo->TebBase;
 						thread->Key = key;
+						pi->AddThread(thread);
 					}
 					thread->KernelTime = baseInfo.KernelTime.QuadPart;
 					thread->UserTime = baseInfo.UserTime.QuadPart;
@@ -341,8 +341,6 @@ namespace WinLL {
 					thread->WaitReason = (WaitReason)baseInfo.WaitReason;
 					thread->WaitTime = baseInfo.WaitTime;
 					thread->ContextSwitches = baseInfo.ContextSwitches;
-
-					pi->AddThread(thread);
 
 					m_threads.push_back(thread);
 					if (newobject) {
@@ -363,11 +361,11 @@ namespace WinLL {
 
 		// processes
 
-		unordered_map<uint32_t, shared_ptr<TProcessInfo>> m_processesById;
+		unordered_map<uint32_t, shared_ptr<TProcessInfo>> m_ProcessesById;
 		vector<shared_ptr<TProcessInfo>> m_processes;
 		vector<shared_ptr<TProcessInfo>> m_terminatedProcesses;
 		vector<shared_ptr<TProcessInfo>> m_newProcesses;
-		ProcessMap m_processesByKey;
+		ProcessMap m_ProcessesByKey;
 
 		// threads
 
@@ -381,5 +379,7 @@ namespace WinLL {
 		inline static uint32_t s_totalProcessors;
 		inline static bool s_isElevated;
 
+		wil::unique_virtualalloc_ptr<BYTE> m_Buffer;
+		ULONG m_BufferSize;
 	};
 }
