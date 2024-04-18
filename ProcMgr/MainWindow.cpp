@@ -9,6 +9,8 @@ MainWindow::MainWindow(HWND hWnd) : m_hWnd(hWnd) {
 }
 
 void MainWindow::BuildWindow() {
+	DockSpaceOverViewport(GetMainViewport());
+
 	if (BeginMainMenuBar()) {
 		PushFont(Globals::VarFont());
 		if(BeginMenu("File")) {
@@ -61,6 +63,7 @@ void MainWindow::BuildWindow() {
 	}
 
 	m_ProcessesView.BuildWindow();
+
 }
 
 bool MainWindow::IsAlwaysOnTop() const {
