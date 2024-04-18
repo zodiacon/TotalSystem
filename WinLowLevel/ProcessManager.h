@@ -52,9 +52,9 @@ namespace WinLL {
 		}
 
 		ProcessManager() {
-			if (s_totalProcessors == 0) {
-				s_totalProcessors = ::GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
-				s_isElevated = SecurityHelper::IsRunningElevated();
+			if (s_TotalProcessors == 0) {
+				s_TotalProcessors = ::GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+				s_IsElevated = SecurityHelper::IsRunningElevated();
 			}
 			m_BufferSize = 1 << 22;
 			m_Buffer.reset((BYTE*)::VirtualAlloc(nullptr, m_BufferSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
@@ -90,7 +90,7 @@ namespace WinLL {
 
 			NTSTATUS status;
 			bool extended;
-			if (s_isElevated && IsWindows8OrGreater()) {
+			if (s_IsElevated && IsWindows8OrGreater()) {
 				status = NtQuerySystemInformation(SystemFullProcessInformation, m_Buffer.get(), m_BufferSize, &len);
 				extended = true;
 			}
@@ -113,8 +113,8 @@ namespace WinLL {
 						}
 						else {
 							const auto& pi2 = it->second;
-							auto kcpu = delta == 0 ? 0 : (int32_t)((p->KernelTime.QuadPart - pi2->KernelTime) * 1000000 / delta / s_totalProcessors);
-							auto cpu = delta == 0 ? 0 : (int32_t)((p->KernelTime.QuadPart + p->UserTime.QuadPart - pi2->UserTime - pi2->KernelTime) * 1000000 / delta / s_totalProcessors);
+							auto kcpu = delta == 0 ? 0 : (int32_t)((p->KernelTime.QuadPart - pi2->KernelTime) * 1000000 / delta / s_TotalProcessors);
+							auto cpu = delta == 0 ? 0 : (int32_t)((p->KernelTime.QuadPart + p->UserTime.QuadPart - pi2->UserTime - pi2->KernelTime) * 1000000 / delta / s_TotalProcessors);
 							pi = BuildProcessInfo(p, includeThreads, threadsByKey, delta, pi2, extended);
 							pi->CPU = cpu;
 							pi->KernelCPU = kcpu;
@@ -247,6 +247,7 @@ namespace WinLL {
 
 		shared_ptr<TProcessInfo> BuildProcessInfo(const SYSTEM_PROCESS_INFORMATION* info, bool includeThreads,
 			ThreadMap& threadsByKey, int64_t delta, shared_ptr<TProcessInfo> pi, bool extended) {
+			SYSTEM_PROCESS_INFORMATION_EXTENSION* ext = nullptr;
 			if (pi == nullptr) {
 				pi = make_shared<TProcessInfo>();
 				pi->Id = HandleToULong(info->UniqueProcessId);
@@ -257,12 +258,12 @@ namespace WinLL {
 				pi->ParentId = HandleToULong(info->InheritedFromUniqueProcessId);
 				pi->ClearThreads();
 				auto name = info->UniqueProcessId == 0 ? L"(Idle)" : wstring(info->ImageName.Buffer, info->ImageName.Length / sizeof(WCHAR));
-				if (extended && info->UniqueProcessId) {
-					auto ext = (SYSTEM_PROCESS_INFORMATION_EXTENSION*)((BYTE*)info +
+				if(extended) {
+					ext = (SYSTEM_PROCESS_INFORMATION_EXTENSION*)((BYTE*)info +
 						FIELD_OFFSET(SYSTEM_PROCESS_INFORMATION, Threads) + sizeof(SYSTEM_EXTENDED_THREAD_INFORMATION) * info->NumberOfThreads);
 					pi->JobObjectId = ext->JobObjectId;
 					auto index = name.rfind(L'\\');
-					::memcpy(pi->UserSid, (BYTE*)info + ext->UserSidOffset, sizeof(pi->UserSid));
+					::memcpy(pi->UserSid, (BYTE*)ext + ext->UserSidOffset, sizeof(pi->UserSid));
 					pi->m_ProcessName = index == wstring::npos ? name : name.substr(index + 1);
 					pi->m_NativeImagePath = name;
 					if (ext->PackageFullNameOffset > 0) {
@@ -274,7 +275,6 @@ namespace WinLL {
 					pi->JobObjectId = 0;
 				}
 			}
-
 			pi->ThreadCount = info->NumberOfThreads;
 			pi->BasePriority = info->BasePriority;
 			pi->UserTime = info->UserTime.QuadPart;
@@ -301,7 +301,10 @@ namespace WinLL {
 			pi->PeakNonPagedPoolUsage = info->QuotaPeakNonPagedPoolUsage;
 			pi->PeakPagedPoolUsage = info->QuotaPeakPagedPoolUsage;
 			pi->PrivatePageCount = info->PrivatePageCount;
-
+			if (ext) {
+				pi->DiskCounters = ext->DiskCounters;
+				pi->ContextSwitches = ext->ContextSwitches;
+			}
 			if (includeThreads) {
 				auto threadCount = info->NumberOfThreads;
 				for (ULONG i = 0; i < threadCount; i++) {
@@ -313,7 +316,7 @@ namespace WinLL {
 					shared_ptr<TThreadInfo> thread;
 					shared_ptr<TThreadInfo> ti2;
 					bool newobject = true;
-					int64_t cpuTime;
+					int64_t cpuTime = 0;
 					if (auto it = m_threadsByKey.find(key); it != m_threadsByKey.end()) {
 						thread = it->second;
 						cpuTime = thread->UserTime + thread->KernelTime;
@@ -349,7 +352,7 @@ namespace WinLL {
 						m_newThreads.push_back(thread);
 					}
 					else {
-						thread->CPU = delta == 0 ? 0 : (int32_t)((thread->KernelTime + thread->UserTime - cpuTime) * 1000000LL / delta / 1/*_totalProcessors*/);
+						thread->CPU = delta == 0 ? 0 : (int32_t)((thread->KernelTime + thread->UserTime - cpuTime) * 1000000LL / delta / s_TotalProcessors);
 						m_threadsByKey.erase(thread->Key);
 					}
 					threadsByKey.insert(make_pair(thread->Key, thread));
@@ -376,8 +379,8 @@ namespace WinLL {
 		ThreadMap m_threadsByKey;
 
 		LARGE_INTEGER m_prevTicks{};
-		inline static uint32_t s_totalProcessors;
-		inline static bool s_isElevated;
+		inline static uint32_t s_TotalProcessors;
+		inline static bool s_IsElevated;
 
 		wil::unique_virtualalloc_ptr<BYTE> m_Buffer;
 		ULONG m_BufferSize;

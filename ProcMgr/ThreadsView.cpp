@@ -3,6 +3,7 @@
 #include "ProcessInfoEx.h"
 #include "ThreadInfoEx.h"
 #include "resource.h"
+#include "Globals.h"
 
 using namespace ImGui;
 using namespace std;
@@ -25,7 +26,8 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
 				Text("%7u (0x%05X)", t.Id, t.Id);
 			}, 0 },
 		{ "Wait Reason", [](auto& t) {
-			TextUnformatted(WaitReasonToString(t.WaitReason));
+			if(t.ThreadState == ThreadState::Waiting)
+				TextUnformatted(WaitReasonToString(t.WaitReason));
 			}, 0, 120 },
 		{ "CPU %", [&](auto& t) {
 			if (t.CPU > 0 && t.ThreadState != ThreadState::Terminated) {
@@ -47,7 +49,13 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
 					TextUnformatted(str.c_str());
 				}
 			}
-		} },
+		}, 0, 70 },
+		{ "Base Pri", [&](auto& t) {
+			Text("%4u", t.BasePriority);
+			}, ImGuiTableColumnFlags_NoResize, 65, },
+		{ "Dyn Pri", [&](auto& t) {
+			Text("%4u", t.Priority);
+			}, ImGuiTableColumnFlags_NoResize, 65 },
 
 	};
 
@@ -56,14 +64,16 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
 
 		TableSetupScrollFreeze(2, 1);
 
-		int i = 0;
+		int c = 0;
+		PushFont(Globals::VarFont());
 		auto header = p->Id == 0 ? "Processor" : "TID";
 		for (auto& ci : columns) {
-			TableSetupColumn(i == 1 ? header : ci.Header, ci.Flags, ci.Width, i);
-			i++;
+			TableSetupColumn(c == 1 ? header : ci.Header, ci.Flags, ci.Width, c);
+			c++;
 		}
 
 		TableHeadersRow();
+		PopFont();
 
 		auto specs = TableGetSortSpecs();
 		if (specs && specs->SpecsDirty) {

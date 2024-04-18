@@ -31,6 +31,8 @@ private:
 		float Width{ 0.0f };
 	};
 
+	void DoSort(int column, bool asc);
+
 	inline static D3D11Image s_StateIcons[10];
 };
 

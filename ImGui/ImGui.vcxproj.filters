@@ -54,6 +54,9 @@
     <ClInclude Include="d3d11Image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="misc\freetype\imgui_freetype.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui.cpp">
@@ -84,6 +87,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="d3d11Image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="misc\fonts\binary_to_compressed_c.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="misc\freetype\imgui_freetype.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

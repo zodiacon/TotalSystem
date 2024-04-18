@@ -60,6 +60,9 @@ namespace WinLL {
 
 		ProcessOrThreadKey Key;
 
+		PROCESS_DISK_COUNTERS DiskCounters;
+		uint64_t ContextSwitches;
+
 		void AddThread(std::shared_ptr<ThreadInfo> thread);
 		void ClearThreads();
 

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "MainWindow.h"
 #include "SecurityHelper.h"
+#include "Globals.h"
 
 using namespace ImGui;
 
@@ -9,6 +10,7 @@ MainWindow::MainWindow(HWND hWnd) : m_hWnd(hWnd) {
 
 void MainWindow::BuildWindow() {
 	if (BeginMainMenuBar()) {
+		PushFont(Globals::VarFont());
 		if(BeginMenu("File")) {
 			if (!WinLL::SecurityHelper::IsRunningElevated() && MenuItem("Run As Administrator...")) {
 				if(WinLL::SecurityHelper::RunElevated()) {
@@ -54,6 +56,7 @@ void MainWindow::BuildWindow() {
 			}
 			ImGui::EndMenu();
 		}
+		PopFont();
 		EndMainMenuBar();
 	}
 

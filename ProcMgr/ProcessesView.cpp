@@ -68,15 +68,11 @@ bool ProcessesView::IsOpen() const {
 }
 
 void ProcessesView::Open(bool open) {
-	m_Open = true;
+	m_Open = open;
 }
 
 void ProcessesView::ShowLowerPane(bool show) {
 	m_ShowLowerPane = show;
-}
-
-void ProcessesView::BuildThreadTable(std::shared_ptr<ProcessInfoEx>& p) {
-
 }
 
 void ProcessesView::DoSort(int col, bool asc) {
@@ -196,7 +192,7 @@ void ProcessesView::BuildTable() {
 				ImVec4 color;
 				auto customColors = p->Id && value > 1.0f;
 				if (customColors) {
-					color = ImColor::HSV(.6f, value / 100 + .3f, .3f).Value;
+					color = ImColor::HSV(.7f, value / 100 + .3f, .3f).Value;
 				}
 				else {
 					color = orgBackColor;
@@ -209,7 +205,7 @@ void ProcessesView::BuildTable() {
 					TextUnformatted(str.c_str());
 				}
 			}
-		} },
+		}, 0, 70 },
 		{ "Parent", [&](auto p) {
 			if (p->ParentId > 0) {
 				Text("%6d", p->ParentId);
@@ -285,11 +281,12 @@ void ProcessesView::BuildTable() {
 		ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersOuterV)) {
 		TableSetupScrollFreeze(2, 1);
 
-		int i = 0;
+		int c = 0;
+		PushFont(Globals::VarFont());
 		for (auto& ci : columns)
-			TableSetupColumn(ci.Header, ci.Flags, ci.Width, i++);
-
+			TableSetupColumn(ci.Header, ci.Flags, ci.Width, c++);
 		TableHeadersRow();
+		PopFont();
 
 		if (IsKeyPressed(ImGuiKey_Space)) {
 			TogglePause();
@@ -397,10 +394,10 @@ void ProcessesView::BuildTable() {
 					popCount = 1;
 				}
 
-				for (int i = 0; i < _countof(columns); i++) {
-					if (TableSetColumnIndex(i)) {
-						columns[i].Callback(p);
-						if (i == 0 && IsItemFocused())
+				for (c = 0; c < _countof(columns); c++) {
+					if (TableSetColumnIndex(c)) {
+						columns[c].Callback(p);
+						if (c == 0 && IsItemFocused())
 							m_SelectedProcess = p;
 					}
 				}
@@ -426,6 +423,7 @@ void ProcessesView::BuildViewMenu() {
 	if (IsKeyPressed(ImGuiKey_L) && GetIO().KeyCtrl) {
 		m_ShowLowerPane = !m_ShowLowerPane;
 	}
+	PushFont(Globals::VarFont());
 	if (BeginMenu("View")) {
 		if (MenuItem("Show Lower Pane", "Ctrl+L", m_ShowLowerPane)) {
 			m_ShowLowerPane = !m_ShowLowerPane;
@@ -450,6 +448,7 @@ void ProcessesView::BuildViewMenu() {
 		}
 		ImGui::EndMenu();
 	}
+	PopFont();
 }
 
 void ProcessesView::BuildProcessMenu(ProcessInfoEx& pi) {
@@ -475,6 +474,7 @@ void ProcessesView::BuildProcessMenu(ProcessInfoEx& pi) {
 }
 
 void ProcessesView::BuildToolBar() {
+	PushFont(Globals::VarFont());
 	if (ImageButton("Pause", m_Icons[IDI_PAUSE].Get(), ImVec2(16, 16))) {
 		TogglePause();
 	}
@@ -503,7 +503,7 @@ void ProcessesView::BuildToolBar() {
 		{ "5 Seconds", 5000 },
 		{ "Paused", 0 },
 	};
-	int current;
+	int current = 0;
 	for (int i = 0; i < _countof(intervals); i++) {
 		if (intervals[i].Interval == m_UpdateInterval) {
 			current = i;
@@ -551,6 +551,7 @@ void ProcessesView::BuildToolBar() {
 
 		EndPopup();
 	}
+	PopFont();
 }
 
 void ProcessesView::BuildLowerPane() {
@@ -558,7 +559,7 @@ void ProcessesView::BuildLowerPane() {
 		if (BeginChild("lowerpane", ImVec2(0, 0), ImGuiChildFlags_None, ImGuiWindowFlags_NoTitleBar)) {
 			if (BeginTabBar("lowertabs", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_Reorderable)) {
 				if (m_SelectedProcess) {
-					SameLine(200);
+					SameLine(300);
 					Text("PID: %u (%ws)", m_SelectedProcess->Id, m_SelectedProcess->GetImageName().c_str()); SameLine();
 				}
 				if (BeginTabItem("Threads", nullptr, ImGuiTabItemFlags_None)) {
@@ -568,6 +569,12 @@ void ProcessesView::BuildLowerPane() {
 					EndTabItem();
 				}
 				if (BeginTabItem("DLLs", nullptr, ImGuiTabItemFlags_None)) {
+					EndTabItem();
+				}
+				if (BeginTabItem("Handles", nullptr, ImGuiTabItemFlags_None)) {
+					EndTabItem();
+				}
+				if (BeginTabItem("Memory", nullptr, ImGuiTabItemFlags_None)) {
 					EndTabItem();
 				}
 				EndTabBar();

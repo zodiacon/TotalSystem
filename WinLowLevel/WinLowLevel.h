@@ -341,7 +341,7 @@ namespace WinLL {
 	struct ProcessProtection {
 		union {
 			uint8_t Level;
-			struct {
+			struct _ {
 				uint8_t Type : 3;
 				uint8_t Audit : 1;
 				ProcessProtectionSigner Signer : 4;

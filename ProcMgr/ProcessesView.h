@@ -30,7 +30,6 @@ public:
 	bool IsOpen() const;
 	void Open(bool open = true);
 	void ShowLowerPane(bool show);
-	void BuildThreadTable(std::shared_ptr<ProcessInfoEx>& p);
 
 private:
 	void DoSort(int col, bool asc);

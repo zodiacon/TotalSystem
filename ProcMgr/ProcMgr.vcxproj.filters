@@ -22,6 +22,9 @@
     <Filter Include="Helpers">
       <UniqueIdentifier>{81f4a8ff-1a7e-4c02-9de0-bdeffc2990f1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Threads">
+      <UniqueIdentifier>{7e8c9fc2-79ff-4045-aa21-6d5526a52dfa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="targetver.h">
@@ -60,11 +63,11 @@
     <ClInclude Include="SortHelper.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="ThreadInfoEx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ThreadsView.h">
-      <Filter>Header Files</Filter>
+      <Filter>Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadInfoEx.h">
+      <Filter>Threads</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -98,11 +101,11 @@
     <ClCompile Include="SortHelper.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
-    <ClCompile Include="ThreadInfoEx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ThreadsView.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadInfoEx.cpp">
+      <Filter>Threads</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
