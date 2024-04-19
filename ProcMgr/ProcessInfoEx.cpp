@@ -89,17 +89,6 @@ const std::wstring& ProcessInfoEx::UserName() const {
 	return m_UserName;
 }
 
-bool ProcessInfoEx::Update() {
-	if (!m_IsNew && !m_IsTerminated)
-		return false;
-
-	bool term = m_IsTerminated;
-	if (::GetTickCount64() > m_ExpiryTime) {
-		m_IsTerminated = m_IsNew = false;
-		return term;
-	}
-	return false;
-}
 
 bool ProcessInfoEx::IsSuspended() const {
 	return m_Suspended;
@@ -112,17 +101,6 @@ bool ProcessInfoEx::SuspendResume() {
 
 	m_Suspended = !m_Suspended;
 	return m_Suspended ? p.Suspend() : p.Resume();
-}
-
-void ProcessInfoEx::New(uint32_t ms) {
-	m_IsNew = true;
-	m_ExpiryTime = ::GetTickCount64() + ms;
-}
-
-void ProcessInfoEx::Term(uint32_t ms) {
-	m_IsNew = false;
-	m_IsTerminated = true;
-	m_ExpiryTime = ::GetTickCount64() + ms;
 }
 
 const std::wstring& ProcessInfoEx::GetExecutablePath() const {

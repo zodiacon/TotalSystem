@@ -18,5 +18,6 @@ struct ProcMgrSettings {
 	};
 
 	std::vector<ProcessColor> ProcessColors;
+
 };
 

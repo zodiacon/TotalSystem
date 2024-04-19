@@ -237,6 +237,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ThreadInfoEx.h" />
     <ClInclude Include="ThreadsView.h" />
+    <ClInclude Include="TransientObject.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FormatHelper.cpp" />
@@ -258,6 +259,7 @@
     <ClCompile Include="SortHelper.cpp" />
     <ClCompile Include="ThreadInfoEx.cpp" />
     <ClCompile Include="ThreadsView.cpp" />
+    <ClCompile Include="TransientObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ProcMgr.rc" />

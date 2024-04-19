@@ -76,7 +76,7 @@ namespace WinLL {
 		int32_t Priority;
 		int32_t BasePriority;
 		uint32_t ContextSwitches;
-		ThreadState ThreadState;
+		ThreadState State;
 		WaitReason WaitReason;
 		int32_t CPU;
 		void* StartAddress;

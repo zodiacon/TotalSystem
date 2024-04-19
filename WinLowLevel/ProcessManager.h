@@ -107,7 +107,7 @@ namespace WinLL {
 						shared_ptr<TProcessInfo> pi;
 						if (auto it = m_ProcessesByKey.find(key); it == m_ProcessesByKey.end()) {
 							// new process
-							pi = BuildProcessInfo(p, includeThreads, threadsByKey, delta, pi, extended);
+							pi = BuildProcessInfo(p, includeThreads, pid, threadsByKey, delta, pi, extended);
 							m_newProcesses.push_back(pi);
 							pi->CPU = pi->KernelCPU = 0;
 						}
@@ -115,7 +115,7 @@ namespace WinLL {
 							const auto& pi2 = it->second;
 							auto kcpu = delta == 0 ? 0 : (int32_t)((p->KernelTime.QuadPart - pi2->KernelTime) * 1000000 / delta / s_TotalProcessors);
 							auto cpu = delta == 0 ? 0 : (int32_t)((p->KernelTime.QuadPart + p->UserTime.QuadPart - pi2->UserTime - pi2->KernelTime) * 1000000 / delta / s_TotalProcessors);
-							pi = BuildProcessInfo(p, includeThreads, threadsByKey, delta, pi2, extended);
+							pi = BuildProcessInfo(p, includeThreads, pid, threadsByKey, delta, pi2, extended);
 							pi->CPU = cpu;
 							pi->KernelCPU = kcpu;
 
@@ -245,7 +245,7 @@ namespace WinLL {
 		using ProcessMap = unordered_map<ProcessOrThreadKey, shared_ptr<TProcessInfo>>;
 		using ThreadMap = unordered_map<ProcessOrThreadKey, shared_ptr<TThreadInfo>>;
 
-		shared_ptr<TProcessInfo> BuildProcessInfo(const SYSTEM_PROCESS_INFORMATION* info, bool includeThreads,
+		shared_ptr<TProcessInfo> BuildProcessInfo(const SYSTEM_PROCESS_INFORMATION* info, bool includeThreads, uint32_t pid,
 			ThreadMap& threadsByKey, int64_t delta, shared_ptr<TProcessInfo> pi, bool extended) {
 			SYSTEM_PROCESS_INFORMATION_EXTENSION* ext = nullptr;
 			if (pi == nullptr) {
@@ -258,7 +258,7 @@ namespace WinLL {
 				pi->ParentId = HandleToULong(info->InheritedFromUniqueProcessId);
 				pi->ClearThreads();
 				auto name = info->UniqueProcessId == 0 ? L"(Idle)" : wstring(info->ImageName.Buffer, info->ImageName.Length / sizeof(WCHAR));
-				if(extended) {
+				if (extended) {
 					ext = (SYSTEM_PROCESS_INFORMATION_EXTENSION*)((BYTE*)info +
 						FIELD_OFFSET(SYSTEM_PROCESS_INFORMATION, Threads) + sizeof(SYSTEM_EXTENDED_THREAD_INFORMATION) * info->NumberOfThreads);
 					pi->JobObjectId = ext->JobObjectId;
@@ -274,6 +274,13 @@ namespace WinLL {
 					pi->m_ProcessName = move(name);
 					pi->JobObjectId = 0;
 				}
+			}
+			if (m_CurrentPid != pid) {
+				pi->ClearThreads();
+				m_CurrentPid = pid;
+				m_threads.clear();
+				m_threadsById.clear();
+				m_threadsByKey.clear();
 			}
 			pi->ThreadCount = info->NumberOfThreads;
 			pi->BasePriority = info->BasePriority;
@@ -305,7 +312,7 @@ namespace WinLL {
 				pi->DiskCounters = ext->DiskCounters;
 				pi->ContextSwitches = ext->ContextSwitches;
 			}
-			if (includeThreads) {
+			if (includeThreads && (pid == 0 || pid == pi->Id)) {
 				auto threadCount = info->NumberOfThreads;
 				for (ULONG i = 0; i < threadCount; i++) {
 					auto tinfo = ((SYSTEM_EXTENDED_THREAD_INFORMATION*)info->Threads) + i;
@@ -340,7 +347,7 @@ namespace WinLL {
 					thread->UserTime = baseInfo.UserTime.QuadPart;
 					thread->Priority = baseInfo.Priority;
 					thread->BasePriority = baseInfo.BasePriority;
-					thread->ThreadState = (ThreadState)baseInfo.ThreadState;
+					thread->State = (ThreadState)baseInfo.ThreadState;
 					thread->WaitReason = (WaitReason)baseInfo.WaitReason;
 					thread->WaitTime = baseInfo.WaitTime;
 					thread->ContextSwitches = baseInfo.ContextSwitches;
@@ -352,7 +359,7 @@ namespace WinLL {
 						m_newThreads.push_back(thread);
 					}
 					else {
-						thread->CPU = delta == 0 ? 0 : (int32_t)((thread->KernelTime + thread->UserTime - cpuTime) * 1000000LL / delta / s_TotalProcessors);
+						thread->CPU = delta == 0 ? 0 : (int32_t)((thread->KernelTime + thread->UserTime - cpuTime) * 1000000LL / delta /* / s_TotalProcessors */);
 						m_threadsByKey.erase(thread->Key);
 					}
 					threadsByKey.insert(make_pair(thread->Key, thread));
@@ -381,6 +388,7 @@ namespace WinLL {
 		LARGE_INTEGER m_prevTicks{};
 		inline static uint32_t s_TotalProcessors;
 		inline static bool s_IsElevated;
+		uint32_t m_CurrentPid{ 0 };
 
 		wil::unique_virtualalloc_ptr<BYTE> m_Buffer;
 		ULONG m_BufferSize;

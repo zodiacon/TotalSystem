@@ -2,8 +2,9 @@
 
 #include "ProcessInfoEx.h"
 #include <functional>
-#include <ThreadInfo.h>
+#include "ThreadInfoEx.h"
 #include <d3d11Image.h>
+#include <ProcessManager.h>
 
 class ThreadInfoEx;
 
@@ -34,5 +35,9 @@ private:
 	void DoSort(int column, bool asc);
 
 	inline static D3D11Image s_StateIcons[10];
+	std::vector<std::shared_ptr<WinLL::ThreadInfo>> m_Threads;
+	std::shared_ptr<WinLL::ProcessInfo> m_Process;
+	WinLL::ProcessManager<WinLL::ProcessInfo, ThreadInfoEx> m_ProcMgr;
+	DWORD64 m_LastUpdate{ 0 };
 };
 

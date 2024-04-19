@@ -4,19 +4,42 @@
 #include "ThreadInfoEx.h"
 #include "resource.h"
 #include "Globals.h"
+#include "ProcMgrSettings.h"
 
 using namespace ImGui;
 using namespace std;
 using namespace WinLL;
 
 void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
-	auto threads = p->GetThreads();
+	bool newProcess = m_Process == nullptr || m_Process->Id != p->Id;
+
+	auto& pm = m_ProcMgr;
+	bool updated = false;
+	if (newProcess || (updated = ::GetTickCount64() - m_LastUpdate > 1000)) {
+		pm.UpdateWithThreads(p->Id);
+		m_LastUpdate = ::GetTickCount64();
+	}
+	if (newProcess) {
+		m_Process = m_ProcMgr.GetProcessById(p->Id);
+		m_Threads = m_Process->GetThreads();
+	}
+	else if (updated) {
+		for (auto t : pm.GetNewThreads()) {
+			t->New(2000);
+			m_Threads.push_back(t);
+		}
+		for (auto t : pm.GetTerminatedThreads()) {
+			t->Term(2000);
+		}
+
+	}
+
 	auto orgBackColor = GetStyle().Colors[ImGuiCol_TableRowBg];
 
 	static const ColumnInfo columns[]{
 		{ "State", [&](auto& t) {
-			Image(GetStateImage(t.ThreadState).Get(), ImVec2(16, 16)); SameLine();
-			auto str = format("{}##{}" ,StateToString(t.ThreadState), p->Id);
+			Image(GetStateImage(t.State).Get(), ImVec2(16, 16)); SameLine();
+			auto str = format("{}##{}" ,StateToString(t.State), p->Id);
 			Selectable(str.c_str(), false, ImGuiSelectableFlags_SpanAllColumns);
 			}, 0, 60 },
 		{ "TID", [&](auto& t) {
@@ -26,11 +49,11 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
 				Text("%7u (0x%05X)", t.Id, t.Id);
 			}, 0 },
 		{ "Wait Reason", [](auto& t) {
-			if(t.ThreadState == ThreadState::Waiting)
+			if (t.State == ThreadState::Waiting)
 				TextUnformatted(WaitReasonToString(t.WaitReason));
 			}, 0, 120 },
 		{ "CPU %", [&](auto& t) {
-			if (t.CPU > 0 && t.ThreadState != ThreadState::Terminated) {
+			if (t.CPU > 0 && t.State != ThreadState::Terminated) {
 				auto value = t.CPU / 10000.0f;
 				auto str = format("{:7.2f}  ", value);
 				ImVec4 color;
@@ -59,7 +82,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
 
 	};
 
-	if (BeginTable("Threads", _countof(columns), ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | 
+	if (BeginTable("Threads", _countof(columns), ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
 		ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit)) {
 
 		TableSetupScrollFreeze(2, 1);
@@ -82,14 +105,31 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
 			specs->SpecsDirty = false;
 		}
 
+		auto count = (int)m_Threads.size();
+		for (int i = 0; i < count; i++) {
+			auto t = (ThreadInfoEx*)m_Threads[i].get();
+			if (t->Update()) {
+				m_Threads.erase(m_Threads.begin() + i);
+				i--;
+				count--;
+				continue;
+			}
+		}
+
 		ImGuiListClipper clipper;
-		clipper.Begin((int)threads.size());
+		clipper.Begin((int)m_Threads.size());
 
 		while (clipper.Step()) {
 			for (int j = clipper.DisplayStart; j < clipper.DisplayEnd; j++) {
-				auto& t = *(ThreadInfoEx*)threads[j].get();
+				auto& t = *(ThreadInfoEx*)m_Threads[j].get();
 				TableNextRow();
 
+				if (t.IsNew()) {
+					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(Globals::Settings().ProcessColors[ProcMgrSettings::NewObjects].Color));
+				}
+				else if (t.IsTerminated()) {
+					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(Globals::Settings().ProcessColors[ProcMgrSettings::DeletedObjects].Color));
+				}
 				//auto popCount = 0;
 				//auto colors = p->Colors();
 				//if (colors.first.x >= 0) {
@@ -180,7 +220,7 @@ D3D11Image& ThreadsView::GetStateImage(WinLL::ThreadState state) {
 }
 
 bool ThreadsView::Init() {
-	UINT icons[] {
+	UINT icons[]{
 		IDI_THREAD_NEW, IDI_READY, IDI_RUNNING, IDI_STANDBY, IDI_STOP,
 		IDI_PAUSE, IDI_TRANSITION, IDI_READY, 0, IDI_TRANSITION
 	};

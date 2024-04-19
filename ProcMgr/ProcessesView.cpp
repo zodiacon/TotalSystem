@@ -307,10 +307,7 @@ void ProcessesView::BuildTable() {
 			if (empty) {
 				m_Processes.reserve(1024);
 			}
-			if (m_SelectedProcess && m_ShowLowerPane)
-				pm.UpdateWithThreads(0);
-			else
-				pm.Update();
+			pm.Update();
 			if (empty) {
 				m_Processes = pm.GetProcesses();
 			}
