@@ -4,7 +4,7 @@
 #include "ThreadInfoEx.h"
 #include <ProcessManager.h>
 
-struct ProcMgrSettings;
+struct TotalSysSettings;
 
 struct Globals abstract final {
 	static auto& ProcessManager() {
@@ -17,7 +17,7 @@ struct Globals abstract final {
 	static ImFont* MonoFont();
 	static ImFont* VarFont();
 
-	static ProcMgrSettings& Settings();
+	static TotalSysSettings& Settings();
 
 	inline static ImFont* s_pMonoFont;
 	inline static ImFont* s_pVarFont;

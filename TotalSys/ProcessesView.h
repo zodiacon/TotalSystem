@@ -4,17 +4,18 @@
 #include <functional>
 #include <SimpleMessageBox.h>
 #include "ThreadsView.h"
+#include "ViewBase.h"
 
 //#include "ProcessProperties.h"
 
 struct ImGuiTableSortSpecsColumn;
 
-class ProcessesView {
+class ProcessesView : public ViewBase {
 	enum class Column {
 		ProcessName, Pid, UserName, Session, CPU, ParentPid, CreateTime, Commit, BasePriority, Threads,
 		Handles, WorkingSet, ExePath, CPUTime, PeakThreads, VirtualSize, PeakWS, Attributes,
 		PagedPool, NonPagedPool, KernelTime, UserTime,
-		PeakPagedPool, PeakNonPagedPool,
+		PeakPagedPool, PeakNonPagedPool, Integrity, 
 	};
 
 	struct ColumnInfo {
@@ -27,8 +28,6 @@ class ProcessesView {
 public:
 	ProcessesView();
 	void BuildWindow();
-	bool IsOpen() const;
-	void Open(bool open = true);
 	void ShowLowerPane(bool show);
 
 private:
@@ -64,5 +63,4 @@ private:
 	std::unordered_map<UINT, D3D11Image> m_Icons;
 	SimpleMessageBox m_KillDlg;
 	bool m_Paused : 1 { false }, m_ShowLowerPane: 1{ false };
-	bool m_Open { true };
 };

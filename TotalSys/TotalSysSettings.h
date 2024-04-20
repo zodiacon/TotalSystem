@@ -2,8 +2,8 @@
 
 #include "ProcessColor.h"
 
-struct ProcMgrSettings {
-	ProcMgrSettings();
+struct TotalSysSettings {
+	TotalSysSettings();
 
 	enum ProcessColorIndex {
 		NewObjects,

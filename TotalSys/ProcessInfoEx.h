@@ -3,6 +3,7 @@
 #include <ProcessInfo.h>
 #include <D3D11Image.h>
 #include "TransientObject.h"
+#include <WinLowLevel.h>
 
 enum class ProcessAttributes {
 	NotComputed = -1,
@@ -26,6 +27,8 @@ public:
 	bool SuspendResume();
 	const std::wstring& GetExecutablePath() const;
 	ID3D11ShaderResourceView* Icon() const;
+	WinLL::IntegrityLevel GetIntegrityLevel() const;
+	PVOID GetPeb() const;
 
 	bool Filtered{ false };
 
@@ -35,6 +38,7 @@ private:
 	mutable std::wstring m_ExecutablePath;
 	mutable ProcessAttributes m_Attributes = ProcessAttributes::NotComputed;
 	mutable std::wstring m_UserName;
+	mutable PVOID m_Peb{ nullptr };
 	bool m_Suspended : 1 { false};
 };
 

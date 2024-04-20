@@ -32,6 +32,7 @@
     <ProjectGuid>{a176c64f-c567-4d9b-8449-41d3d63acfa0}</ProjectGuid>
     <RootNamespace>ProcMgr</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>TotalSys</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -100,7 +101,7 @@
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
@@ -117,7 +118,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -138,7 +139,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseSigned|Win32'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -162,7 +163,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
@@ -179,7 +180,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -200,7 +201,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseSigned|x64'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -230,14 +231,14 @@
     <ClInclude Include="ProcessColor.h" />
     <ClInclude Include="ProcessesView.h" />
     <ClInclude Include="ProcessInfoEx.h" />
-    <ClInclude Include="ProcMgr.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="ProcMgrSettings.h" />
+    <ClInclude Include="TotalSysSettings.h" />
     <ClInclude Include="SortHelper.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ThreadInfoEx.h" />
     <ClInclude Include="ThreadsView.h" />
     <ClInclude Include="TransientObject.h" />
+    <ClInclude Include="ViewBase.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FormatHelper.cpp" />
@@ -254,15 +255,16 @@
     <ClCompile Include="ProcessColor.cpp" />
     <ClCompile Include="ProcessesView.cpp" />
     <ClCompile Include="ProcessInfoEx.cpp" />
-    <ClCompile Include="ProcMgr.cpp" />
-    <ClCompile Include="ProcMgrSettings.cpp" />
+    <ClCompile Include="TotalSys.cpp" />
+    <ClCompile Include="TotalSysSettings.cpp" />
     <ClCompile Include="SortHelper.cpp" />
     <ClCompile Include="ThreadInfoEx.cpp" />
     <ClCompile Include="ThreadsView.cpp" />
     <ClCompile Include="TransientObject.cpp" />
+    <ClCompile Include="ViewBase.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="ProcMgr.rc" />
+    <ResourceCompile Include="TotalSys.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Icons\Initialized.ico" />

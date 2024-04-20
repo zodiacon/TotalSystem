@@ -12,6 +12,7 @@ public:
 private:
 	HWND m_hWnd;
 	ProcessesView m_ProcessesView;
+	ThreadsView m_ThreadsView{ true };
 	bool m_Dark{ true };
 };
 

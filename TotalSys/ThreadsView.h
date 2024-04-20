@@ -5,12 +5,15 @@
 #include "ThreadInfoEx.h"
 #include <d3d11Image.h>
 #include <ProcessManager.h>
+#include "ViewBase.h"
 
 class ThreadInfoEx;
 
-class ThreadsView {
+class ThreadsView : public ViewBase {
 public:
+	explicit ThreadsView(bool allThreads = false);
 	void BuildThreadMenu();
+	void BuildWindow();
 	void BuildTable(std::shared_ptr<ProcessInfoEx>& p);
 
 	static PCSTR StateToString(WinLL::ThreadState state);
@@ -21,8 +24,10 @@ public:
 
 private:
 	enum class Column {
-		State, Id, WaitReason, CPU, BasePriority, CurrentPriority, CPUTime, CreateTime, KernelTime, UserTime, StartAddress,
+		State, Id, ProcessId, ProcessName, WaitReason, CPU, BasePriority, Priority, CPUTime, 
+		CreateTime, KernelTime, UserTime, StartAddress, Win32StartAddress, Teb, 
 		SuspendCount, Service, ContextSwitches, Cycles, CyclesDelta, MemoryPriority, IOPriority,
+		WaitTime, StackBase, StackLimit,
 	};
 
 	struct ColumnInfo {
@@ -39,5 +44,6 @@ private:
 	std::shared_ptr<WinLL::ProcessInfo> m_Process;
 	WinLL::ProcessManager<WinLL::ProcessInfo, ThreadInfoEx> m_ProcMgr;
 	DWORD64 m_LastUpdate{ 0 };
+	bool m_AllThreads;
 };
 

@@ -1,11 +1,11 @@
 #include "pch.h"
-#include "ProcMgrSettings.h"
+#include "TotalSysSettings.h"
 #include <StandardColors.h>
 #include "FormatHelper.h"
 
 using namespace ImGui;
 
-ProcMgrSettings::ProcMgrSettings() {
+TotalSysSettings::TotalSysSettings() {
 	auto& black = StandardColors::Black;
 	auto& white = StandardColors::White;
 

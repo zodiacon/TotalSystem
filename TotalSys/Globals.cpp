@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "Globals.h"
-#include "ProcMgrSettings.h"
+#include "TotalSysSettings.h"
 
 void Globals::SetMonoFont(ImFont* font) {
 	s_pMonoFont = font;
@@ -18,7 +18,7 @@ ImFont* Globals::VarFont() {
 	return s_pVarFont;
 }
 
-ProcMgrSettings& Globals::Settings() {
-	static ProcMgrSettings settings;
+TotalSysSettings& Globals::Settings() {
+	static TotalSysSettings settings;
 	return settings;
 }

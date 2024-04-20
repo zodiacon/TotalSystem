@@ -30,9 +30,6 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ProcMgr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -42,7 +39,7 @@
     <ClInclude Include="MainWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ProcMgrSettings.h">
+    <ClInclude Include="TotalSysSettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Resource.h">
@@ -72,9 +69,12 @@
     <ClInclude Include="TransientObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ViewBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ProcMgr.cpp">
+    <ClCompile Include="TotalSys.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
@@ -86,7 +86,7 @@
     <ClCompile Include="MainWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ProcMgrSettings.cpp">
+    <ClCompile Include="TotalSysSettings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ProcessesView.cpp">
@@ -113,9 +113,12 @@
     <ClCompile Include="TransientObject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ViewBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="ProcMgr.rc">
+    <ResourceCompile Include="TotalSys.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

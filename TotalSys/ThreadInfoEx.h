@@ -7,5 +7,6 @@ class ThreadInfoEx : public WinLL::ThreadInfo, public TransientObject {
 public:
 	void Term(uint32_t ms) override;
 
+	int GetMemoryPriority() const;
 };
 

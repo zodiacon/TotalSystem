@@ -68,5 +68,11 @@
     <ClCompile Include="ThreadInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Thread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemInformation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

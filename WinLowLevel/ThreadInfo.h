@@ -80,7 +80,8 @@ namespace WinLL {
 		WaitReason WaitReason;
 		int32_t CPU;
 		void* StartAddress;
-		void* StackBase, * StackLimit;
+		void* StackBase;
+		void* StackLimit;
 		void* Win32StartAddress;
 		void* TebBase;
 

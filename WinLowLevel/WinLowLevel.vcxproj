@@ -240,6 +240,8 @@
     <ClCompile Include="ProcessInfo.cpp" />
     <ClCompile Include="ProcessManager.cpp" />
     <ClCompile Include="SecurityHelper.cpp" />
+    <ClCompile Include="SystemInformation.cpp" />
+    <ClCompile Include="Thread.cpp" />
     <ClCompile Include="ThreadInfo.cpp" />
     <ClCompile Include="Token.cpp" />
     <ClCompile Include="WinLowLevel.cpp" />

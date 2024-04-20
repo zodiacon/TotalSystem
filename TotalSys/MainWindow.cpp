@@ -31,6 +31,9 @@ void MainWindow::BuildWindow() {
 			if (MenuItem("Processes", "F4", m_ProcessesView.IsOpen(), !m_ProcessesView.IsOpen())) {
 				m_ProcessesView.Open();
 			}
+			if (MenuItem("Threads", nullptr, m_ThreadsView.IsOpen(), !m_ThreadsView.IsOpen())) {
+				m_ThreadsView.Open();
+			}
 			ImGui::EndMenu();
 		}
 		if (BeginMenu("Options")) {
@@ -63,7 +66,7 @@ void MainWindow::BuildWindow() {
 	}
 
 	m_ProcessesView.BuildWindow();
-
+	m_ThreadsView.BuildWindow();
 }
 
 bool MainWindow::IsAlwaysOnTop() const {

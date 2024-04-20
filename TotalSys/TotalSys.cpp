@@ -35,9 +35,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 
 	// Create application window
 	ImGui_ImplWin32_EnableDpiAwareness();
-	WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, hInstance, nullptr, nullptr, nullptr, nullptr, L"Process Manager", nullptr };
+	WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, hInstance, nullptr, nullptr, nullptr, nullptr, L"Total System", nullptr };
 	::RegisterClassExW(&wc);
-	HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Process Manager", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, wc.hInstance, nullptr);
+	HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Total System", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, wc.hInstance, nullptr);
 	SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadImage(hInstance, MAKEINTRESOURCE(IDI_PROCMGR), IMAGE_ICON, 32, 32, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE));
 	SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadImage(hInstance, MAKEINTRESOURCE(IDI_PROCMGR), IMAGE_ICON, 16, 16, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE));
 

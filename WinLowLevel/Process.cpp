@@ -55,10 +55,6 @@ namespace WinLL {
 		return token.GetUserName(includeDomain);
 	}
 
-	wstring Process::GetAppId() const {
-		return wstring();
-	}
-
 	wstring Process::GetImagePath() const {
 		BYTE buffer[MAX_PATH * 2];
 		if (NT_SUCCESS(NtQueryInformationProcess(Handle(), ProcessImageFileNameWin32, buffer, sizeof(buffer), nullptr))) {
@@ -171,6 +167,22 @@ namespace WinLL {
 		WCHAR name[MAX_PATH];
 		auto success = ::QueryFullProcessImageName(Handle(), 0, name, &size);
 		return success ? std::wstring(name) : L"";
+	}
+
+	IntegrityLevel Process::GetIntegrityLevel() const {
+		wil::unique_handle hToken;
+		if (!::OpenProcessToken(Handle(), TOKEN_QUERY, hToken.addressof()))
+			return IntegrityLevel::Error;
+
+		BYTE buffer[256];
+		DWORD len;
+		if (!::GetTokenInformation(hToken.get(), TokenIntegrityLevel, buffer, 256, &len))
+			return IntegrityLevel::Error;
+
+		auto integrity = reinterpret_cast<TOKEN_MANDATORY_LABEL*>(buffer);
+
+		auto sid = integrity->Label.Sid;
+		return (IntegrityLevel)(*::GetSidSubAuthority(sid, *::GetSidSubAuthorityCount(sid) - 1));
 	}
 
 }

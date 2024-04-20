@@ -97,6 +97,123 @@
 namespace WinLL {
 	using namespace std;
 
+	int SetLastStatus(int status);
+	int GetLastStatus();
+
+	struct PerformanceInformation {
+		int64_t IdleProcessTime;
+		int64_t IoReadTransferCount;
+		int64_t IoWriteTransferCount;
+		int64_t IoOtherTransferCount;
+		uint32_t IoReadOperationCount;
+		uint32_t IoWriteOperationCount;
+		uint32_t IoOtherOperationCount;
+		uint32_t AvailablePages;
+		uint32_t CommittedPages;
+		uint32_t CommitLimit;
+		uint32_t PeakCommitment;
+		uint32_t PageFaultCount;
+		uint32_t CopyOnWriteCount;
+		uint32_t TransitionCount;
+		uint32_t CacheTransitionCount;
+		uint32_t DemandZeroCount;
+		uint32_t PageReadCount;
+		uint32_t PageReadIoCount;
+		uint32_t CacheReadCount;
+		uint32_t CacheIoCount;
+		uint32_t DirtyPagesWriteCount;
+		uint32_t DirtyWriteIoCount;
+		uint32_t MappedPagesWriteCount;
+		uint32_t MappedWriteIoCount;
+		uint32_t PagedPoolPages;
+		uint32_t NonPagedPoolPages;
+		uint32_t PagedPoolAllocs;
+		uint32_t PagedPoolFrees;
+		uint32_t NonPagedPoolAllocs;
+		uint32_t NonPagedPoolFrees;
+		uint32_t FreeSystemPtes;
+		uint32_t ResidentSystemCodePage;
+		uint32_t TotalSystemDriverPages;
+		uint32_t TotalSystemCodePages;
+		uint32_t NonPagedPoolLookasideHits;
+		uint32_t PagedPoolLookasideHits;
+		uint32_t AvailablePagedPoolPages;
+		uint32_t ResidentSystemCachePage;
+		uint32_t ResidentPagedPoolPage;
+		uint32_t ResidentSystemDriverPage;
+		uint32_t CcFastReadNoWait;
+		uint32_t CcFastReadWait;
+		uint32_t CcFastReadResourceMiss;
+		uint32_t CcFastReadNotPossible;
+		uint32_t CcFastMdlReadNoWait;
+		uint32_t CcFastMdlReadWait;
+		uint32_t CcFastMdlReadResourceMiss;
+		uint32_t CcFastMdlReadNotPossible;
+		uint32_t CcMapDataNoWait;
+		uint32_t CcMapDataWait;
+		uint32_t CcMapDataNoWaitMiss;
+		uint32_t CcMapDataWaitMiss;
+		uint32_t CcPinMappedDataCount;
+		uint32_t CcPinReadNoWait;
+		uint32_t CcPinReadWait;
+		uint32_t CcPinReadNoWaitMiss;
+		uint32_t CcPinReadWaitMiss;
+		uint32_t CcCopyReadNoWait;
+		uint32_t CcCopyReadWait;
+		uint32_t CcCopyReadNoWaitMiss;
+		uint32_t CcCopyReadWaitMiss;
+		uint32_t CcMdlReadNoWait;
+		uint32_t CcMdlReadWait;
+		uint32_t CcMdlReadNoWaitMiss;
+		uint32_t CcMdlReadWaitMiss;
+		uint32_t CcReadAheadIos;
+		uint32_t CcLazyWriteIos;
+		uint32_t CcLazyWritePages;
+		uint32_t CcDataFlushes;
+		uint32_t CcDataPages;
+		uint32_t ContextSwitches;
+		uint32_t FirstLevelTbFills;
+		uint32_t SecondLevelTbFills;
+		uint32_t SystemCalls;
+		uint64_t CcTotalDirtyPages; // since THRESHOLD
+		uint64_t CcDirtyPageThreshold; // since THRESHOLD
+		int64_t ResidentAvailablePages; // since THRESHOLD
+		uint64_t SharedCommittedPages; // since THRESHOLD
+	};
+
+	struct WindowsVersion {
+		uint32_t Major, Minor;
+		uint32_t Build;
+	};
+
+	enum class ProcessorArchitecture : uint16_t {
+		x64 = 9,
+		ARM = 5,
+		x86 = 0,
+		Itanium = 6,
+		Unknown = 0xffff
+	};
+
+	struct BasicSystemInfo {
+		ProcessorArchitecture ProcessorArchitecture;
+		uint32_t PageSize;
+		uint32_t NumberOfProcessors;
+		uint16_t ProcessorLevel;
+		uint16_t ProcessorRevision;
+		size_t TotalPhysicalInPages;
+		size_t CommitLimitInPages;
+		void* MinimumAppAddress;
+		void* MaximumAppAddress;
+	};
+
+	class SystemInformation {
+	public:
+		static PerformanceInformation GetPerformanceInformation();
+		static const WindowsVersion& GetWindowsVersion();
+		static const BasicSystemInfo& GetBasicSystemInfo();
+		static uint64_t GetBootTime();
+	};
+
 	struct AccessMask {
 		AccessMask(ULONG access = 0) : Access(access) {}
 		operator ULONG() const {
@@ -161,6 +278,27 @@ namespace WinLL {
 			SetQuota = PROCESS_SET_QUOTA,
 			SetInformation = PROCESS_SET_INFORMATION,
 			All = PROCESS_ALL_ACCESS,
+		};
+	};
+
+	struct ThreadAccessMask : DispatcherAccessMask {
+		using DispatcherAccessMask::DispatcherAccessMask;
+
+		enum : uint32_t {
+			Terminate = THREAD_TERMINATE,
+			SetLimitedInformation = THREAD_SET_LIMITED_INFORMATION,
+			QueryInformation = THREAD_QUERY_INFORMATION,
+			QueryLimitedInformation = THREAD_QUERY_LIMITED_INFORMATION,
+			SuspendResume = THREAD_SUSPEND_RESUME,
+			SetInformation = THREAD_SET_INFORMATION,
+			Impersonate = THREAD_IMPERSONATE,
+			SetContext = THREAD_SET_CONTEXT,
+			GetContext = THREAD_GET_CONTEXT,
+			DirectImpersonation = THREAD_DIRECT_IMPERSONATION,
+			SystemSecurity = ACCESS_SYSTEM_SECURITY,
+			SetThreadToken = THREAD_SET_THREAD_TOKEN,
+			Resume = THREAD_RESUME,
+			All = THREAD_ALL_ACCESS,
 		};
 	};
 
@@ -310,6 +448,7 @@ namespace WinLL {
 		High = SECURITY_MANDATORY_HIGH_RID,
 		System = SECURITY_MANDATORY_SYSTEM_RID,
 		Protected = SECURITY_MANDATORY_PROTECTED_PROCESS_RID,
+		Error = 0xffffffff
 	};
 
 	enum class ProcessProtectionSigner : uint8_t {
@@ -356,33 +495,34 @@ namespace WinLL {
 		using DispatcherObject::DispatcherObject;
 
 		bool Open(uint32_t pid, ProcessAccessMask access = ProcessAccessMask::QueryInformation);
-		static Process Current();
+		[[nodiscard]] static Process Current();
 
-		int32_t GetExitCode() const;
-		uint32_t GetId() const;
-		PPEB GetPeb() const;
-		wstring GetCommandLine() const;
-		int32_t GetSessionId() const;
-		wstring GetImagePath() const;
-		wstring GetImageName() const;
-		wstring GetUserName(bool includeDomain = false) const;
-		wstring GetPackageName() const;
-		wstring GetAppUserModelId() const;
-		wstring GetAppId() const;
-		PriorityClass GetPriorityClass() const;
+		[[nodiscard]] int32_t GetExitCode() const;
+		[[nodiscard]] uint32_t GetId() const;
+		[[nodiscard]] PPEB GetPeb() const;
+		[[nodiscard]] wstring GetCommandLine() const;
+		[[nodiscard]] int32_t GetSessionId() const;
+		[[nodiscard]] wstring GetImagePath() const;
+		[[nodiscard]] wstring GetImageName() const;
+		[[nodiscard]] wstring GetUserName(bool includeDomain = false) const;
+		[[nodiscard]] wstring GetPackageName() const;
+		[[nodiscard]] wstring GetAppUserModelId() const;
+		[[nodiscard]] wstring GetAppId() const;
+		[[nodiscard]] PriorityClass GetPriorityClass() const;
 		bool SetPriorityClass(PriorityClass pc);
 		bool Terminate(int32_t exitCode = 0);
-		std::wstring GetFullImageName() const;
+		[[nodiscard]] std::wstring GetFullImageName() const;
+		[[nodiscard]] IntegrityLevel GetIntegrityLevel() const;
 
 		bool Suspend();
 		bool Resume();
 
-		bool IsImmersive() const noexcept;
-		bool IsProtected() const;
-		bool IsSecure() const;
-		bool IsInJob(HANDLE hJob = nullptr) const;
-		bool IsWow64Process() const;
-		bool IsManaged() const;
+		[[nodiscard]] bool IsImmersive() const noexcept;
+		[[nodiscard]] bool IsProtected() const;
+		[[nodiscard]] bool IsSecure() const;
+		[[nodiscard]] bool IsInJob(HANDLE hJob = nullptr) const;
+		[[nodiscard]] bool IsWow64Process() const;
+		[[nodiscard]] bool IsManaged() const;
 
 	private:
 		bool GetExtendedInfo(PROCESS_EXTENDED_BASIC_INFORMATION* info) const;
@@ -425,9 +565,46 @@ namespace WinLL {
 		}
 	};
 
+	enum class IoPriority {
+		Unknown = -1,
+		VeryLow = 0,
+		Low,
+		Normal,
+		High,
+		Critical
+	};
+
+	struct CpuNumber {
+		uint16_t Group;
+		uint8_t Number;
+	};
+
+	enum class ThreadPriority {
+		Idle = THREAD_PRIORITY_IDLE,
+		Lowest = THREAD_PRIORITY_LOWEST,
+		BelowNormal = THREAD_PRIORITY_BELOW_NORMAL,
+		Normal = THREAD_PRIORITY_NORMAL,
+		AboveNormal = THREAD_PRIORITY_ABOVE_NORMAL,
+		Highest = THREAD_PRIORITY_HIGHEST,
+		TimeCritical = THREAD_PRIORITY_TIME_CRITICAL
+	};
+
+
 	class Thread : public DispatcherObject {
 	public:
 		using DispatcherObject::DispatcherObject;
+
+		bool Open(uint32_t id, ThreadAccessMask access = ThreadAccessMask::QueryLimitedInformation);
+
+		[[nodiscard]] uint32_t GetId() const;
+		[[nodiscard]] ThreadPriority GetPriority() const;
+		bool SetPriority(ThreadPriority priority);
+		CpuNumber GetIdealProcessor() const;
+		bool Terminate(uint32_t exitCode = 0);
+		[[nodiscard]] int GetMemoryPriority() const;
+		IoPriority GetIoPriority() const;
+		[[nodiscard]] size_t GetSubProcessTag() const;
+		[[nodiscard]] std::wstring GetServiceNameByTag(uint32_t pid);
 	};
 
 	class Token : public KernelObject {
@@ -436,7 +613,7 @@ namespace WinLL {
 
 		bool Open(TokenAccessMask access, uint32_t pid = 0);
 
-		wstring GetUserName(bool includeDomain = false) const;
+		[[nodiscard]] wstring GetUserName(bool includeDomain = false) const;
 		//Sid GetUserSid() const;
 	};
 

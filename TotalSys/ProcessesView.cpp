@@ -11,7 +11,7 @@
 #include "FormatHelper.h"
 #include "Resource.h"
 #include <ShellApi.h>
-#include "ProcMgrSettings.h"
+#include "TotalSysSettings.h"
 
 #pragma comment(lib, "Shlwapi.lib")
 
@@ -29,13 +29,14 @@ ProcessesView::ProcessesView() {
 		auto hIcon = (HICON)::LoadImage(::GetModuleHandle(nullptr), MAKEINTRESOURCE(icon), IMAGE_ICON, 16, 16, LR_COPYFROMRESOURCE | LR_CREATEDIBSECTION);
 		m_Icons.insert({ icon, D3D11Image::FromIcon(hIcon) });
 	}
+	Open(true);
 }
 
 void ProcessesView::BuildWindow() {
-	if (m_Open) {
+	if (IsOpen()) {
 		SetNextWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
 		SetNextWindowPos(ImVec2(10, 20), ImGuiCond_FirstUseEver);
-		if (Begin("Processes", &m_Open, ImGuiWindowFlags_MenuBar)) {
+		if (Begin("Processes", GetOpenAddress(), ImGuiWindowFlags_MenuBar)) {
 			if (BeginMenuBar()) {
 				if (m_SelectedProcess && BeginMenu("Process")) {
 					BuildProcessMenu(*m_SelectedProcess);
@@ -63,13 +64,6 @@ void ProcessesView::BuildWindow() {
 	//	_processProperties.erase(key);
 }
 
-bool ProcessesView::IsOpen() const {
-	return m_Open;
-}
-
-void ProcessesView::Open(bool open) {
-	m_Open = open;
-}
 
 void ProcessesView::ShowLowerPane(bool show) {
 	m_ShowLowerPane = show;
@@ -102,6 +96,7 @@ void ProcessesView::DoSort(int col, bool asc) {
 			case Column::UserTime: return SortHelper::Sort(p1->UserTime, p2->UserTime, asc);
 			case Column::PeakPagedPool: return SortHelper::Sort(p1->PeakPagedPoolUsage, p2->PeakPagedPoolUsage, asc);
 			case Column::PeakNonPagedPool: return SortHelper::Sort(p1->PeakNonPagedPoolUsage, p2->PeakNonPagedPoolUsage, asc);
+			case Column::Integrity: return SortHelper::Sort(p1->GetIntegrityLevel(), p2->GetIntegrityLevel(), asc);
 		}
 		return false;
 		});
@@ -216,14 +211,14 @@ void ProcessesView::BuildTable() {
 				}
 			}
 		}, 0, 140.0f },
-		{ "Created", [](auto& p) {
+		{ "Create Time", [](auto& p) {
 			Text(FormatHelper::FormatDateTime(p->CreateTime).c_str());
 			},ImGuiTableColumnFlags_NoResize },
 		{ "Private Bytes", [](auto& p) {
 			Text("%12ws K", FormatHelper::FormatNumber(p->PrivatePageCount >> 10).c_str());
 			}, },
 		{ "Pri", [](auto& p) {
-			Text("%5d", p->BasePriority);
+			Text("%4d", p->BasePriority);
 			}, },
 		{ "Threads", [](auto& p) {
 			Text("%6ws", FormatHelper::FormatNumber(p->ThreadCount).c_str());
@@ -236,40 +231,47 @@ void ProcessesView::BuildTable() {
 			}, },
 		{ "Executable Path", [](auto& p) {
 			Text("%ws", p->GetExecutablePath().c_str());
-			}, 0, 150.0f },
+			}, ImGuiTableColumnFlags_DefaultHide, 150.0f },
 		{ "CPU Time", [](auto& p) {
 			TextUnformatted(FormatHelper::FormatTimeSpan(p->UserTime + p->KernelTime).c_str());
 			}, },
 		{ "Peak Thr", [](auto& p) {
 			Text("%7ws", FormatHelper::FormatNumber(p->PeakThreads).c_str());
-			}, },
+			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Virtual Size", [](auto& p) {
 			Text("%14ws K", FormatHelper::FormatNumber(p->VirtualSize >> 10).c_str());
-			}, },
+			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Peak WS", [](auto& p) {
 			Text("%12ws K", FormatHelper::FormatNumber(p->PeakWorkingSetSize >> 10).c_str());
-			}, },
+			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Attributes", [](auto& p) {
 			TextUnformatted(ProcessAttributesToString(p->Attributes()).c_str());
 			}, },
 		{ "Paged Pool", [](auto& p) {
 			Text("%9ws K", FormatHelper::FormatNumber(p->PagedPoolUsage >> 10).c_str());
-			}, },
+			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "NP Pool", [](auto& p) {
 			Text("%9ws K", FormatHelper::FormatNumber(p->NonPagedPoolUsage >> 10).c_str());
-			}, },
+			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "kernel Time", [](auto& p) {
 			TextUnformatted(FormatHelper::FormatTimeSpan(p->KernelTime).c_str());
-			}, },
+			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "User Time", [](auto& p) {
 			TextUnformatted(FormatHelper::FormatTimeSpan(p->UserTime).c_str());
-			}, },
+			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Peak Paged", [](auto& p) {
 			Text("%9ws K", FormatHelper::FormatNumber(p->PeakPagedPoolUsage >> 10).c_str());
-			}, },
+			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Peak Non-Paged", [](auto& p) {
 			Text("%9ws K", FormatHelper::FormatNumber(p->PeakNonPagedPoolUsage >> 10).c_str());
-			}, },
+			}, ImGuiTableColumnFlags_DefaultHide },
+		{ "Integrity", [](auto& p) {
+			TextUnformatted(FormatHelper::IntegrityToString(p->GetIntegrityLevel()));
+			}, ImGuiTableColumnFlags_DefaultHide },
+		{ "PEB", [](auto& p) {
+			Text("0x%p", p->GetPeb());
+			}, ImGuiTableColumnFlags_DefaultHide },
+
 	};
 
 	float y = 0;
@@ -277,7 +279,7 @@ void ProcessesView::BuildTable() {
 		y = GetWindowSize().y / 2;
 		BeginChild("upper", ImVec2(0, y), ImGuiChildFlags_ResizeY);
 	}
-	if (BeginTable("processes", _countof(columns), ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | 0 * ImGuiTableFlags_NoSavedSettings |
+	if (BeginTable("Processes", _countof(columns), ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | 0 * ImGuiTableFlags_NoSavedSettings |
 		ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersOuterV)) {
 		TableSetupScrollFreeze(2, 1);
 
