@@ -78,4 +78,8 @@ namespace WinLL {
 	bool Thread::Resume() {
 		return ::ResumeThread(Handle()) != -1;
 	}
+
+	bool Thread::Terminate(uint32_t exitCode) {
+		return ::TerminateThread(Handle(), exitCode);
+	}
 }

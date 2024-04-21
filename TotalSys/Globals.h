@@ -7,11 +7,6 @@
 struct TotalSysSettings;
 
 struct Globals abstract final {
-	static auto& ProcessManager() {
-		static WinLL::ProcessManager<ProcessInfoEx, ThreadInfoEx> pm;
-		return pm;
-	}
-
 	static void SetMonoFont(ImFont* font);
 	static void SetVarFont(ImFont* font);
 	static ImFont* MonoFont();

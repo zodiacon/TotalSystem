@@ -19,8 +19,8 @@ DEFINE_ENUM_FLAG_OPERATORS(ProcessAttributes);
 
 class ProcessInfoEx : public WinLL::ProcessInfo, public TransientObject {
 public:
-	std::pair<const ImVec4, const ImVec4> Colors() const;
-	ProcessAttributes Attributes() const;
+	std::pair<const ImVec4, const ImVec4> Colors(WinLL::ProcessManager<ProcessInfoEx, WinLL::ThreadInfo>& pm) const;
+	ProcessAttributes Attributes(WinLL::ProcessManager<ProcessInfoEx, WinLL::ThreadInfo>& pm) const;
 	const std::wstring& UserName() const;
 	bool SuspendResume();
 

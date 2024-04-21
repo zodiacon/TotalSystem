@@ -14,5 +14,6 @@ struct FormatHelper abstract final {
 	static std::string ProtectionToString(WinLL::ProcessProtection protection);
 	static PCSTR IoPriorityToString(WinLL::IoPriority io);
 	static PCSTR PriorityClassToString(WinLL::PriorityClass pc);
+	static std::string Format(const char* fmt, ...);
 };
 

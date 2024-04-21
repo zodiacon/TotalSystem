@@ -11,7 +11,7 @@
 using namespace std;
 using namespace WinLL;
 
-std::pair<const ImVec4, const ImVec4> ProcessInfoEx::Colors() const {
+std::pair<const ImVec4, const ImVec4> ProcessInfoEx::Colors(ProcessManager<ProcessInfoEx, ThreadInfo>& pm) const {
 	using namespace ImGui;
 	auto& colors = Globals::Settings().GetProcessColors();
 
@@ -21,7 +21,7 @@ std::pair<const ImVec4, const ImVec4> ProcessInfoEx::Colors() const {
 	if (colors[TotalSysSettings::NewObjects].Enabled && IsNew())
 		return { colors[TotalSysSettings::NewObjects].Color, colors[TotalSysSettings::NewObjects].TextColor };
 
-	auto attributes = Attributes();
+	auto attributes = Attributes(pm);
 	if (colors[TotalSysSettings::Manageed].Enabled && (attributes & ProcessAttributes::Managed) == ProcessAttributes::Managed) {
 		return { colors[TotalSysSettings::Manageed].Color, colors[TotalSysSettings::Manageed].TextColor };
 	}
@@ -47,10 +47,10 @@ std::pair<const ImVec4, const ImVec4> ProcessInfoEx::Colors() const {
 	return { ImVec4(-1, 0, 0, 0), ImVec4() };
 }
 
-ProcessAttributes ProcessInfoEx::Attributes() const {
+ProcessAttributes ProcessInfoEx::Attributes(ProcessManager<ProcessInfoEx, ThreadInfo>& pm) const {
 	if (m_Attributes == ProcessAttributes::NotComputed) {
 		m_Attributes = ProcessAttributes::None;
-		auto parent = Globals::ProcessManager().GetProcessById(ParentId);
+		auto parent = pm.GetProcessById(ParentId);
 		if (parent && _wcsicmp(parent->GetImageName().c_str(), L"services.exe") == 0)
 			m_Attributes |= ProcessAttributes::Service;
 

@@ -230,6 +230,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="ProcessColor.h" />
     <ClInclude Include="ProcessesView.h" />
+    <ClInclude Include="ProcessHelper.h" />
     <ClInclude Include="ProcessInfoEx.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SortedFilteredVector.h" />
@@ -255,6 +256,7 @@
     </ClCompile>
     <ClCompile Include="ProcessColor.cpp" />
     <ClCompile Include="ProcessesView.cpp" />
+    <ClCompile Include="ProcessHelper.cpp" />
     <ClCompile Include="ProcessInfoEx.cpp" />
     <ClCompile Include="SortedFilteredVector.cpp" />
     <ClCompile Include="TotalSys.cpp" />

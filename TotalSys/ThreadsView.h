@@ -15,6 +15,7 @@ public:
 	void BuildThreadMenu();
 	void BuildWindow();
 	void BuildTable(std::shared_ptr<ProcessInfoEx> p);
+	void BuildToolBar();
 	void Clear();
 
 	static PCSTR StateToString(WinLL::ThreadState state);

@@ -7,6 +7,7 @@
 #include "TotalSysSettings.h"
 #include "SortHelper.h"
 #include "FormatHelper.h"
+#include <ImGuiExt.h>
 
 using namespace ImGui;
 using namespace std;
@@ -18,6 +19,7 @@ ThreadsView::ThreadsView(bool allThreads) : m_AllThreads(allThreads) {
 void ThreadsView::BuildWindow() {
 	if (Begin("All Threads", GetOpenAddress())) {
 		BuildTable(nullptr);
+		BuildToolBar();
 	}
 	ImGui::End();
 }
@@ -36,6 +38,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 		if (pid != -1) {
 			m_Process = pm.GetProcessById(pid);
 			m_Threads = m_Process->GetThreads();
+			m_SelectedThread = nullptr;
 		}
 		else if (m_Threads.empty()) {
 			m_Threads.insert(m_Threads.end(), pm.GetThreads().begin(), pm.GetThreads().end());
@@ -57,10 +60,11 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 	static const ColumnInfo columns[]{
 		{ "State", [&](auto& t) {
 			Image(GetStateImage(t->State).Get(), ImVec2(16, 16)); SameLine();
-			auto str = format("{}##{}" ,StateToString(t->State), pid);
+			auto str = format("{}##{}" ,StateToString(t->State), t->Id);
 			Selectable(str.c_str(), m_SelectedThread == t, ImGuiSelectableFlags_SpanAllColumns);
 			if (IsItemClicked()) {
 				m_SelectedThread = t;
+				SetItemDefaultFocus();
 			}
 			}, 0, 60 },
 		{ "TID", [&](auto& t) {
@@ -138,7 +142,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 			if (t->StackLimit)
 				Text("0x%p", t->StackLimit);
 			}, ImGuiTableColumnFlags_DefaultHide },
-		{ "Suspend", [](auto& t) {
+		{ "Suspend Cnt", [](auto& t) {
 			auto count = t->GetSuspendCount();
 			if(count)
 				Text("%4d", count);
@@ -192,7 +196,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 		}
 		auto count = (int)m_Threads.size();
 		for (int i = 0; i < count; i++) {
-			auto t = (ThreadInfoEx*)m_Threads[i].get();
+			auto t = static_pointer_cast<ThreadInfoEx>(m_Threads[i]);
 			if (t->Update()) {
 				m_Threads.erase(m_Threads.begin() + i);
 				i--;
@@ -216,15 +220,41 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(Globals::Settings().GetProcessColors()[TotalSysSettings::DeletedObjects].Color));
 				}
 
-				for (int i = 0; i < _countof(columns); i++) {
-					if (TableSetColumnIndex(i)) {
-						columns[i].Callback(t);
+				for (int c = 0; c < _countof(columns); c++) {
+					if (TableSetColumnIndex(c)) {
+						columns[c].Callback(t);
+						if (c == 0 && IsItemFocused())
+							m_SelectedThread = t;
 					}
 				}
 			}
 		}
 
 		EndTable();
+	}
+}
+
+void ThreadsView::BuildToolBar() {
+	auto selected = m_SelectedThread != nullptr;
+	if (ButtonEnabled("Stack", selected)) {
+	}
+	SameLine();
+	if (ButtonEnabled("Suspend", selected)) {
+		Thread t;
+		if (t.Open(m_SelectedThread->Id, ThreadAccessMask::SuspendResume))
+			t.Suspend();
+	}
+	SameLine();
+	if (ButtonEnabled("Resume", selected)) {
+		Thread t;
+		if (t.Open(m_SelectedThread->Id, ThreadAccessMask::SuspendResume))
+			t.Resume();
+	}
+	SameLine();
+	if (ButtonEnabled("Kill", selected)) {
+		Thread t;
+		if (t.Open(m_SelectedThread->Id, ThreadAccessMask::Terminate))
+			t.Terminate();
 	}
 }
 

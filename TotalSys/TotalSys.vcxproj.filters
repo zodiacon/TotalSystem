@@ -75,6 +75,9 @@
     <ClInclude Include="SortedFilteredVector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ProcessHelper.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TotalSys.cpp">
@@ -121,6 +124,9 @@
     </ClCompile>
     <ClCompile Include="SortedFilteredVector.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessHelper.cpp">
+      <Filter>Helpers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

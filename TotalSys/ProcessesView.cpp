@@ -12,6 +12,7 @@
 #include "Resource.h"
 #include <ShellApi.h>
 #include "TotalSysSettings.h"
+#include "ProcessHelper.h"
 
 #pragma comment(lib, "Shlwapi.lib")
 
@@ -89,7 +90,7 @@ void ProcessesView::DoSort(int col, bool asc) {
 			case Column::PeakThreads: return SortHelper::Sort(p1->PeakThreads, p2->PeakThreads, asc);
 			case Column::VirtualSize: return SortHelper::Sort(p1->VirtualSize, p2->VirtualSize, asc);
 			case Column::PeakWS: return SortHelper::Sort(p1->PeakWorkingSetSize, p2->PeakWorkingSetSize, asc);
-			case Column::Attributes: return SortHelper::Sort(p1->Attributes(), p2->Attributes(), asc);
+			case Column::Attributes: return SortHelper::Sort(p1->Attributes(m_ProcMgr), p2->Attributes(m_ProcMgr), asc);
 			case Column::PagedPool: return SortHelper::Sort(p1->PagedPoolUsage, p2->PagedPoolUsage, asc);
 			case Column::NonPagedPool: return SortHelper::Sort(p1->NonPagedPoolUsage, p2->NonPagedPoolUsage, asc);
 			case Column::KernelTime: return SortHelper::Sort(p1->KernelTime, p2->KernelTime, asc);
@@ -110,7 +111,7 @@ void ProcessesView::DoSort(int col, bool asc) {
 }
 
 void ProcessesView::DoUpdate() {
-	auto& pm = Globals::ProcessManager();
+	auto& pm = m_ProcMgr;
 	for (auto& pi : pm.GetNewProcesses()) {
 		m_Processes.push_back(pi);
 		pi->New(2000);
@@ -131,24 +132,26 @@ bool ProcessesView::KillProcess(uint32_t id) {
 
 void ProcessesView::TryKillProcess(ProcessInfo& pi) {
 	if (m_KillDlg.IsEmpty()) {
-		const std::string name(pi.GetImageName().begin(), pi.GetImageName().end());
-		auto text = format("Kill process {} ({})?", pi.Id, name);
+		m_PidsToKill.clear();
+		char text[128];
+		sprintf_s(text, "Kill process %u (%ws)?", pi.Id, pi.GetImageName().c_str());
 
-		m_KillDlg.Init("Kill Process?", move(text), MessageBoxButtons::OkCancel);
+		m_KillDlg.Init("Kill Process", text, MessageBoxButtons::OkCancel);
 	}
 }
 
 void ProcessesView::BuildTable() {
 	auto orgBackColor = GetStyle().Colors[ImGuiCol_TableRowBg];
-	auto& pm = Globals::ProcessManager();
+	auto& pm = m_ProcMgr;
 
 	static const ColumnInfo columns[] = {
 		{ "Name", [this](auto& p) {
 			Image(p->Icon(), ImVec2(16, 16)); SameLine();
-			const std::string name(p->GetImageName().begin(), p->GetImageName().end());
-			auto str = format("{}##{} {}", name, p->Id, p->ParentId);
-			Selectable(str.c_str(), m_SelectedProcess == p, ImGuiSelectableFlags_SpanAllColumns);
-
+			char name[64];
+			PushFont(Globals::VarFont());
+			sprintf_s(name, "%ws##%u %u", p->GetImageName().c_str(), p->Id, p->ParentId);
+			Selectable(name, m_SelectedProcess == p, ImGuiSelectableFlags_SpanAllColumns);
+			PopFont();
 			if (IsItemClicked()) {
 				m_SelectedProcess = p;
 			}
@@ -179,10 +182,12 @@ void ProcessesView::BuildTable() {
 			}, 0, 130.0f },
 		{ "User Name", [](auto p) {
 			auto& username = p->GetUserName(true);
+			PushFont(Globals::VarFont());
 			if (username.empty())
 				TextColored(StandardColors::LightGray, "<access denied>");
 			else
 				Text("%ws", username.c_str());
+			PopFont();
 			}, 0, 110.0f },
 		{ "Session", [](auto p) {
 			Text("%4u", p->SessionId);
@@ -253,8 +258,8 @@ void ProcessesView::BuildTable() {
 		{ "Peak WS", [](auto& p) {
 			Text("%12ws K", FormatHelper::FormatNumber(p->PeakWorkingSetSize >> 10).c_str());
 			}, ImGuiTableColumnFlags_DefaultHide },
-		{ "Attributes", [](auto& p) {
-			TextUnformatted(ProcessAttributesToString(p->Attributes()).c_str());
+		{ "Attributes", [this](auto& p) {
+			TextUnformatted(ProcessAttributesToString(p->Attributes(m_ProcMgr)).c_str());
 			}, },
 		{ "Paged Pool", [](auto& p) {
 			Text("%9ws K", FormatHelper::FormatNumber(p->PagedPoolUsage >> 10).c_str());
@@ -338,11 +343,18 @@ void ProcessesView::BuildTable() {
 
 		auto result = m_KillDlg.ShowModal();
 		if (result == MessageBoxResult::OK) {
-			auto success = KillProcess(m_SelectedProcess->Id);
-			if (success)
-				m_SelectedProcess.reset();
+			if (m_PidsToKill.empty()) {
+				auto success = KillProcess(m_SelectedProcess->Id);
+				if (success)
+					m_SelectedProcess.reset();
+			}
 			else {
-				//SimpleMessageBox::ShowModal("Terminate Process", format("Process {} termination failed.", m_SelectedProcess->Id).c_str());
+				for (auto& pid : m_PidsToKill) {
+					Process p;
+					if (p.Open(pid, ProcessAccessMask::Terminate))
+						p.Terminate();
+				}
+
 			}
 		}
 
@@ -421,7 +433,7 @@ void ProcessesView::BuildTable() {
 				TableNextRow();
 
 				auto popCount = 0;
-				auto colors = p->Colors();
+				auto colors = p->Colors(m_ProcMgr);
 				if (colors.first.x >= 0) {
 					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(colors.first));
 					PushStyleColor(ImGuiCol_Text, colors.second);
@@ -431,8 +443,10 @@ void ProcessesView::BuildTable() {
 				for (c = 0; c < _countof(columns); c++) {
 					if (TableSetColumnIndex(c)) {
 						columns[c].Callback(p);
-						if (c == 0 && IsItemFocused())
+						if (c == 0 && IsItemFocused()) {
 							m_SelectedProcess = p;
+							m_SelectedIndex = j;
+						}
 					}
 				}
 
@@ -488,6 +502,15 @@ void ProcessesView::BuildViewMenu() {
 void ProcessesView::BuildProcessMenu(ProcessInfoEx& pi) {
 	if (MenuItem("Kill", "Delete")) {
 		TryKillProcess(pi);
+	}
+	char name[32];
+	sprintf_s(name, "Kill all %ws processes...", pi.GetImageName().c_str());
+	if (MenuItem(name)) {
+		auto processes = ProcessHelper::GetProcessIdsByName(m_Processes.GetAllItems(), pi.GetImageName());
+		if (m_KillDlg.IsEmpty()) {
+			m_KillDlg.Init("Kill Processes", FormatHelper::Format("Kill %u processes named %ws?", (uint32_t)processes.size(), pi.GetImageName().c_str()), MessageBoxButtons::OkCancel);
+			m_PidsToKill = move(processes);
+		}
 	}
 	Separator();
 	if (BuildPriorityClassMenu(pi))
@@ -590,7 +613,7 @@ void ProcessesView::BuildToolBar() {
 
 void ProcessesView::BuildLowerPane() {
 	if (m_ShowLowerPane) {
-		if (BeginChild("lowerpane", ImVec2(0, 0), ImGuiChildFlags_None, ImGuiWindowFlags_NoTitleBar)) {
+		if (BeginChild("lowerpane", ImVec2(0, 0), ImGuiWindowFlags_None, ImGuiWindowFlags_NoScrollbar)) {
 			if (BeginTabBar("lowertabs", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_Reorderable)) {
 				if (m_SelectedProcess) {
 					SameLine(300);
@@ -598,6 +621,7 @@ void ProcessesView::BuildLowerPane() {
 				}
 				if (BeginTabItem("Threads", nullptr, ImGuiTabItemFlags_None)) {
 					if (m_SelectedProcess) {
+						m_ThreadsView.BuildToolBar();
 						m_ThreadsView.BuildTable(m_SelectedProcess);
 					}
 					EndTabItem();

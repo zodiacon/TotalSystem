@@ -114,3 +114,12 @@ PCSTR FormatHelper::PriorityClassToString(PriorityClass pc) {
 	}
 	return "";
 }
+
+std::string FormatHelper::Format(const char* fmt, ...) {
+	char buffer[128];
+	va_list args;
+	va_start(args, fmt);
+	vsprintf_s(buffer, fmt, args);
+	va_end(args);
+	return buffer;
+}

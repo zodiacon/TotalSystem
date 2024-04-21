@@ -193,7 +193,7 @@ public:
 		return items;
 	}
 
-	const std::vector<T> GetAllItems() const {
+	const std::vector<T>& GetAllItems() const {
 		return m_Items;
 	}
 

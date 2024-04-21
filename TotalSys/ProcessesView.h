@@ -17,7 +17,7 @@ class ProcessesView : public ViewBase {
 		Handles, WorkingSet, ExePath, CPUTime, PeakThreads, VirtualSize, PeakWS, Attributes,
 		PagedPool, NonPagedPool, KernelTime, UserTime,
 		PeakPagedPool, PeakNonPagedPool, Integrity, PEB, Protection, 
-		Platform, Description, Company, Virtualization, JobId, MemoryPriority, IoPriority,
+		Platform, Description, Company, JobId, MemoryPriority, IoPriority, Virtualization,
 		ReadOperationsCount, WriteOperationsCount, OtherOperationsCount,
 		ReadOperationsBytes, WriteOperationsBytes, OtherOperationsBytes,
 
@@ -58,6 +58,8 @@ private:
 	static std::string ProcessAttributesToString(ProcessAttributes attributes);
 
 private:
+	WinLL::ProcessManager<ProcessInfoEx, WinLL::ThreadInfo> m_ProcMgr;
+	std::vector<uint32_t> m_PidsToKill;
 	ThreadsView m_ThreadsView;
 	DWORD64 m_Tick = 0;
 	char m_FilterText[24]{};
@@ -67,5 +69,6 @@ private:
 	int m_UpdateInterval{ 1000 }, m_OldInterval{ 0 };
 	std::unordered_map<UINT, D3D11Image> m_Icons;
 	SimpleMessageBox m_KillDlg;
+	int m_SelectedIndex{ -1 };
 	bool m_Paused : 1 { false }, m_ShowLowerPane: 1{ false };
 };
