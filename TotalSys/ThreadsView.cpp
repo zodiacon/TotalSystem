@@ -16,22 +16,32 @@ ThreadsView::ThreadsView(bool allThreads) : m_AllThreads(allThreads) {
 }
 
 void ThreadsView::BuildWindow() {
+	if (Begin("All Threads", GetOpenAddress())) {
+		BuildTable(nullptr);
+	}
+	ImGui::End();
 }
 
-void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
-	bool newProcess = m_Process == nullptr || m_Process->Id != p->Id;
+void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
+	auto pid = p ? p->Id : -1;
+	bool newProcess = m_Threads.empty() || (m_Process && m_Process->Id != pid);
 
 	auto& pm = m_ProcMgr;
 	bool updated = false;
 	if (newProcess || (updated = ::GetTickCount64() - m_LastUpdate > 1000)) {
-		pm.UpdateWithThreads(p->Id);
+		pm.UpdateWithThreads(pid);
 		m_LastUpdate = ::GetTickCount64();
 	}
 	if (newProcess) {
-		m_Process = m_ProcMgr.GetProcessById(p->Id);
-		m_Threads = m_Process->GetThreads();
+		if (pid != -1) {
+			m_Process = pm.GetProcessById(pid);
+			m_Threads = m_Process->GetThreads();
+		}
+		else if (m_Threads.empty()) {
+			m_Threads.insert(m_Threads.end(), pm.GetThreads().begin(), pm.GetThreads().end());
+		}
 	}
-	else if (updated) {
+	else if(updated) {
 		for (auto t : pm.GetNewThreads()) {
 			t->New(2000);
 			m_Threads.push_back(t);
@@ -47,24 +57,24 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
 	static const ColumnInfo columns[]{
 		{ "State", [&](auto& t) {
 			Image(GetStateImage(t->State).Get(), ImVec2(16, 16)); SameLine();
-			auto str = format("{}##{}" ,StateToString(t->State), p->Id);
+			auto str = format("{}##{}" ,StateToString(t->State), pid);
 			Selectable(str.c_str(), m_SelectedThread == t, ImGuiSelectableFlags_SpanAllColumns);
 			if (IsItemClicked()) {
 				m_SelectedThread = t;
 			}
 			}, 0, 60 },
 		{ "TID", [&](auto& t) {
-			if (p->Id == 0)
+			if (pid == 0)
 				Text("%7u", t->Id);
 			else
 				Text("%7u (0x%05X)", t->Id, t->Id);
 			}, 0 },
 		{ "PID", [&](auto& t) {
 			Text("%7u (0x%05X)", t->ProcessId, t->ProcessId);
-			}, ImGuiTableColumnFlags_DefaultHide },
+			},  pid == -1 ? 0 : ImGuiTableColumnFlags_DefaultHide },
 		{ "Process Name", [&](auto& t) {
 			Text("%ws", t->GetProcessImageName().c_str());
-			}, ImGuiTableColumnFlags_DefaultHide },
+			}, pid == -1 ? 0 : ImGuiTableColumnFlags_DefaultHide },
 		{ "Wait Reason", [](auto& t) {
 			if (t->State == ThreadState::Waiting)
 				TextUnformatted(WaitReasonToString(t->WaitReason));
@@ -74,7 +84,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
 				auto value = t->CPU / 10000.0f;
 				auto str = format("{:7.2f}  ", value);
 				ImVec4 color;
-				auto customColors = p->Id && value > 1.0f;
+				auto customColors = pid && value > 1.0f;
 				if (customColors) {
 					color = ImColor::HSV(.6f, value / 100 + .3f, .3f).Value;
 				}
@@ -160,7 +170,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
 
 		int c = 0;
 		PushFont(Globals::VarFont());
-		auto header = p->Id == 0 ? "Processor" : "TID";
+		auto header = pid == 0 ? "Processor" : "TID";
 		for (auto& ci : columns) {
 			TableSetupColumn(c == 1 ? header : ci.Header, ci.Flags, ci.Width, c);
 			c++;
@@ -200,10 +210,10 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
 				TableNextRow();
 
 				if (t->IsNew()) {
-					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(Globals::Settings().ProcessColors[TotalSysSettings::NewObjects].Color));
+					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(Globals::Settings().GetProcessColors()[TotalSysSettings::NewObjects].Color));
 				}
 				else if (t->IsTerminated()) {
-					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(Globals::Settings().ProcessColors[TotalSysSettings::DeletedObjects].Color));
+					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(Globals::Settings().GetProcessColors()[TotalSysSettings::DeletedObjects].Color));
 				}
 
 				for (int i = 0; i < _countof(columns); i++) {
@@ -216,6 +226,13 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
 
 		EndTable();
 	}
+}
+
+void ThreadsView::Clear() {
+	m_Process = nullptr;
+	m_Threads.clear();
+	if (m_AllThreads)
+		m_Threads.reserve(4096);
 }
 
 PCSTR ThreadsView::StateToString(ThreadState state) {
@@ -326,6 +343,7 @@ void ThreadsView::DoSort(int column, bool asc) {
 			case Column::WaitTime: return SortHelper::Sort(t1->WaitTime, t2->WaitTime, asc);
 			case Column::MemoryPriority: return SortHelper::Sort(t1->GetMemoryPriority(), t2->GetMemoryPriority(), asc);
 			case Column::IOPriority: return SortHelper::Sort(t1->GetIoPriority(), t2->GetIoPriority(), asc);
+			case Column::Service: return SortHelper::Sort(t1->GetServiceName(), t2->GetServiceName(), asc);
 			//case Column::ComFlags: return SortHelper::SortNumbers(GetThreadInfoEx(t1.get()).GetComFlags(), GetThreadInfoEx(t2.get()).GetComFlags(), asc);
 			//case Column::ComApartment: return SortHelper::SortStrings(
 			//	FormatHelper::ComApartmentToString(GetThreadInfoEx(t1.get()).GetComFlags()),

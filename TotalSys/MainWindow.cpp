@@ -4,6 +4,7 @@
 #include "Globals.h"
 
 using namespace ImGui;
+using namespace WinLL;
 
 MainWindow::MainWindow(HWND hWnd) : m_hWnd(hWnd) {
 }
@@ -32,6 +33,7 @@ void MainWindow::BuildWindow() {
 				m_ProcessesView.Open();
 			}
 			if (MenuItem("Threads", nullptr, m_ThreadsView.IsOpen(), !m_ThreadsView.IsOpen())) {
+				m_ThreadsView.Clear();
 				m_ThreadsView.Open();
 			}
 			ImGui::EndMenu();
@@ -52,6 +54,12 @@ void MainWindow::BuildWindow() {
 				}
 				ImGui::EndMenu();
 			}
+			auto replaced = SecurityHelper::IsExeReplaced(L"taskmgr.exe");
+			if (MenuItem("Replace Task Manager", nullptr, replaced)) {
+				WCHAR path[MAX_PATH];
+				::GetModuleFileName(nullptr, path, _countof(path));
+				SecurityHelper::ReplaceExe(L"taskmgr.exe", path, replaced);
+			}
 			ImGui::EndMenu();
 		}
 		if (BeginMenu("Help")) {
@@ -64,7 +72,9 @@ void MainWindow::BuildWindow() {
 	}
 
 	m_ProcessesView.BuildWindow();
-	m_ThreadsView.BuildWindow();
+	if (m_ThreadsView.IsOpen()) {
+		m_ThreadsView.BuildWindow();
+	}
 }
 
 bool MainWindow::IsAlwaysOnTop() const {

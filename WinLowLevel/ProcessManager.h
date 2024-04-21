@@ -312,12 +312,15 @@ namespace WinLL {
 				pi->DiskCounters = ext->DiskCounters;
 				pi->ContextSwitches = ext->ContextSwitches;
 			}
-			if (includeThreads && (pid == 0 || pid == pi->Id)) {
+			if (includeThreads && (pid == -1 || pid == pi->Id)) {
 				auto threadCount = info->NumberOfThreads;
 				for (ULONG i = 0; i < threadCount; i++) {
 					auto tinfo = ((SYSTEM_EXTENDED_THREAD_INFORMATION*)info->Threads) + i;
-					if (pi->Id == 0)
+					if (pi->Id == 0) {
 						tinfo->ThreadInfo.ClientId.UniqueThread = ULongToHandle(i);
+						if (pi->Id == 0)
+							continue;	// skip IDLE process if all threads are requested
+					}
 					const auto& baseInfo = tinfo->ThreadInfo;
 					ProcessOrThreadKey key = { baseInfo.CreateTime.QuadPart, HandleToULong(baseInfo.ClientId.UniqueThread) };
 					shared_ptr<TThreadInfo> thread;

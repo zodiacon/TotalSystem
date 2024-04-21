@@ -14,7 +14,8 @@ public:
 	explicit ThreadsView(bool allThreads = false);
 	void BuildThreadMenu();
 	void BuildWindow();
-	void BuildTable(std::shared_ptr<ProcessInfoEx>& p);
+	void BuildTable(std::shared_ptr<ProcessInfoEx> p);
+	void Clear();
 
 	static PCSTR StateToString(WinLL::ThreadState state);
 	static PCSTR WaitReasonToString(WinLL::WaitReason reason);

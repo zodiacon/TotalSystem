@@ -239,6 +239,7 @@
     <ClCompile Include="Process.cpp" />
     <ClCompile Include="ProcessInfo.cpp" />
     <ClCompile Include="ProcessManager.cpp" />
+    <ClCompile Include="RegistryKey.cpp" />
     <ClCompile Include="SecurityHelper.cpp" />
     <ClCompile Include="SystemInformation.cpp" />
     <ClCompile Include="Thread.cpp" />

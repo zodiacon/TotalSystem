@@ -566,7 +566,7 @@ void ProcessesView::BuildToolBar() {
 		OpenPopup("colors");
 
 	if (BeginPopup("colors", ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) {
-		auto& colors = Globals::Settings().ProcessColors;
+		auto& colors = Globals::Settings().GetProcessColors();
 
 		for (auto& c : colors) {
 			Checkbox(c.Name.c_str(), &c.Enabled);

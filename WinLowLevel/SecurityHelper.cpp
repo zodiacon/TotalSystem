@@ -2,8 +2,12 @@
 #include "SecurityHelper.h"
 #include <shellapi.h>
 #include <wil\resource.h>
+#include "WinLowLevel.h"
+#include <assert.h>
 
 namespace WinLL {
+	const wstring ifeoKey(L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\");
+
 	using namespace std;
 
 	bool SecurityHelper::IsRunningElevated() {
@@ -81,5 +85,27 @@ namespace WinLL {
 			return result;
 		}
 		return L"";
+	}
+
+	bool SecurityHelper::ReplaceExe(PCWSTR exeToReplace, PCWSTR targetExePath, bool revert) {
+		RegistryKey key;
+		if (ERROR_SUCCESS != key.Create(HKEY_LOCAL_MACHINE, (ifeoKey + exeToReplace).c_str(), KEY_READ | KEY_WRITE | DELETE))
+			return false;
+
+		if (revert)
+			return key.DeleteValue(L"Debugger") == ERROR_SUCCESS;
+
+		return key.SetStringValue(L"Debugger", targetExePath, REG_SZ) == ERROR_SUCCESS;
+	}
+
+	bool SecurityHelper::IsExeReplaced(PCWSTR exeName) {
+		RegistryKey key;
+		if (ERROR_SUCCESS != key.Open(HKEY_LOCAL_MACHINE, (ifeoKey + exeName).c_str(), KEY_READ))
+			return false;
+
+		WCHAR path[MAX_PATH];
+		ULONG chars = _countof(path);
+		return key.QueryStringValue(L"Debugger", path, &chars) == ERROR_SUCCESS;
+
 	}
 }

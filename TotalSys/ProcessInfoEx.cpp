@@ -13,7 +13,7 @@ using namespace WinLL;
 
 std::pair<const ImVec4, const ImVec4> ProcessInfoEx::Colors() const {
 	using namespace ImGui;
-	auto& colors = Globals::Settings().ProcessColors;
+	auto& colors = Globals::Settings().GetProcessColors();
 
 	if (colors[TotalSysSettings::DeletedObjects].Enabled && IsTerminated())
 		return { colors[TotalSysSettings::DeletedObjects].Color, colors[TotalSysSettings::DeletedObjects].TextColor };

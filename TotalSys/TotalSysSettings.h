@@ -17,7 +17,13 @@ struct TotalSysSettings {
 		Suspended,
 	};
 
-	std::vector<ProcessColor> ProcessColors;
+	uint32_t NewObjectsTime{ 2000 };
+	uint32_t OldObjectsTime{ 2000 };
+
+	std::vector<ProcessColor>& GetProcessColors();
+
+private:
+	std::vector<ProcessColor> m_ProcessColors[2];
 
 };
 
