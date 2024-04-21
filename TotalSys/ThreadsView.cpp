@@ -46,29 +46,32 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
 
 	static const ColumnInfo columns[]{
 		{ "State", [&](auto& t) {
-			Image(GetStateImage(t.State).Get(), ImVec2(16, 16)); SameLine();
-			auto str = format("{}##{}" ,StateToString(t.State), p->Id);
-			Selectable(str.c_str(), false, ImGuiSelectableFlags_SpanAllColumns);
+			Image(GetStateImage(t->State).Get(), ImVec2(16, 16)); SameLine();
+			auto str = format("{}##{}" ,StateToString(t->State), p->Id);
+			Selectable(str.c_str(), m_SelectedThread == t, ImGuiSelectableFlags_SpanAllColumns);
+			if (IsItemClicked()) {
+				m_SelectedThread = t;
+			}
 			}, 0, 60 },
 		{ "TID", [&](auto& t) {
 			if (p->Id == 0)
-				Text("%7u", t.Id);
+				Text("%7u", t->Id);
 			else
-				Text("%7u (0x%05X)", t.Id, t.Id);
+				Text("%7u (0x%05X)", t->Id, t->Id);
 			}, 0 },
 		{ "PID", [&](auto& t) {
-			Text("%7u (0x%05X)", t.ProcessId, t.ProcessId);
+			Text("%7u (0x%05X)", t->ProcessId, t->ProcessId);
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Process Name", [&](auto& t) {
-			Text("%ws", t.GetProcessImageName().c_str());
+			Text("%ws", t->GetProcessImageName().c_str());
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Wait Reason", [](auto& t) {
-			if (t.State == ThreadState::Waiting)
-				TextUnformatted(WaitReasonToString(t.WaitReason));
+			if (t->State == ThreadState::Waiting)
+				TextUnformatted(WaitReasonToString(t->WaitReason));
 			}, 0, 120 },
 		{ "CPU %", [&](auto& t) {
-			if (t.CPU > 0 && t.State != ThreadState::Terminated) {
-				auto value = t.CPU / 10000.0f;
+			if (t->CPU > 0 && t->State != ThreadState::Terminated) {
+				auto value = t->CPU / 10000.0f;
 				auto str = format("{:7.2f}  ", value);
 				ImVec4 color;
 				auto customColors = p->Id && value > 1.0f;
@@ -88,31 +91,65 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
 			}
 		}, 0, 70 },
 		{ "Base Pri", [&](auto& t) {
-			Text("%4u", t.BasePriority);
+			Text("%4u", t->BasePriority);
 			}, ImGuiTableColumnFlags_NoResize, 65, },
 		{ "Dyn Pri", [&](auto& t) {
-			Text("%4u", t.Priority);
+			Text("%4u", t->Priority);
 			}, ImGuiTableColumnFlags_NoResize, 65 },
 		{ "CPU Time", [](auto& t) {
-			TextUnformatted(FormatHelper::FormatTimeSpan(t.UserTime + t.KernelTime).c_str());
+			TextUnformatted(FormatHelper::FormatTimeSpan(t->UserTime + t->KernelTime).c_str());
 			}, },
 		{ "Create Time", [](auto& t) {
-			Text(FormatHelper::FormatDateTime(t.CreateTime).c_str());
+			Text(FormatHelper::FormatDateTime(t->CreateTime).c_str());
 			},ImGuiTableColumnFlags_NoResize },
 		{ "Kernel Time", [](auto& t) {
-			TextUnformatted(FormatHelper::FormatTimeSpan(t.KernelTime).c_str());
-			}, },
+			TextUnformatted(FormatHelper::FormatTimeSpan(t->KernelTime).c_str());
+			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "User Time", [](auto& t) {
-			TextUnformatted(FormatHelper::FormatTimeSpan(t.UserTime).c_str());
-			}, },
+			TextUnformatted(FormatHelper::FormatTimeSpan(t->UserTime).c_str());
+			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Start Address", [](auto& t) {
-			if (t.StartAddress)
-				TextUnformatted(format("{}", t.StartAddress).c_str());
+			if (t->StartAddress)
+				Text("0x%p", t->StartAddress);
 			}, },
 		{ "Win32 Start Address", [](auto& t) {
-			if (t.Win32StartAddress)
-				TextUnformatted(format("{}", t.Win32StartAddress).c_str());
+			if (t->Win32StartAddress)
+				Text("0x%p", t->Win32StartAddress);
 			}, },
+		{ "TEB", [](auto& t) {
+			if(t->TebBase)
+				Text("0x%p", t->TebBase);
+			}, ImGuiTableColumnFlags_DefaultHide },
+		{ "Stack Base", [](auto& t) {
+			if (t->StackBase)
+				Text("0x%p", t->StackBase);
+			}, ImGuiTableColumnFlags_DefaultHide },
+		{ "Stack Limit", [](auto& t) {
+			if (t->StackLimit)
+				Text("0x%p", t->StackLimit);
+			}, ImGuiTableColumnFlags_DefaultHide },
+		{ "Suspend", [](auto& t) {
+			auto count = t->GetSuspendCount();
+			if(count)
+				Text("%4d", count);
+			}, ImGuiTableColumnFlags_DefaultHide },
+		{ "Service", [](auto& t) {
+			Text("%ws", t->GetServiceName().c_str());
+			}, ImGuiTableColumnFlags_DefaultHide },
+		{ "Ctx Switch", [](auto& t) {
+			Text("%ws", FormatHelper::FormatNumber(t->ContextSwitches).c_str());
+			}, ImGuiTableColumnFlags_DefaultHide },
+		{ "Mem Pri", [](auto& t) {
+			auto priority = t->GetMemoryPriority();
+			if(priority >= 0)
+				Text("%d", priority);
+			}, ImGuiTableColumnFlags_DefaultHide },
+		{ "I/O Pri", [](auto& t) {
+			Text("%s", FormatHelper::IoPriorityToString(t->GetIoPriority()));
+			}, ImGuiTableColumnFlags_DefaultHide },
+		{ "Wait Time", [](auto& t) {
+			TextUnformatted(FormatHelper::FormatTimeSpan(t->WaitTime).c_str());
+			}, ImGuiTableColumnFlags_DefaultHide },
 
 	};
 
@@ -159,13 +196,13 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx>& p) {
 
 		while (clipper.Step()) {
 			for (int j = clipper.DisplayStart; j < clipper.DisplayEnd; j++) {
-				auto& t = *(ThreadInfoEx*)m_Threads[j].get();
+				auto t = static_pointer_cast<ThreadInfoEx>(m_Threads[j]);
 				TableNextRow();
 
-				if (t.IsNew()) {
+				if (t->IsNew()) {
 					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(Globals::Settings().ProcessColors[TotalSysSettings::NewObjects].Color));
 				}
-				else if (t.IsTerminated()) {
+				else if (t->IsTerminated()) {
 					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(Globals::Settings().ProcessColors[TotalSysSettings::DeletedObjects].Color));
 				}
 
@@ -263,7 +300,10 @@ bool ThreadsView::Init() {
 }
 
 void ThreadsView::DoSort(int column, bool asc) {
-	std::sort(m_Threads.begin(), m_Threads.end(), [&](const auto& t1, const auto& t2) {
+	std::sort(m_Threads.begin(), m_Threads.end(), [&](const auto& tx1, const auto& tx2) {
+		auto t1 = static_pointer_cast<ThreadInfoEx>(tx1);
+		auto t2 = static_pointer_cast<ThreadInfoEx>(tx2);
+
 		switch (static_cast<Column>(column)) {
 			case Column::State: return SortHelper::Sort(t1->State, t2->State, asc);
 			case Column::Id: return SortHelper::Sort(t1->Id, t2->Id, asc);
@@ -284,8 +324,8 @@ void ThreadsView::DoSort(int column, bool asc) {
 			case Column::StackLimit: return SortHelper::Sort(t1->StackLimit, t2->StackLimit, asc);
 			case Column::ContextSwitches: return SortHelper::Sort(t1->ContextSwitches, t2->ContextSwitches, asc);
 			case Column::WaitTime: return SortHelper::Sort(t1->WaitTime, t2->WaitTime, asc);
-			//case Column::MemoryPriority: return SortHelper::Sort(t1->GetMemoryPriority(), t2->GetMemoryPriority(), asc);
-			//case Column::IOPriority: return SortHelper::Sort(t1->GetIoPriority(), t2->GetIoPriority(), asc);
+			case Column::MemoryPriority: return SortHelper::Sort(t1->GetMemoryPriority(), t2->GetMemoryPriority(), asc);
+			case Column::IOPriority: return SortHelper::Sort(t1->GetIoPriority(), t2->GetIoPriority(), asc);
 			//case Column::ComFlags: return SortHelper::SortNumbers(GetThreadInfoEx(t1.get()).GetComFlags(), GetThreadInfoEx(t2.get()).GetComFlags(), asc);
 			//case Column::ComApartment: return SortHelper::SortStrings(
 			//	FormatHelper::ComApartmentToString(GetThreadInfoEx(t1.get()).GetComFlags()),

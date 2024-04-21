@@ -72,6 +72,9 @@
     <ClInclude Include="ViewBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SortedFilteredVector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TotalSys.cpp">
@@ -114,6 +117,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ViewBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SortedFilteredVector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

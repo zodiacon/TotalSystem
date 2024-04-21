@@ -232,6 +232,7 @@
     <ClInclude Include="ProcessesView.h" />
     <ClInclude Include="ProcessInfoEx.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="SortedFilteredVector.h" />
     <ClInclude Include="TotalSysSettings.h" />
     <ClInclude Include="SortHelper.h" />
     <ClInclude Include="targetver.h" />
@@ -255,6 +256,7 @@
     <ClCompile Include="ProcessColor.cpp" />
     <ClCompile Include="ProcessesView.cpp" />
     <ClCompile Include="ProcessInfoEx.cpp" />
+    <ClCompile Include="SortedFilteredVector.cpp" />
     <ClCompile Include="TotalSys.cpp" />
     <ClCompile Include="TotalSysSettings.cpp" />
     <ClCompile Include="SortHelper.cpp" />

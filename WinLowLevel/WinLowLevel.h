@@ -463,6 +463,15 @@ namespace WinLL {
 		App,
 	};
 
+	enum class IoPriority {
+		Unknown = -1,
+		VeryLow = 0,
+		Low,
+		Normal,
+		High,
+		Critical
+	};
+
 	enum class VirtualizationState {
 		Unknown,
 		NotAllowed,
@@ -480,7 +489,7 @@ namespace WinLL {
 	struct ProcessProtection {
 		union {
 			uint8_t Level;
-			struct _ {
+			struct {
 				uint8_t Type : 3;
 				uint8_t Audit : 1;
 				ProcessProtectionSigner Signer : 4;
@@ -509,13 +518,16 @@ namespace WinLL {
 		[[nodiscard]] wstring GetAppUserModelId() const;
 		[[nodiscard]] wstring GetAppId() const;
 		[[nodiscard]] PriorityClass GetPriorityClass() const;
-		bool SetPriorityClass(PriorityClass pc);
-		bool Terminate(int32_t exitCode = 0);
 		[[nodiscard]] std::wstring GetFullImageName() const;
 		[[nodiscard]] IntegrityLevel GetIntegrityLevel() const;
+		[[nodiscard]] ProcessProtection GetProtection() const;
+		[[nodiscard]] int GetMemoryPriority() const;
+		[[nodiscard]] IoPriority GetIoPriority() const;
 
 		bool Suspend();
 		bool Resume();
+		bool SetPriorityClass(PriorityClass pc);
+		bool Terminate(int32_t exitCode = 0);
 
 		[[nodiscard]] bool IsImmersive() const noexcept;
 		[[nodiscard]] bool IsProtected() const;
@@ -565,15 +577,6 @@ namespace WinLL {
 		}
 	};
 
-	enum class IoPriority {
-		Unknown = -1,
-		VeryLow = 0,
-		Low,
-		Normal,
-		High,
-		Critical
-	};
-
 	struct CpuNumber {
 		uint16_t Group;
 		uint8_t Number;
@@ -602,9 +605,13 @@ namespace WinLL {
 		CpuNumber GetIdealProcessor() const;
 		bool Terminate(uint32_t exitCode = 0);
 		[[nodiscard]] int GetMemoryPriority() const;
-		IoPriority GetIoPriority() const;
+		[[nodiscard]] IoPriority GetIoPriority() const;
 		[[nodiscard]] size_t GetSubProcessTag() const;
 		[[nodiscard]] std::wstring GetServiceNameByTag(uint32_t pid);
+		[[nodiscard]] int GetSuspendCount() const;
+
+		bool Suspend();
+		bool Resume();
 	};
 
 	class Token : public KernelObject {

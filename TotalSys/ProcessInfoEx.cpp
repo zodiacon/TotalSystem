@@ -4,6 +4,9 @@
 #include "Globals.h"
 #include "ProcessColor.h"
 #include "TotalSysSettings.h"
+#include <ShellScalingApi.h>
+
+#pragma comment(lib, "Version.lib")
 
 using namespace std;
 using namespace WinLL;
@@ -148,4 +151,90 @@ PVOID ProcessInfoEx::GetPeb() const {
 			m_Peb = p.GetPeb();
 	}
 	return m_Peb;
+}
+
+WinLL::ProcessProtection ProcessInfoEx::GetProtection() const {
+	Process p;
+	if (p.Open(Id, ProcessAccessMask::QueryLimitedInformation))
+		return p.GetProtection();
+	return ProcessProtection();
+}
+
+const wstring& ProcessInfoEx::GetDescription() const {
+	if (!m_DescChecked) {
+		m_Description = GetVersionObject(L"FileDescription");
+		m_DescChecked = true;
+	}
+	return m_Description;
+}
+
+const wstring& ProcessInfoEx::GetCompanyName() const {
+	if (!m_CompanyChecked) {
+		m_Company = GetVersionObject(L"CompanyName");
+		m_CompanyChecked = true;
+	}
+	return m_Company;
+}
+
+DpiAwareness ProcessInfoEx::GetDpiAwareness() const {
+	static const auto pGetProcessDpiAware = (decltype(::GetProcessDpiAwareness)*)::GetProcAddress(::GetModuleHandle(L"shcore"), "GetProcessDpiAwareness");
+	DpiAwareness da = DpiAwareness::None;
+	if (pGetProcessDpiAware == nullptr)
+		return da;
+
+	Process p;
+	if (p.Open(Id, ProcessAccessMask::QueryLimitedInformation)) {
+		pGetProcessDpiAware(p.Handle(), reinterpret_cast<PROCESS_DPI_AWARENESS*>(&da));
+	}
+	return da;
+}
+
+wstring ProcessInfoEx::GetVersionObject(const wstring& name) const {
+	BYTE buffer[1 << 12];
+	wstring result;
+	const auto& exe = GetExecutablePath();
+	if (::GetFileVersionInfo(exe.c_str(), 0, sizeof(buffer), buffer)) {
+		WORD* langAndCodePage;
+		UINT len;
+		if (::VerQueryValue(buffer, L"\\VarFileInfo\\Translation", (void**)&langAndCodePage, &len)) {
+			auto text = format(L"\\StringFileInfo\\{:04x}{:04x}\\{}", langAndCodePage[0], langAndCodePage[1], name);
+			WCHAR* desc;
+			if (::VerQueryValue(buffer, text.c_str(), (void**)&desc, &len))
+				result = desc;
+		}
+	}
+	return result;
+}
+
+int ProcessInfoEx::GetBitness() const {
+	if (m_Bitness == 0) {
+		static SYSTEM_INFO si = { 0 };
+		if (si.dwNumberOfProcessors == 0)
+			::GetNativeSystemInfo(&si);
+		Process p;
+		if (p.Open(Id, ProcessAccessMask::QueryLimitedInformation)) {
+			if (p.IsWow64Process())
+				m_Bitness = 32;
+			else
+				m_Bitness = si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL || si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM ? 32 : 64;
+		}
+		else {
+			m_Bitness = si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL || si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM ? 32 : 64;
+		}
+	}
+	return m_Bitness;
+}
+
+int ProcessInfoEx::GetMemoryPriority() const {
+	Process p;
+	if (p.Open(Id, ProcessAccessMask::QueryLimitedInformation))
+		return p.GetMemoryPriority();
+	return -1;
+}
+
+WinLL::IoPriority ProcessInfoEx::GetIoPriority() const {
+	Process p;
+	if (p.Open(Id, ProcessAccessMask::QueryLimitedInformation))
+		return p.GetIoPriority();
+	return IoPriority::Unknown;
 }

@@ -22,23 +22,33 @@ public:
 	std::pair<const ImVec4, const ImVec4> Colors() const;
 	ProcessAttributes Attributes() const;
 	const std::wstring& UserName() const;
-
-	bool IsSuspended() const;
 	bool SuspendResume();
-	const std::wstring& GetExecutablePath() const;
-	ID3D11ShaderResourceView* Icon() const;
-	WinLL::IntegrityLevel GetIntegrityLevel() const;
-	PVOID GetPeb() const;
 
-	bool Filtered{ false };
+	[[nodiscard]] bool IsSuspended() const;
+	[[nodiscard]] const std::wstring& GetExecutablePath() const;
+	[[nodiscard]] ID3D11ShaderResourceView* Icon() const;
+	[[nodiscard]] WinLL::IntegrityLevel GetIntegrityLevel() const;
+	[[nodiscard]] PVOID GetPeb() const;
+	[[nodiscard]] WinLL::ProcessProtection GetProtection() const;
+	[[nodiscard]] const std::wstring& GetDescription() const;
+	[[nodiscard]] const std::wstring& GetCompanyName() const;
+	[[nodiscard]] WinLL::DpiAwareness GetDpiAwareness() const;
+	[[nodiscard]] int GetBitness() const;
+	[[nodiscard]] int GetMemoryPriority() const;
+	[[nodiscard]] WinLL::IoPriority GetIoPriority() const;
+
+private:
+	std::wstring GetVersionObject(const std::wstring& name) const;
 
 private:
 	mutable D3D11Image m_Icon;
 	mutable wil::com_ptr<ID3D11ShaderResourceView> m_spIcon;
 	mutable std::wstring m_ExecutablePath;
 	mutable ProcessAttributes m_Attributes = ProcessAttributes::NotComputed;
-	mutable std::wstring m_UserName;
+	mutable std::wstring m_UserName, m_Description, m_Company;
 	mutable PVOID m_Peb{ nullptr };
-	bool m_Suspended : 1 { false};
+	mutable int m_Bitness{ 0 };
+	mutable	bool m_Suspended : 1 { false };
+	mutable bool m_CompanyChecked{ false }, m_DescChecked{ false };
 };
 

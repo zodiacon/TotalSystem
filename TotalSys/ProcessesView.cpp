@@ -70,7 +70,7 @@ void ProcessesView::ShowLowerPane(bool show) {
 }
 
 void ProcessesView::DoSort(int col, bool asc) {
-	ranges::sort(m_Processes, [&](const auto& p1, const auto& p2) {
+	m_Processes.Sort([&](const auto& p1, const auto& p2) {
 		switch (static_cast<Column>(col)) {
 			case Column::ProcessName: return SortHelper::Sort(p1->GetImageName(), p2->GetImageName(), asc);
 			case Column::Pid: return SortHelper::Sort(p1->Id, p2->Id, asc);
@@ -97,6 +97,13 @@ void ProcessesView::DoSort(int col, bool asc) {
 			case Column::PeakPagedPool: return SortHelper::Sort(p1->PeakPagedPoolUsage, p2->PeakPagedPoolUsage, asc);
 			case Column::PeakNonPagedPool: return SortHelper::Sort(p1->PeakNonPagedPoolUsage, p2->PeakNonPagedPoolUsage, asc);
 			case Column::Integrity: return SortHelper::Sort(p1->GetIntegrityLevel(), p2->GetIntegrityLevel(), asc);
+			case Column::PEB: return SortHelper::Sort(p1->GetPeb(), p2->GetPeb(), asc);
+			case Column::Protection: return SortHelper::Sort(p1->GetProtection().Level, p2->GetProtection().Level, asc);
+			case Column::Company: return SortHelper::Sort(p1->GetCompanyName(), p2->GetCompanyName(), asc);
+			case Column::Platform: return SortHelper::Sort(p1->GetBitness(), p2->GetBitness(), asc);
+			case Column::JobId: return SortHelper::Sort(p1->JobObjectId, p2->JobObjectId, asc);
+			case Column::MemoryPriority: return SortHelper::Sort(p1->GetMemoryPriority(), p2->GetMemoryPriority(), asc);
+			case Column::IoPriority: return SortHelper::Sort(p1->GetIoPriority(), p2->GetIoPriority(), asc);
 		}
 		return false;
 		});
@@ -140,7 +147,7 @@ void ProcessesView::BuildTable() {
 			Image(p->Icon(), ImVec2(16, 16)); SameLine();
 			const std::string name(p->GetImageName().begin(), p->GetImageName().end());
 			auto str = format("{}##{} {}", name, p->Id, p->ParentId);
-			Selectable(str.c_str(), m_SelectedProcess.get() == p.get(), ImGuiSelectableFlags_SpanAllColumns);
+			Selectable(str.c_str(), m_SelectedProcess == p, ImGuiSelectableFlags_SpanAllColumns);
 
 			if (IsItemClicked()) {
 				m_SelectedProcess = p;
@@ -230,7 +237,9 @@ void ProcessesView::BuildTable() {
 			Text("%12ws K", FormatHelper::FormatNumber(p->WorkingSetSize >> 10).c_str());
 			}, },
 		{ "Executable Path", [](auto& p) {
+			PushFont(Globals::VarFont());
 			Text("%ws", p->GetExecutablePath().c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide, 150.0f },
 		{ "CPU Time", [](auto& p) {
 			TextUnformatted(FormatHelper::FormatTimeSpan(p->UserTime + p->KernelTime).c_str());
@@ -269,8 +278,41 @@ void ProcessesView::BuildTable() {
 			TextUnformatted(FormatHelper::IntegrityToString(p->GetIntegrityLevel()));
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "PEB", [](auto& p) {
-			Text("0x%p", p->GetPeb());
+			auto peb = p->GetPeb();
+			if (peb)
+				Text("0x%p", peb);
 			}, ImGuiTableColumnFlags_DefaultHide },
+		{ "Protection", [](auto& p) {
+			auto protection = p->GetProtection();
+			PushFont(Globals::VarFont());
+			TextUnformatted(FormatHelper::ProtectionToString(protection).c_str());
+			PopFont();
+			}, ImGuiTableColumnFlags_DefaultHide },
+		{ "Platform", [](auto& p) {
+			Text("%d-Bit", p->GetBitness());
+			}, 0 },
+		{ "Description", [](auto& p) {
+			PushFont(Globals::VarFont());
+			Text("%ws", p->GetDescription().c_str());
+			PopFont();
+			}, 0, 150, },
+		{ "Company Name", [](auto& p) {
+			PushFont(Globals::VarFont());
+			Text("%ws", p->GetCompanyName().c_str());
+			PopFont();
+			}, ImGuiTableColumnFlags_DefaultHide, 150, },
+		{ "Job ID", [](auto& p) {
+			if (p->JobObjectId)
+				Text("%4u", p->JobObjectId);
+			}, ImGuiTableColumnFlags_DefaultHide, 60, },
+		{ "Memory Pri", [](auto& p) {
+			auto priority = p->GetMemoryPriority();
+			if (priority >= 0)
+				Text("%4u", priority);
+			}, ImGuiTableColumnFlags_DefaultHide, 60, },
+		{ "I/O Pri", [](auto& p) {
+			TextUnformatted(FormatHelper::IoPriorityToString(p->GetIoPriority()));
+			}, ImGuiTableColumnFlags_DefaultHide, 70, },
 
 	};
 
@@ -305,6 +347,34 @@ void ProcessesView::BuildTable() {
 		}
 
 		if (m_UpdateInterval > 0 && ::GetTickCount64() - m_Tick >= m_UpdateInterval) {
+			std::string filter;
+			if (m_FilterText[0]) {
+				filter = m_FilterText;
+				_strlwr_s(filter.data(), filter.length() + 1);
+			}
+			if (m_FilterText[0]) {
+				m_Processes.Filter([&](auto& p, auto) {
+					std::wstring name(p->GetImageName());
+					if (!name.empty()) {
+						_wcslwr_s(name.data(), name.length() + 1);
+						wstring wfilter(filter.begin(), filter.end());
+						if (name.find(wfilter) != wstring::npos) {
+							return true;
+						}
+					}
+					if (to_string(p->Id).find(filter) != string::npos) {
+						return true;
+					}
+					if (format("{:x}", p->Id).find(filter) != string::npos) {
+						return true;
+					}
+					return false;
+					});
+			}
+			else {
+				m_Processes.Filter(nullptr);
+			}
+
 			auto empty = m_Processes.empty();
 			if (empty) {
 				m_Processes.reserve(1024);
@@ -321,15 +391,6 @@ void ProcessesView::BuildTable() {
 			m_Tick = ::GetTickCount64();
 		}
 
-
-		std::string filter;
-		if (m_FilterText[0]) {
-			filter = m_FilterText;
-			_strlwr_s(filter.data(), filter.length() + 1);
-		}
-		std::vector<int> indices;
-		indices.reserve(m_Processes.size());
-
 		auto count = static_cast<int>(m_Processes.size());
 		for (int i = 0; i < count; i++) {
 			auto& p = m_Processes[i];
@@ -337,52 +398,26 @@ void ProcessesView::BuildTable() {
 				// process terminated
 				if (p == m_SelectedProcess)
 					m_SelectedProcess.reset();
-				m_Processes.erase(m_Processes.begin() + i);
+				m_Processes.Remove(i);
 				i--;
 				count--;
 				continue;
 			}
-			p->Filtered = false;
-			if (filter[0]) {
-				p->Filtered = true;
-				std::wstring name(p->GetImageName());
-				if (!name.empty()) {
-					_wcslwr_s(name.data(), name.length() + 1);
-					wstring wfilter(filter.begin(), filter.end());
-					if (name.find(wfilter) != wstring::npos) {
-						p->Filtered = false;
-					}
-				}
-				if (p->Filtered && to_string(p->Id).find(filter) != string::npos) {
-					p->Filtered = false;
-				}
-				if (p->Filtered && format("{:x}", p->Id).find(filter) != string::npos) {
-					p->Filtered = false;
-				}
-			}
-			if (!p->Filtered)
-				indices.push_back(i);
 		}
-
 		auto specs = TableGetSortSpecs();
 		if (specs && specs->SpecsDirty) {
 			m_Specs = specs->Specs;
 			DoSort(m_Specs->ColumnIndex, m_Specs->SortDirection == ImGuiSortDirection_Ascending);
 			specs->SpecsDirty = false;
 		}
-		ImGuiListClipper clipper;
 
-		count = static_cast<int>(indices.size());
+		count = static_cast<int>(m_Processes.size());
+		ImGuiListClipper clipper;
 		clipper.Begin(count);
 
 		while (clipper.Step()) {
 			for (int j = clipper.DisplayStart; j < clipper.DisplayEnd; j++) {
-				int i = indices[j];
-				auto& p = m_Processes[i];
-				if (p->Filtered) {
-					clipper.ItemsCount--;
-					continue;
-				}
+				auto& p = m_Processes[j];
 				TableNextRow();
 
 				auto popCount = 0;
@@ -463,7 +498,7 @@ void ProcessesView::BuildProcessMenu(ProcessInfoEx& pi) {
 	}
 	Separator();
 
-	if (MenuItem("Go to file location...")) {
+	if (MenuItem("Open file location")) {
 		GotoFileLocation(pi);
 	}
 	Separator();
@@ -485,7 +520,7 @@ void ProcessesView::BuildToolBar() {
 	InputTextWithHint("##Filter", "Filter (Ctrl+F)", m_FilterText, _countof(m_FilterText), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll);
 
 	SameLine(0, 20);
-	PushStyleColor(ImGuiCol_Button, StandardColors::DarkRed);
+	PushStyleColor(ImGuiCol_Button, Globals::IsDarkMode() ? StandardColors::DarkRed : StandardColors::Red);
 
 	if (ButtonEnabled("Kill", m_SelectedProcess != nullptr, ImVec2(40, 0))) {
 		TryKillProcess(*m_SelectedProcess);

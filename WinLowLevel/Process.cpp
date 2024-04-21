@@ -185,4 +185,27 @@ namespace WinLL {
 		return (IntegrityLevel)(*::GetSidSubAuthority(sid, *::GetSidSubAuthorityCount(sid) - 1));
 	}
 
+	ProcessProtection Process::GetProtection() const {
+		ProcessProtection protection;
+		ULONG len;
+		auto status = ::NtQueryInformationProcess(Handle(), ProcessProtectionInformation, &protection, sizeof(protection), &len);
+		if (!NT_SUCCESS(status))
+			return ProcessProtection();
+		return protection;
+	}
+
+	int Process::GetMemoryPriority() const {
+		int priority = -1;
+		ULONG len;
+		::NtQueryInformationProcess(Handle(), ProcessPagePriority, &priority, sizeof(priority), &len);
+		return priority;
+	}
+
+	IoPriority Process::GetIoPriority() const {
+		auto priority = IoPriority::Unknown;
+		ULONG len;
+		::NtQueryInformationProcess(Handle(), ProcessIoPriority, &priority, sizeof(priority), &len);
+		return priority;
+	}
+
 }

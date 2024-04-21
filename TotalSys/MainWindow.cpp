@@ -41,13 +41,11 @@ void MainWindow::BuildWindow() {
 				ToggleAlwaysOnTop();
 			}
 			if (BeginMenu("Theme")) {
-				if (MenuItem("Dark", nullptr, m_Dark)) {
-					StyleColorsDark();
-					m_Dark = true;
+				if (MenuItem("Dark", nullptr, Globals::IsDarkMode())) {
+					Globals::SetDarkMode(true);
 				}
-				if (MenuItem("Light", nullptr, !m_Dark)) {
-					ImGui::StyleColorsLight();
-					m_Dark = false;
+				if (MenuItem("Light", nullptr, !Globals::IsDarkMode())) {
+					Globals::SetDarkMode(false);
 				}
 				Separator();
 				if (MenuItem("As System")) {
@@ -57,7 +55,7 @@ void MainWindow::BuildWindow() {
 			ImGui::EndMenu();
 		}
 		if (BeginMenu("Help")) {
-			if (MenuItem("About Process Manager...")) {
+			if (MenuItem("About Total System...")) {
 			}
 			ImGui::EndMenu();
 		}
@@ -78,4 +76,5 @@ bool MainWindow::ToggleAlwaysOnTop() {
 	::SetWindowPos(m_hWnd, onTop ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 	return onTop;
 }
+
 

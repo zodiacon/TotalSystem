@@ -3,6 +3,11 @@
 #include "WinLowLevel.h"
 
 namespace WinLL {
+	bool Thread::Open(uint32_t id, ThreadAccessMask access) {
+		m_hObject.reset(::OpenThread(access, FALSE, id));
+		return m_hObject != nullptr;
+	}
+
 	int Thread::GetMemoryPriority() const {
 		int priority = -1;
 		ULONG len;
@@ -58,5 +63,19 @@ namespace WinLL {
 		if (err)
 			return L"";
 		return info.OutParams.pszName;
+	}
+
+	int Thread::GetSuspendCount() const {
+		int count = 0;
+		NtQueryInformationThread(Handle(), ThreadSuspendCount, &count, sizeof(count), nullptr);
+		return count;
+	}
+
+	bool Thread::Suspend() {
+		return ::SuspendThread(Handle()) != -1;
+	}
+
+	bool Thread::Resume() {
+		return ::ResumeThread(Handle()) != -1;
 	}
 }

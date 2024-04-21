@@ -11,5 +11,8 @@ struct FormatHelper abstract final {
 	static PCSTR VirtualizationStateToString(WinLL::VirtualizationState state);
 	static PCSTR IntegrityToString(WinLL::IntegrityLevel level);
 	static PCSTR SidNameUseToString(SID_NAME_USE use);
+	static std::string ProtectionToString(WinLL::ProcessProtection protection);
+	static PCSTR IoPriorityToString(WinLL::IoPriority io);
+	static PCSTR PriorityClassToString(WinLL::PriorityClass pc);
 };
 

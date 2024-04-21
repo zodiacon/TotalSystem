@@ -18,6 +18,18 @@ ImFont* Globals::VarFont() {
 	return s_pVarFont;
 }
 
+bool Globals::IsDarkMode() {
+	return s_Dark;
+}
+
+void Globals::SetDarkMode(bool dark) {
+	if (s_Dark = dark)
+		ImGui::StyleColorsDark();
+	else
+		ImGui::StyleColorsLight();
+
+}
+
 TotalSysSettings& Globals::Settings() {
 	static TotalSysSettings settings;
 	return settings;

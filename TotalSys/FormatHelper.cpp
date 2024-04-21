@@ -69,3 +69,48 @@ PCSTR FormatHelper::SidNameUseToString(SID_NAME_USE use) {
 	}
 	return "<Unknown>";
 }
+
+string FormatHelper::ProtectionToString(WinLL::ProcessProtection protection) {
+	if (protection.Level == 0) {
+		return "";
+	}
+
+	static const PCSTR signer[] = {
+		"Authenticode",
+		"CodeGen",
+		"Antimalware",
+		"LSA",
+		"Windows",
+		"WinTcb",
+		"WinSystem",
+		"App"
+	};
+	string result = signer[(int)protection.Signer - 1];
+	result += format(" ({}) ", (int)protection.Signer);
+	if(protection.Type == 1)
+		result += "(PPL)";
+	return result;
+}
+
+PCSTR FormatHelper::IoPriorityToString(WinLL::IoPriority io) {
+	switch (io) {
+		case IoPriority::Critical: return "Critical";
+		case IoPriority::High: return "High";
+		case IoPriority::Low: return "Low";
+		case IoPriority::Normal: return "Normal";
+		case IoPriority::VeryLow: return "Very Low";
+	}
+	return "";
+}
+
+PCSTR FormatHelper::PriorityClassToString(PriorityClass pc) {
+	switch (pc) {
+		case PriorityClass::Normal: return "Normal (8)";
+		case PriorityClass::AboveNormal: return "Above Normal (10)";
+		case PriorityClass::BelowNormal: return "Below Normal (6)";
+		case PriorityClass::High: return "High (13)";
+		case PriorityClass::Idle: return "Idle (4)";
+		case PriorityClass::Realtime: return "Realtime (24)";
+	}
+	return "";
+}

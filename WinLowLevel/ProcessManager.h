@@ -31,9 +31,9 @@ namespace WinLL {
 		ProcessManager& operator=(const ProcessManager&) = delete;
 
 		void Update() {
-			Update(false, 0);
+			Update(false, -1);
 		}
-		void UpdateWithThreads(uint32_t pid = 0) {
+		void UpdateWithThreads(uint32_t pid = -1) {
 			Update(true, pid);
 		}
 
@@ -102,7 +102,7 @@ namespace WinLL {
 				auto p = reinterpret_cast<SYSTEM_PROCESS_INFORMATION*>(m_Buffer.get());
 
 				for (;;) {
-					if (pid == 0 || pid == HandleToULong(p->UniqueProcessId)) {
+					if (pid == -1 || pid == HandleToULong(p->UniqueProcessId)) {
 						ProcessOrThreadKey key = { p->CreateTime.QuadPart, HandleToULong(p->UniqueProcessId) };
 						shared_ptr<TProcessInfo> pi;
 						if (auto it = m_ProcessesByKey.find(key); it == m_ProcessesByKey.end()) {

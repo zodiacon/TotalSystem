@@ -5,6 +5,7 @@
 #include <SimpleMessageBox.h>
 #include "ThreadsView.h"
 #include "ViewBase.h"
+#include "SortedFilteredVector.h"
 
 //#include "ProcessProperties.h"
 
@@ -15,7 +16,11 @@ class ProcessesView : public ViewBase {
 		ProcessName, Pid, UserName, Session, CPU, ParentPid, CreateTime, Commit, BasePriority, Threads,
 		Handles, WorkingSet, ExePath, CPUTime, PeakThreads, VirtualSize, PeakWS, Attributes,
 		PagedPool, NonPagedPool, KernelTime, UserTime,
-		PeakPagedPool, PeakNonPagedPool, Integrity, 
+		PeakPagedPool, PeakNonPagedPool, Integrity, PEB, Protection, 
+		Platform, Description, Company, Virtualization, JobId, MemoryPriority, IoPriority,
+		ReadOperationsCount, WriteOperationsCount, OtherOperationsCount,
+		ReadOperationsBytes, WriteOperationsBytes, OtherOperationsBytes,
+
 	};
 
 	struct ColumnInfo {
@@ -56,7 +61,7 @@ private:
 	ThreadsView m_ThreadsView;
 	DWORD64 m_Tick = 0;
 	char m_FilterText[24]{};
-	std::vector<std::shared_ptr<ProcessInfoEx>> m_Processes;
+	SortedFilteredVector<std::shared_ptr<ProcessInfoEx>> m_Processes;
 	const ImGuiTableColumnSortSpecs* m_Specs = nullptr;
 	std::shared_ptr<ProcessInfoEx> m_SelectedProcess;
 	int m_UpdateInterval{ 1000 }, m_OldInterval{ 0 };
