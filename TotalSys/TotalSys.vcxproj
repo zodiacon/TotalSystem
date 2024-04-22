@@ -226,7 +226,9 @@
   <ItemGroup>
     <ClInclude Include="FormatHelper.h" />
     <ClInclude Include="Globals.h" />
+    <ClInclude Include="IconManager.h" />
     <ClInclude Include="MainWindow.h" />
+    <ClInclude Include="ModulesView.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ProcessColor.h" />
     <ClInclude Include="ProcessesView.h" />
@@ -236,7 +238,6 @@
     <ClInclude Include="SortedFilteredVector.h" />
     <ClInclude Include="TotalSysSettings.h" />
     <ClInclude Include="SortHelper.h" />
-    <ClInclude Include="targetver.h" />
     <ClInclude Include="ThreadInfoEx.h" />
     <ClInclude Include="ThreadsView.h" />
     <ClInclude Include="TransientObject.h" />
@@ -245,7 +246,9 @@
   <ItemGroup>
     <ClCompile Include="FormatHelper.cpp" />
     <ClCompile Include="Globals.cpp" />
+    <ClCompile Include="IconManager.cpp" />
     <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="ModulesView.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -276,8 +279,11 @@
     <Image Include="Icons\Running.ico" />
     <Image Include="Icons\Standby.ico" />
     <Image Include="Icons\Terminated.ico" />
+    <Image Include="Icons\TotalSys.ico" />
     <Image Include="Icons\transition.ico" />
     <Image Include="Icons\Waiting.ico" />
+    <Image Include="Icons\Window.ico" />
+    <Image Include="Icons\window_split.ico" />
     <Image Include="ProcMgr.ico" />
   </ItemGroup>
   <ItemGroup>

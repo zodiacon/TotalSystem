@@ -318,7 +318,7 @@ namespace WinLL {
 					auto tinfo = ((SYSTEM_EXTENDED_THREAD_INFORMATION*)info->Threads) + i;
 					if (pi->Id == 0) {
 						tinfo->ThreadInfo.ClientId.UniqueThread = ULongToHandle(i);
-						if (pi->Id == 0)
+						if (pid == -1)
 							continue;	// skip IDLE process if all threads are requested
 					}
 					const auto& baseInfo = tinfo->ThreadInfo;

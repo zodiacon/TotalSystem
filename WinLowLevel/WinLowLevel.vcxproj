@@ -217,16 +217,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="FileHelper.h" />
     <ClInclude Include="Keys.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ProcessInfo.h" />
     <ClInclude Include="ProcessManager.h" />
+    <ClInclude Include="ProcessModuleTracker.h" />
     <ClInclude Include="SecurityHelper.h" />
     <ClInclude Include="ThreadInfo.h" />
     <ClInclude Include="WinLowLevel.h" />
     <ClInclude Include="XString.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="FileHelper.cpp" />
     <ClCompile Include="KernelObject.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -239,6 +242,7 @@
     <ClCompile Include="Process.cpp" />
     <ClCompile Include="ProcessInfo.cpp" />
     <ClCompile Include="ProcessManager.cpp" />
+    <ClCompile Include="ProcessModuleTracker.cpp" />
     <ClCompile Include="RegistryKey.cpp" />
     <ClCompile Include="SecurityHelper.cpp" />
     <ClCompile Include="SystemInformation.cpp" />

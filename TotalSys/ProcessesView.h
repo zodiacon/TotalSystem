@@ -20,7 +20,7 @@ class ProcessesView : public ViewBase {
 		Platform, Description, Company, JobId, MemoryPriority, IoPriority, Virtualization,
 		ReadOperationsCount, WriteOperationsCount, OtherOperationsCount,
 		ReadOperationsBytes, WriteOperationsBytes, OtherOperationsBytes,
-
+		GdiObjects, PeakGdiObjects, UserObjects, PeakUserObjects,
 	};
 
 	struct ColumnInfo {
@@ -34,6 +34,7 @@ public:
 	ProcessesView();
 	void BuildWindow();
 	void ShowLowerPane(bool show);
+	bool IsRunning() const;
 
 private:
 	void DoSort(int col, bool asc);
@@ -67,7 +68,6 @@ private:
 	const ImGuiTableColumnSortSpecs* m_Specs = nullptr;
 	std::shared_ptr<ProcessInfoEx> m_SelectedProcess;
 	int m_UpdateInterval{ 1000 }, m_OldInterval{ 0 };
-	std::unordered_map<UINT, D3D11Image> m_Icons;
 	SimpleMessageBox m_KillDlg;
 	int m_SelectedIndex{ -1 };
 	bool m_Paused : 1 { false }, m_ShowLowerPane: 1{ false };

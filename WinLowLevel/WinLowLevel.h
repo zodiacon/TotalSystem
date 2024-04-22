@@ -601,9 +601,7 @@ namespace WinLL {
 
 		[[nodiscard]] uint32_t GetId() const;
 		[[nodiscard]] ThreadPriority GetPriority() const;
-		bool SetPriority(ThreadPriority priority);
-		CpuNumber GetIdealProcessor() const;
-		bool Terminate(uint32_t exitCode = 0);
+		[[nodiscard]] CpuNumber GetIdealProcessor() const;
 		[[nodiscard]] int GetMemoryPriority() const;
 		[[nodiscard]] IoPriority GetIoPriority() const;
 		[[nodiscard]] size_t GetSubProcessTag() const;
@@ -612,6 +610,8 @@ namespace WinLL {
 
 		bool Suspend();
 		bool Resume();
+		bool SetPriority(ThreadPriority priority);
+		bool Terminate(uint32_t exitCode = 0);
 	};
 
 	class Token : public KernelObject {
@@ -621,6 +621,8 @@ namespace WinLL {
 		bool Open(TokenAccessMask access, uint32_t pid = 0);
 
 		[[nodiscard]] wstring GetUserName(bool includeDomain = false) const;
+		[[nodiscard]] VirtualizationState GetVirtualizationState() const;
+
 		//Sid GetUserSid() const;
 	};
 
@@ -636,12 +638,8 @@ namespace WinLL {
 	class RegistryKey : public KernelObject {
 	public:
 		using KernelObject::KernelObject;
-		
-		void Close() override;
-		HKEY Detach();
-		void Attach(HKEY hKey, bool own = true);
 
-		bool IsValid() const;
+		void Close() override;
 
 		LSTATUS Open(HKEY parent, PCWSTR path, DWORD access = KEY_READ | KEY_WRITE);
 		LSTATUS Create(HKEY parent, PCWSTR path, DWORD access = KEY_WRITE);
@@ -662,9 +660,8 @@ namespace WinLL {
 		LSTATUS DeleteSubKey(_In_z_ LPCTSTR lpszSubKey) noexcept;
 		LSTATUS DeleteValue(_In_z_ LPCTSTR lpszValue) noexcept;
 
-	private:
-		void CheckPredefinedKey();
 	};
 
-
 }
+
+

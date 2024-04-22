@@ -31,4 +31,20 @@ namespace WinLL {
 		}
 		return L"";
 	}
+
+	VirtualizationState Token::GetVirtualizationState() const {
+		ULONG virt = 0;
+		DWORD len;
+		if (!::GetTokenInformation(Handle(), TokenVirtualizationAllowed, &virt, sizeof(virt), &len))
+			return VirtualizationState::Unknown;
+
+		if (!virt)
+			return VirtualizationState::NotAllowed;
+
+		if (::GetTokenInformation(Handle(), TokenVirtualizationEnabled, &virt, sizeof(virt), &len))
+			return virt ? VirtualizationState::Enabled : VirtualizationState::Disabled;
+
+		return VirtualizationState::Unknown;
+	}
+
 }

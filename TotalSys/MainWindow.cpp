@@ -2,11 +2,18 @@
 #include "MainWindow.h"
 #include "SecurityHelper.h"
 #include "Globals.h"
+#include "resource.h"
 
 using namespace ImGui;
 using namespace WinLL;
 
 MainWindow::MainWindow(HWND hWnd) : m_hWnd(hWnd) {
+	UINT icons[]{ IDI_PAUSE, IDI_SPLIT, IDI_WINDOW, IDI_RUNNING };
+
+	for (auto& icon : icons) {
+		Globals::ImageManager().Add(icon);
+	}
+
 }
 
 void MainWindow::BuildWindow() {

@@ -30,6 +30,11 @@ void Globals::SetDarkMode(bool dark) {
 
 }
 
+IconManager& Globals::ImageManager() {
+	static IconManager mgr;
+	return mgr;
+}
+
 TotalSysSettings& Globals::Settings() {
 	static TotalSysSettings settings;
 	return settings;

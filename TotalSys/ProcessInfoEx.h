@@ -36,6 +36,7 @@ public:
 	[[nodiscard]] int GetBitness() const;
 	[[nodiscard]] int GetMemoryPriority() const;
 	[[nodiscard]] WinLL::IoPriority GetIoPriority() const;
+	[[nodiscard]] WinLL::VirtualizationState GetVirtualizationState() const;
 
 private:
 	std::wstring GetVersionObject(const std::wstring& name) const;

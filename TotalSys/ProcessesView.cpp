@@ -24,12 +24,6 @@ extern ID3D11Device* g_pd3dDevice;
 extern ID3D11DeviceContext* g_pd3dDeviceContext;
 
 ProcessesView::ProcessesView() {
-	UINT icons[]{ IDI_PAUSE };
-
-	for (auto& icon : icons) {
-		auto hIcon = (HICON)::LoadImage(::GetModuleHandle(nullptr), MAKEINTRESOURCE(icon), IMAGE_ICON, 16, 16, LR_COPYFROMRESOURCE | LR_CREATEDIBSECTION);
-		m_Icons.insert({ icon, D3D11Image::FromIcon(hIcon) });
-	}
 	Open(true);
 }
 
@@ -70,6 +64,10 @@ void ProcessesView::ShowLowerPane(bool show) {
 	m_ShowLowerPane = show;
 }
 
+bool ProcessesView::IsRunning() const {
+	return m_UpdateInterval > 0;
+}
+
 void ProcessesView::DoSort(int col, bool asc) {
 	m_Processes.Sort([&](const auto& p1, const auto& p2) {
 		switch (static_cast<Column>(col)) {
@@ -105,6 +103,13 @@ void ProcessesView::DoSort(int col, bool asc) {
 			case Column::JobId: return SortHelper::Sort(p1->JobObjectId, p2->JobObjectId, asc);
 			case Column::MemoryPriority: return SortHelper::Sort(p1->GetMemoryPriority(), p2->GetMemoryPriority(), asc);
 			case Column::IoPriority: return SortHelper::Sort(p1->GetIoPriority(), p2->GetIoPriority(), asc);
+			case Column::Virtualization: return SortHelper::Sort(p1->GetVirtualizationState(), p2->GetVirtualizationState(), asc);
+			case Column::ReadOperationsBytes: return SortHelper::Sort(p1->ReadTransferCount, p2->ReadTransferCount, asc);
+			case Column::WriteOperationsBytes: return SortHelper::Sort(p1->WriteTransferCount, p2->WriteTransferCount, asc);
+			case Column::OtherOperationsBytes: return SortHelper::Sort(p1->OtherTransferCount, p2->OtherTransferCount, asc);
+			case Column::ReadOperationsCount: return SortHelper::Sort(p1->ReadOperationCount, p2->ReadOperationCount, asc);
+			case Column::WriteOperationsCount: return SortHelper::Sort(p1->WriteOperationCount, p2->WriteOperationCount, asc);
+			case Column::OtherOperationsCount: return SortHelper::Sort(p1->OtherOperationCount, p2->OtherOperationCount, asc);
 		}
 		return false;
 		});
@@ -318,6 +323,27 @@ void ProcessesView::BuildTable() {
 		{ "I/O Pri", [](auto& p) {
 			TextUnformatted(FormatHelper::IoPriorityToString(p->GetIoPriority()));
 			}, ImGuiTableColumnFlags_DefaultHide, 70, },
+		{ "Virtualization", [](auto& p) {
+			TextUnformatted(FormatHelper::VirtualizationStateToString(p->GetVirtualizationState()));
+			}, ImGuiTableColumnFlags_DefaultHide, 70, },
+		{ "Read Op Count", [](auto& p) {
+			Text("%12ws", FormatHelper::FormatNumber(p->ReadOperationCount).c_str());
+			}, ImGuiTableColumnFlags_DefaultHide, 100, },
+		{ "Write Op Count", [](auto& p) {
+			Text("%12ws", FormatHelper::FormatNumber(p->WriteOperationCount).c_str());
+			}, ImGuiTableColumnFlags_DefaultHide, 100, },
+		{ "Other Op Count", [](auto& p) {
+			Text("%12ws", FormatHelper::FormatNumber(p->OtherOperationCount).c_str());
+			}, ImGuiTableColumnFlags_DefaultHide, 100, },
+		{ "Read Bytes", [](auto& p) {
+			Text("%17ws", FormatHelper::FormatNumber(p->ReadTransferCount).c_str());
+			}, ImGuiTableColumnFlags_DefaultHide, 130, },
+		{ "Write Bytes", [](auto& p) {
+			Text("%17ws", FormatHelper::FormatNumber(p->WriteTransferCount).c_str());
+			}, ImGuiTableColumnFlags_DefaultHide, 130, },
+		{ "Other Bytes", [](auto& p) {
+			Text("%17ws", FormatHelper::FormatNumber(p->OtherTransferCount).c_str());
+			}, ImGuiTableColumnFlags_DefaultHide, 130, },
 
 	};
 
@@ -508,7 +534,8 @@ void ProcessesView::BuildProcessMenu(ProcessInfoEx& pi) {
 	if (MenuItem(name)) {
 		auto processes = ProcessHelper::GetProcessIdsByName(m_Processes.GetAllItems(), pi.GetImageName());
 		if (m_KillDlg.IsEmpty()) {
-			m_KillDlg.Init("Kill Processes", FormatHelper::Format("Kill %u processes named %ws?", (uint32_t)processes.size(), pi.GetImageName().c_str()), MessageBoxButtons::OkCancel);
+			m_KillDlg.Init("Kill Processes", FormatHelper::Format("Kill %u processes named %ws?", 
+				(uint32_t)processes.size(), pi.GetImageName().c_str()), MessageBoxButtons::OkCancel);
 			m_PidsToKill = move(processes);
 		}
 	}
@@ -524,23 +551,33 @@ void ProcessesView::BuildProcessMenu(ProcessInfoEx& pi) {
 	if (MenuItem("Open file location")) {
 		GotoFileLocation(pi);
 	}
-	Separator();
-	if (MenuItem("Properties...")) {
+	//Separator();
+	//if (MenuItem("Properties...")) {
 	//	GetOrAddProcessProperties(p);
-	}
+	//}
 }
 
 void ProcessesView::BuildToolBar() {
 	PushFont(Globals::VarFont());
-	if (ImageButton("Pause", m_Icons[IDI_PAUSE].Get(), ImVec2(16, 16))) {
+	if (ImageButton("LowerPane", Globals::ImageManager().GetImage(m_ShowLowerPane ? IDI_WINDOW : IDI_SPLIT), ImVec2(16, 16))) {
+		m_ShowLowerPane = !m_ShowLowerPane;
+	}
+	if(IsItemHovered())
+		SetTooltip(((m_ShowLowerPane ? "Hide" : "Show") + string(" Lower Pane")).c_str());
+	SameLine();
+	if (ImageButton("Pause", Globals::ImageManager().GetImage(IsRunning() ? IDI_PAUSE : IDI_RUNNING), ImVec2(16, 16))) {
 		TogglePause();
 	}
+	if (IsItemHovered())
+		SetTooltip(IsRunning() ? "Pause" : "Resume");
+
 	SameLine();
 	SetNextItemWidth(120);
 	if (GetIO().KeyCtrl && IsKeyPressed(ImGuiKey_F))
 		SetKeyboardFocusHere();
 
-	InputTextWithHint("##Filter", "Filter (Ctrl+F)", m_FilterText, _countof(m_FilterText), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll);
+	InputTextWithHint("##Filter", "Filter (Ctrl+F)", m_FilterText, _countof(m_FilterText), 
+		ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll);
 
 	SameLine(0, 20);
 	PushStyleColor(ImGuiCol_Button, Globals::IsDarkMode() ? StandardColors::DarkRed : StandardColors::Red);
@@ -616,7 +653,7 @@ void ProcessesView::BuildLowerPane() {
 		if (BeginChild("lowerpane", ImVec2(0, 0), ImGuiWindowFlags_None, ImGuiWindowFlags_NoScrollbar)) {
 			if (BeginTabBar("lowertabs", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_Reorderable)) {
 				if (m_SelectedProcess) {
-					SameLine(300);
+					SameLine(350);
 					Text("PID: %u (%ws)", m_SelectedProcess->Id, m_SelectedProcess->GetImageName().c_str()); SameLine();
 				}
 				if (BeginTabItem("Threads", nullptr, ImGuiTabItemFlags_None)) {
@@ -632,7 +669,15 @@ void ProcessesView::BuildLowerPane() {
 				if (BeginTabItem("Handles", nullptr, ImGuiTabItemFlags_None)) {
 					EndTabItem();
 				}
+				if ((m_SelectedProcess && (m_SelectedProcess->Attributes(m_ProcMgr) & ProcessAttributes::InJob) == ProcessAttributes::InJob)) {
+					if (BeginTabItem("Job", nullptr, ImGuiTabItemFlags_None)) {
+						EndTabItem();
+					}
+				}
 				if (BeginTabItem("Memory", nullptr, ImGuiTabItemFlags_None)) {
+					EndTabItem();
+				}
+				if (BeginTabItem("Environment", nullptr, ImGuiTabItemFlags_None)) {
 					EndTabItem();
 				}
 				EndTabBar();

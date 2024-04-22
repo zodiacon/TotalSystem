@@ -27,9 +27,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -66,9 +63,6 @@
     <ClInclude Include="ThreadInfoEx.h">
       <Filter>Threads</Filter>
     </ClInclude>
-    <ClInclude Include="TransientObject.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ViewBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -77,6 +71,15 @@
     </ClInclude>
     <ClInclude Include="ProcessHelper.h">
       <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="ModulesView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TransientObject.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="IconManager.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -128,6 +131,12 @@
     <ClCompile Include="ProcessHelper.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
+    <ClCompile Include="ModulesView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IconManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TotalSys.rc">
@@ -157,6 +166,15 @@
       <Filter>Resource Files\Icons</Filter>
     </Image>
     <Image Include="Icons\transition.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="Icons\window_split.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="Icons\Window.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="Icons\TotalSys.ico">
       <Filter>Resource Files\Icons</Filter>
     </Image>
   </ItemGroup>

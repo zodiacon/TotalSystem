@@ -18,8 +18,8 @@ ThreadsView::ThreadsView(bool allThreads) : m_AllThreads(allThreads) {
 
 void ThreadsView::BuildWindow() {
 	if (Begin("All Threads", GetOpenAddress())) {
-		BuildTable(nullptr);
 		BuildToolBar();
+		BuildTable(nullptr);
 	}
 	ImGui::End();
 }
@@ -68,8 +68,8 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 			}
 			}, 0, 60 },
 		{ "TID", [&](auto& t) {
-			if (pid == 0)
-				Text("%7u", t->Id);
+			if (m_Process && m_Process->Id == 0)
+				Text(" CPU %4u", t->Id);
 			else
 				Text("%7u (0x%05X)", t->Id, t->Id);
 			}, 0 },
@@ -151,8 +151,8 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 			Text("%ws", t->GetServiceName().c_str());
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Ctx Switch", [](auto& t) {
-			Text("%ws", FormatHelper::FormatNumber(t->ContextSwitches).c_str());
-			}, ImGuiTableColumnFlags_DefaultHide },
+			Text("%12ws", FormatHelper::FormatNumber(t->ContextSwitches).c_str());
+			}, ImGuiTableColumnFlags_DefaultHide, 100 },
 		{ "Mem Pri", [](auto& t) {
 			auto priority = t->GetMemoryPriority();
 			if(priority >= 0)

@@ -39,6 +39,12 @@
     <ClInclude Include="ThreadInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ProcessModuleTracker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WinLowLevel.cpp">
@@ -75,6 +81,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RegistryKey.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessModuleTracker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FileHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
