@@ -6,6 +6,7 @@
 #include "ThreadsView.h"
 #include "ViewBase.h"
 #include "SortedFilteredVector.h"
+#include "ModulesView.h"
 
 //#include "ProcessProperties.h"
 
@@ -34,11 +35,10 @@ public:
 	ProcessesView();
 	void BuildWindow();
 	void ShowLowerPane(bool show);
-	bool IsRunning() const;
+	bool Refresh(bool now = false);
 
 private:
 	void DoSort(int col, bool asc);
-	void DoUpdate();
 	bool KillProcess(uint32_t id);
 	void TryKillProcess(WinLL::ProcessInfo& pi);
 
@@ -50,8 +50,6 @@ private:
 
 	bool BuildPriorityClassMenu(WinLL::ProcessInfo& pi);
 	bool GotoFileLocation(WinLL::ProcessInfo const& pi);
-	void TogglePause();
-	//void BuildPropertiesWindow(ProcessProperties* props);
 
 	//std::shared_ptr<ProcessProperties> GetProcessProperties(WinSys::ProcessInfo* pi);
 	//std::shared_ptr<ProcessProperties> GetOrAddProcessProperties(const std::shared_ptr<WinSys::ProcessInfo>& pi);
@@ -62,13 +60,11 @@ private:
 	WinLL::ProcessManager<ProcessInfoEx, WinLL::ThreadInfo> m_ProcMgr;
 	std::vector<uint32_t> m_PidsToKill;
 	ThreadsView m_ThreadsView;
-	DWORD64 m_Tick = 0;
+	ModulesView m_ModulesView;
 	char m_FilterText[24]{};
 	SortedFilteredVector<std::shared_ptr<ProcessInfoEx>> m_Processes;
-	const ImGuiTableColumnSortSpecs* m_Specs = nullptr;
 	std::shared_ptr<ProcessInfoEx> m_SelectedProcess;
-	int m_UpdateInterval{ 1000 }, m_OldInterval{ 0 };
 	SimpleMessageBox m_KillDlg;
 	int m_SelectedIndex{ -1 };
-	bool m_Paused : 1 { false }, m_ShowLowerPane: 1{ false };
+	bool m_ShowLowerPane : 1{ false }, m_WasRunning : 1 { false };
 };

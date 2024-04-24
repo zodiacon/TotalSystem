@@ -56,4 +56,10 @@ namespace WinLL {
 
 		return time;
 	}
+
+	wstring SystemInformation::GetSystemDir() {
+		WCHAR path[MAX_PATH];
+		::GetSystemDirectory(path, _countof(path));
+		return path;
+	}
 }

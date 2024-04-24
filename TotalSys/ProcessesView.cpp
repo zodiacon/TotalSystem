@@ -13,8 +13,10 @@
 #include <ShellApi.h>
 #include "TotalSysSettings.h"
 #include "ProcessHelper.h"
+#include "UI.h"
 
 #pragma comment(lib, "Shlwapi.lib")
+#pragma comment(lib, "imagehlp.lib")
 
 using namespace ImGui;
 using namespace std;
@@ -29,8 +31,6 @@ ProcessesView::ProcessesView() {
 
 void ProcessesView::BuildWindow() {
 	if (IsOpen()) {
-		SetNextWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
-		SetNextWindowPos(ImVec2(10, 20), ImGuiCond_FirstUseEver);
 		if (Begin("Processes", GetOpenAddress(), ImGuiWindowFlags_MenuBar)) {
 			if (BeginMenuBar()) {
 				if (m_SelectedProcess && BeginMenu("Process")) {
@@ -45,18 +45,6 @@ void ProcessesView::BuildWindow() {
 		}
 		ImGui::End();
 	}
-
-
-	//std::vector<WinSys::ProcessOrThreadKey> keys;
-	//for (const auto& [key, p] : _processProperties) {
-	//	if (p->WindowOpen)
-	//		BuildPropertiesWindow(p.get());
-	//	else
-	//		keys.push_back(p->GetProcess()->Key);
-	//}
-
-	//for (auto& key : keys)
-	//	_processProperties.erase(key);
 }
 
 
@@ -64,8 +52,30 @@ void ProcessesView::ShowLowerPane(bool show) {
 	m_ShowLowerPane = show;
 }
 
-bool ProcessesView::IsRunning() const {
-	return m_UpdateInterval > 0;
+bool ProcessesView::Refresh(bool now) {
+	if (NeedUpdate() || now) {
+		auto& pm = m_ProcMgr;
+		auto empty = m_Processes.empty();
+		pm.Update();
+		if (empty) {
+			m_Processes = pm.GetProcesses();
+		}
+		else {
+			for (auto& pi : pm.GetNewProcesses()) {
+				m_Processes.push_back(pi);
+				pi->New(2000);
+			}
+
+			for (auto& pi : pm.GetTerminatedProcesses()) {
+				pi->Term(2000);
+			}
+		}
+
+		UpdateTick();
+
+		return true;
+	}
+	return false;
 }
 
 void ProcessesView::DoSort(int col, bool asc) {
@@ -115,17 +125,6 @@ void ProcessesView::DoSort(int col, bool asc) {
 		});
 }
 
-void ProcessesView::DoUpdate() {
-	auto& pm = m_ProcMgr;
-	for (auto& pi : pm.GetNewProcesses()) {
-		m_Processes.push_back(pi);
-		pi->New(2000);
-	}
-
-	for (auto& pi : pm.GetTerminatedProcesses()) {
-		pi->Term(2000);
-	}
-}
 
 bool ProcessesView::KillProcess(uint32_t id) {
 	Process process;
@@ -148,6 +147,7 @@ void ProcessesView::TryKillProcess(ProcessInfo& pi) {
 void ProcessesView::BuildTable() {
 	auto orgBackColor = GetStyle().Colors[ImGuiCol_TableRowBg];
 	auto& pm = m_ProcMgr;
+	auto update = Refresh();
 
 	static const ColumnInfo columns[] = {
 		{ "Name", [this](auto& p) {
@@ -163,20 +163,23 @@ void ProcessesView::BuildTable() {
 
 			auto item = format("{} {}", p->Id, p->ParentId);
 			if (BeginPopupContextItem(item.c_str())) {
-				if (m_UpdateInterval) {
+				if (IsRunning()) {
 					TogglePause();
-					m_Paused = true;
+					m_ThreadsView.TogglePause();
+					m_WasRunning = true;
 				}
 				m_SelectedProcess = p;
 				BuildProcessMenu(*p);
 				EndPopup();
 			}
+
 			if (m_SelectedProcess) {
-				item = format("{} {}", m_SelectedProcess->Id, m_SelectedProcess->ParentId);
+				auto item = format("{} {}", m_SelectedProcess->Id, m_SelectedProcess->ParentId);
 				if (!IsPopupOpen(item.c_str())) {
-					if (m_Paused) {
+					if (m_WasRunning) {
 						TogglePause();
-						m_Paused = false;
+						m_ThreadsView.TogglePause();
+						m_WasRunning = false;
 					}
 				}
 			}
@@ -224,7 +227,9 @@ void ProcessesView::BuildTable() {
 				auto parent = pm.GetProcessById(p->ParentId);
 				if (parent && parent->CreateTime < p->CreateTime) {
 					SameLine();
+					PushFont(Globals::VarFont());
 					Text("(%ws)", parent->GetImageName().c_str());
+					PopFont();
 				}
 			}
 		}, 0, 140.0f },
@@ -365,6 +370,7 @@ void ProcessesView::BuildTable() {
 
 		if (IsKeyPressed(ImGuiKey_Space)) {
 			TogglePause();
+			m_ThreadsView.TogglePause();
 		}
 
 		auto result = m_KillDlg.ShowModal();
@@ -384,7 +390,7 @@ void ProcessesView::BuildTable() {
 			}
 		}
 
-		if (m_UpdateInterval > 0 && ::GetTickCount64() - m_Tick >= m_UpdateInterval) {
+		if (update) {
 			std::string filter;
 			if (m_FilterText[0]) {
 				filter = m_FilterText;
@@ -412,21 +418,8 @@ void ProcessesView::BuildTable() {
 			else {
 				m_Processes.Filter(nullptr);
 			}
-
-			auto empty = m_Processes.empty();
-			if (empty) {
-				m_Processes.reserve(1024);
-			}
-			pm.Update();
-			if (empty) {
-				m_Processes = pm.GetProcesses();
-			}
-			else {
-				DoUpdate();
-			}
-			if (m_Specs)
-				DoSort(m_Specs->ColumnIndex, m_Specs->SortDirection == ImGuiSortDirection_Ascending);
-			m_Tick = ::GetTickCount64();
+			auto specs = TableGetSortSpecs()->Specs;
+			DoSort(specs->ColumnIndex, specs->SortDirection == ImGuiSortDirection_Ascending);
 		}
 
 		auto count = static_cast<int>(m_Processes.size());
@@ -441,12 +434,6 @@ void ProcessesView::BuildTable() {
 				count--;
 				continue;
 			}
-		}
-		auto specs = TableGetSortSpecs();
-		if (specs && specs->SpecsDirty) {
-			m_Specs = specs->Specs;
-			DoSort(m_Specs->ColumnIndex, m_Specs->SortDirection == ImGuiSortDirection_Ascending);
-			specs->SpecsDirty = false;
 		}
 
 		count = static_cast<int>(m_Processes.size());
@@ -480,6 +467,7 @@ void ProcessesView::BuildTable() {
 
 			}
 		}
+
 		EndTable();
 
 		if (m_SelectedProcess && IsKeyPressed(ImGuiKey_Delete)) {
@@ -491,32 +479,20 @@ void ProcessesView::BuildTable() {
 		EndChild();
 		BuildLowerPane();
 	}
+
 }
 
 void ProcessesView::BuildViewMenu() {
 	if (IsKeyPressed(ImGuiKey_L) && GetIO().KeyCtrl) {
 		m_ShowLowerPane = !m_ShowLowerPane;
 	}
+
 	PushFont(Globals::VarFont());
 	if (BeginMenu("View")) {
 		if (MenuItem("Show Lower Pane", "Ctrl+L", m_ShowLowerPane)) {
 			m_ShowLowerPane = !m_ShowLowerPane;
 		}
-		if (BeginMenu("Update Interval")) {
-			if (MenuItem("500 ms", nullptr, m_UpdateInterval == 500))
-				m_UpdateInterval = 500;
-			if (MenuItem("1 second", nullptr, m_UpdateInterval == 1000))
-				m_UpdateInterval = 1000;
-			if (MenuItem("2 seconds", nullptr, m_UpdateInterval == 2000))
-				m_UpdateInterval = 2000;
-			if (MenuItem("5 seconds", nullptr, m_UpdateInterval == 5000))
-				m_UpdateInterval = 5000;
-			Separator();
-			if (MenuItem("Paused", "SPACE", m_UpdateInterval == 0)) {
-				TogglePause();
-			}
-			ImGui::EndMenu();
-		}
+		BuildUpdateIntervalMenu();
 		Separator();
 		if (MenuItem("Refresh", "F5")) {
 		}
@@ -526,28 +502,31 @@ void ProcessesView::BuildViewMenu() {
 }
 
 void ProcessesView::BuildProcessMenu(ProcessInfoEx& pi) {
-	if (MenuItem("Kill", "Delete")) {
-		TryKillProcess(pi);
-	}
-	char name[32];
-	sprintf_s(name, "Kill all %ws processes...", pi.GetImageName().c_str());
-	if (MenuItem(name)) {
-		auto processes = ProcessHelper::GetProcessIdsByName(m_Processes.GetAllItems(), pi.GetImageName());
-		if (m_KillDlg.IsEmpty()) {
-			m_KillDlg.Init("Kill Processes", FormatHelper::Format("Kill %u processes named %ws?", 
-				(uint32_t)processes.size(), pi.GetImageName().c_str()), MessageBoxButtons::OkCancel);
-			m_PidsToKill = move(processes);
+	PushFont(Globals::VarFont());
+	if (pi.Id > 4) {
+		if (MenuItem("Kill", "Delete")) {
+			TryKillProcess(pi);
 		}
-	}
-	Separator();
-	if (BuildPriorityClassMenu(pi))
+		auto len = pi.GetImageName().size() + 32;
+		auto name = make_unique<char[]>(len);
+		sprintf_s(name.get(), len, "Kill all %ws processes...", pi.GetImageName().c_str());
+		if (MenuItem(name.get())) {
+			auto processes = ProcessHelper::GetProcessIdsByName(m_Processes.GetAllItems(), pi.GetImageName());
+			if (m_KillDlg.IsEmpty()) {
+				m_KillDlg.Init("Kill Processes", FormatHelper::Format("Kill %u processes named %ws?",
+					(uint32_t)processes.size(), pi.GetImageName().c_str()), MessageBoxButtons::OkCancel);
+				m_PidsToKill = move(processes);
+			}
+		}
 		Separator();
+		if (BuildPriorityClassMenu(pi))
+			Separator();
 
-	if (MenuItem(m_SelectedProcess->IsSuspended() ? "Resume" : "Suspend")) {
-		pi.SuspendResume();
+		if (MenuItem(m_SelectedProcess->IsSuspended() ? "Resume" : "Suspend")) {
+			pi.SuspendResume();
+		}
+		Separator();
 	}
-	Separator();
-
 	if (MenuItem("Open file location")) {
 		GotoFileLocation(pi);
 	}
@@ -555,6 +534,7 @@ void ProcessesView::BuildProcessMenu(ProcessInfoEx& pi) {
 	//if (MenuItem("Properties...")) {
 	//	GetOrAddProcessProperties(p);
 	//}
+	PopFont();
 }
 
 void ProcessesView::BuildToolBar() {
@@ -562,11 +542,12 @@ void ProcessesView::BuildToolBar() {
 	if (ImageButton("LowerPane", Globals::ImageManager().GetImage(m_ShowLowerPane ? IDI_WINDOW : IDI_SPLIT), ImVec2(16, 16))) {
 		m_ShowLowerPane = !m_ShowLowerPane;
 	}
-	if(IsItemHovered())
+	if (IsItemHovered())
 		SetTooltip(((m_ShowLowerPane ? "Hide" : "Show") + string(" Lower Pane")).c_str());
 	SameLine();
 	if (ImageButton("Pause", Globals::ImageManager().GetImage(IsRunning() ? IDI_PAUSE : IDI_RUNNING), ImVec2(16, 16))) {
 		TogglePause();
+		m_ThreadsView.TogglePause();
 	}
 	if (IsItemHovered())
 		SetTooltip(IsRunning() ? "Pause" : "Resume");
@@ -576,49 +557,21 @@ void ProcessesView::BuildToolBar() {
 	if (GetIO().KeyCtrl && IsKeyPressed(ImGuiKey_F))
 		SetKeyboardFocusHere();
 
-	InputTextWithHint("##Filter", "Filter (Ctrl+F)", m_FilterText, _countof(m_FilterText), 
+	InputTextWithHint("##Filter", "Filter (Ctrl+F)", m_FilterText, _countof(m_FilterText),
 		ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll);
+	if (IsItemHovered())
+		SetTooltip("Filter by name/ID");
 
 	SameLine(0, 20);
-	PushStyleColor(ImGuiCol_Button, Globals::IsDarkMode() ? StandardColors::DarkRed : StandardColors::Red);
-
 	if (ButtonEnabled("Kill", m_SelectedProcess != nullptr, ImVec2(40, 0))) {
 		TryKillProcess(*m_SelectedProcess);
 	}
-	PopStyleColor(1);
+	if (IsItemHovered())
+		SetTooltip("Terminate Process");
 	SameLine();
-	static const struct {
-		const char* Text;
-		int Interval;
-	} intervals[] = {
-		{ "500 msec", 500 },
-		{ "1 Second", 1000 },
-		{ "2 Seconds", 2000 },
-		{ "5 Seconds", 5000 },
-		{ "Paused", 0 },
-	};
-	int current = 0;
-	for (int i = 0; i < _countof(intervals); i++) {
-		if (intervals[i].Interval == m_UpdateInterval) {
-			current = i;
-			break;
-		}
-	}
-	SetNextItemWidth(100);
-	if (BeginCombo("Update", intervals[current].Text, ImGuiComboFlags_None)) {
-		for (auto& item : intervals) {
-			if (item.Interval == 0)
-				break;
-			if (MenuItem(item.Text, nullptr, m_UpdateInterval == item.Interval)) {
-				m_UpdateInterval = item.Interval;
-			}
-		}
-		Separator();
-		if (MenuItem("Paused", "SPACE", m_UpdateInterval == 0)) {
-			TogglePause();
-		}
-		EndCombo();
-	}
+
+	if (BuildUpdateIntervalToolBar())
+		m_ThreadsView.SetUpdateInterval(GetUpdateInterval());
 
 	SameLine();
 	bool open = Button("Colors", ImVec2(60, 0));
@@ -653,7 +606,7 @@ void ProcessesView::BuildLowerPane() {
 		if (BeginChild("lowerpane", ImVec2(0, 0), ImGuiWindowFlags_None, ImGuiWindowFlags_NoScrollbar)) {
 			if (BeginTabBar("lowertabs", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_Reorderable)) {
 				if (m_SelectedProcess) {
-					SameLine(350);
+					SameLine(450);
 					Text("PID: %u (%ws)", m_SelectedProcess->Id, m_SelectedProcess->GetImageName().c_str()); SameLine();
 				}
 				if (BeginTabItem("Threads", nullptr, ImGuiTabItemFlags_None)) {
@@ -663,7 +616,10 @@ void ProcessesView::BuildLowerPane() {
 					}
 					EndTabItem();
 				}
-				if (BeginTabItem("DLLs", nullptr, ImGuiTabItemFlags_None)) {
+				if (BeginTabItem("Modules", nullptr, ImGuiTabItemFlags_None)) {
+					if (m_SelectedProcess) {
+						m_ModulesView.BuildTable(m_SelectedProcess);
+					}
 					EndTabItem();
 				}
 				if (BeginTabItem("Handles", nullptr, ImGuiTabItemFlags_None)) {
@@ -673,6 +629,9 @@ void ProcessesView::BuildLowerPane() {
 					if (BeginTabItem("Job", nullptr, ImGuiTabItemFlags_None)) {
 						EndTabItem();
 					}
+				}
+				if (BeginTabItem("Token")) {
+					EndTabItem();
 				}
 				if (BeginTabItem("Memory", nullptr, ImGuiTabItemFlags_None)) {
 					EndTabItem();
@@ -718,54 +677,28 @@ bool ProcessesView::BuildPriorityClassMenu(ProcessInfo& pi) {
 }
 
 bool ProcessesView::GotoFileLocation(ProcessInfo const& pi) {
-	Process process;
-	if (process.Open(pi.Id, ProcessAccessMask::QueryLimitedInformation)) {
-		auto path = process.GetFullImageName();
-		auto bs = path.rfind(L'\\');
-		if (bs == std::wstring::npos)
-			return false;
-
-		auto folder = path.substr(0, bs);
-		return (INT_PTR)::ShellExecute(nullptr, L"open", L"explorer", (L"/select,\"" + path + L"\"").c_str(),
-			nullptr, SW_SHOWDEFAULT) > 31;
+	wstring path;
+	if (pi.Id <= 4) {
+		path = SystemInformation::GetSystemDir() + L"\\ntoskrnl.exe";
 	}
-	return false;
+	if (path.empty()) {
+		Process process;
+		if (process.Open(pi.Id, ProcessAccessMask::QueryLimitedInformation)) {
+			auto path = process.GetFullImageName();
+			auto bs = path.rfind(L'\\');
+			if (bs == std::wstring::npos)
+				return false;
+
+			auto folder = path.substr(0, bs);
+		}
+	}
+	if (path.empty())
+		return false;
+
+	return (INT_PTR)::ShellExecute(nullptr, L"open", L"explorer", (L"/select,\"" + path + L"\"").c_str(),
+		nullptr, SW_SHOWDEFAULT) > 31;
 }
 
-void ProcessesView::TogglePause() {
-	if (m_UpdateInterval == 0) {
-		m_UpdateInterval = m_OldInterval;
-	}
-	else {
-		m_OldInterval = m_UpdateInterval;
-		m_UpdateInterval = 0;
-	}
-}
-
-//void ProcessesView::BuildPropertiesWindow(ProcessProperties* props) {
-//	SetNextWindowSizeConstraints(ImVec2(300, 200), GetIO().DisplaySize);
-//	SetNextWindowSize(ImVec2(GetIO().DisplaySize.x / 2, 300), ImGuiCond_Once);
-//	if (Begin(props->GetName().c_str(), &props->WindowOpen, ImGuiWindowFlags_None)) {
-//	}
-//	End();
-//}
-
-//shared_ptr<ProcessProperties> ProcessesView::GetProcessProperties(WinSys::ProcessInfo* pi) {
-//	auto it = _processProperties.find(pi->Key);
-//	return it == _processProperties.end() ? nullptr : it->second;
-//}
-
-//shared_ptr<ProcessProperties> ProcessesView::GetOrAddProcessProperties(const std::shared_ptr<WinSys::ProcessInfo>& pi) {
-//	auto props = GetProcessProperties(pi.get());
-//	if (props == nullptr) {
-//		CStringA name;
-//		name.Format("%ws (%u) Properties##%lld", pi->GetImageName().c_str(), pi->Id, pi->CreateTime);
-//		props = std::make_shared<ProcessProperties>(std::string(name), pi);
-//		_processProperties.insert({ pi->Key, props });
-//		_tm.AddWindow(props);
-//	}
-//	return props;
-//}
 
 string ProcessesView::ProcessAttributesToString(ProcessAttributes attributes) {
 	string text;

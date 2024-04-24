@@ -17,7 +17,17 @@ ThreadsView::ThreadsView(bool allThreads) : m_AllThreads(allThreads) {
 }
 
 void ThreadsView::BuildWindow() {
-	if (Begin("All Threads", GetOpenAddress())) {
+	if (Begin("All Threads", GetOpenAddress(), ImGuiWindowFlags_MenuBar)) {
+		if (BeginMenuBar()) {
+			if (BeginMenu("View")) {
+				BuildUpdateIntervalMenu();
+				ImGui::EndMenu();
+			}
+			if (BeginMenu("Thread")) {
+				ImGui::EndMenu();
+			}
+			EndMenuBar();
+		}
 		BuildToolBar();
 		BuildTable(nullptr);
 	}
@@ -26,36 +36,8 @@ void ThreadsView::BuildWindow() {
 
 void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 	auto pid = p ? p->Id : -1;
-	bool newProcess = m_Threads.empty() || (m_Process && m_Process->Id != pid);
-
-	auto& pm = m_ProcMgr;
-	bool updated = false;
-	if (newProcess || (updated = ::GetTickCount64() - m_LastUpdate > 1000)) {
-		pm.UpdateWithThreads(pid);
-		m_LastUpdate = ::GetTickCount64();
-	}
-	if (newProcess) {
-		if (pid != -1) {
-			m_Process = pm.GetProcessById(pid);
-			m_Threads = m_Process->GetThreads();
-			m_SelectedThread = nullptr;
-		}
-		else if (m_Threads.empty()) {
-			m_Threads.insert(m_Threads.end(), pm.GetThreads().begin(), pm.GetThreads().end());
-		}
-	}
-	else if(updated) {
-		for (auto t : pm.GetNewThreads()) {
-			t->New(2000);
-			m_Threads.push_back(t);
-		}
-		for (auto t : pm.GetTerminatedThreads()) {
-			t->Term(2000);
-		}
-
-	}
-
 	auto orgBackColor = GetStyle().Colors[ImGuiCol_TableRowBg];
+	auto updated = Refresh(p);
 
 	static const ColumnInfo columns[]{
 		{ "State", [&](auto& t) {
@@ -66,7 +48,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 				m_SelectedThread = t;
 				SetItemDefaultFocus();
 			}
-			}, 0, 60 },
+			}, 0, 90 },
 		{ "TID", [&](auto& t) {
 			if (m_Process && m_Process->Id == 0)
 				Text(" CPU %4u", t->Id);
@@ -131,7 +113,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 				Text("0x%p", t->Win32StartAddress);
 			}, },
 		{ "TEB", [](auto& t) {
-			if(t->TebBase)
+			if (t->TebBase)
 				Text("0x%p", t->TebBase);
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Stack Base", [](auto& t) {
@@ -144,7 +126,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Suspend Cnt", [](auto& t) {
 			auto count = t->GetSuspendCount();
-			if(count)
+			if (count)
 				Text("%4d", count);
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Service", [](auto& t) {
@@ -155,7 +137,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 			}, ImGuiTableColumnFlags_DefaultHide, 100 },
 		{ "Mem Pri", [](auto& t) {
 			auto priority = t->GetMemoryPriority();
-			if(priority >= 0)
+			if (priority >= 0)
 				Text("%d", priority);
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "I/O Pri", [](auto& t) {
@@ -185,7 +167,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 
 		auto specs = TableGetSortSpecs();
 		if (specs) {
-			if (newProcess || updated)
+			if (updated)
 				specs->SpecsDirty = true;
 
 			if (specs->SpecsDirty) {
@@ -232,6 +214,11 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 
 		EndTable();
 	}
+
+	if (m_AllThreads && IsKeyReleased(ImGuiKey_Space)) {
+		TogglePause();
+	}
+
 }
 
 void ThreadsView::BuildToolBar() {
@@ -256,6 +243,10 @@ void ThreadsView::BuildToolBar() {
 		if (t.Open(m_SelectedThread->Id, ThreadAccessMask::Terminate))
 			t.Terminate();
 	}
+	if (m_AllThreads) {
+		SameLine();
+		BuildUpdateIntervalToolBar();
+	}
 }
 
 void ThreadsView::Clear() {
@@ -263,6 +254,39 @@ void ThreadsView::Clear() {
 	m_Threads.clear();
 	if (m_AllThreads)
 		m_Threads.reserve(4096);
+}
+
+bool ThreadsView::Refresh(std::shared_ptr<ProcessInfoEx>& p, bool now) {
+	auto pid = p ? p->Id : -1;
+	bool newProcess = m_Threads.empty() || (m_Process && m_Process->Id != pid);
+
+	auto& pm = m_ProcMgr;
+	bool updated = now;
+	if (now || newProcess || (updated = NeedUpdate())) {
+		pm.UpdateWithThreads(pid);
+		UpdateTick();
+	}
+	if (newProcess) {
+		if (pid != -1) {
+			m_Process = pm.GetProcessById(pid);
+			m_Threads = m_Process->GetThreads();
+			m_SelectedThread = nullptr;
+		}
+		else if (m_Threads.empty()) {
+			m_Threads.insert(m_Threads.end(), pm.GetThreads().begin(), pm.GetThreads().end());
+		}
+	}
+	else if (updated) {
+		for (auto t : pm.GetNewThreads()) {
+			t->New(2000);
+			m_Threads.push_back(t);
+		}
+		for (auto t : pm.GetTerminatedThreads()) {
+			t->Term(2000);
+		}
+
+	}
+	return updated;
 }
 
 PCSTR ThreadsView::StateToString(ThreadState state) {

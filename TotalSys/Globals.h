@@ -19,6 +19,5 @@ struct Globals abstract final {
 
 	inline static ImFont* s_pMonoFont;
 	inline static ImFont* s_pVarFont;
-	inline static bool s_Dark{ true };
 };
 

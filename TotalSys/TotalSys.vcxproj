@@ -241,6 +241,7 @@
     <ClInclude Include="ThreadInfoEx.h" />
     <ClInclude Include="ThreadsView.h" />
     <ClInclude Include="TransientObject.h" />
+    <ClInclude Include="UI.h" />
     <ClInclude Include="ViewBase.h" />
   </ItemGroup>
   <ItemGroup>
@@ -268,6 +269,7 @@
     <ClCompile Include="ThreadInfoEx.cpp" />
     <ClCompile Include="ThreadsView.cpp" />
     <ClCompile Include="TransientObject.cpp" />
+    <ClCompile Include="UI.cpp" />
     <ClCompile Include="ViewBase.cpp" />
   </ItemGroup>
   <ItemGroup>

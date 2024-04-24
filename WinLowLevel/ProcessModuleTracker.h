@@ -3,7 +3,7 @@
 #include <wil\resource.h>
 #include <TlHelp32.h>
 
-namespace WinLL {
+namespace WinLLX {
 	enum class MapType {
 		Image,
 		Data
@@ -23,7 +23,7 @@ namespace WinLL {
 		ControlFlowGuard = 0x4000,
 		TerminalServerAware = 0x8000
 	};
-	DEFINE_ENUM_FLAG_OPERATORS(WinLL::DllCharacteristics);
+	DEFINE_ENUM_FLAG_OPERATORS(WinLLX::DllCharacteristics);
 
 	struct ModuleInfo {
 		std::wstring Name;
@@ -37,15 +37,15 @@ namespace WinLL {
 
 	class ProcessModuleTracker final {
 	public:
-		explicit ProcessModuleTracker(DWORD pid);
-		explicit ProcessModuleTracker(HANDLE hProcess);
+		bool TrackProcess(uint32_t pid);
+		explicit ProcessModuleTracker(HANDLE hProcess = nullptr);
 
 		operator bool() const;
-		uint32_t EnumModules();
+		uint32_t Update();
 		const std::vector<std::shared_ptr<ModuleInfo>>& GetModules() const;
 		const std::vector<std::shared_ptr<ModuleInfo>>& GetNewModules() const;
 		const std::vector<std::shared_ptr<ModuleInfo>>& GetUnloadedModules() const;
-		bool IsRunning() const;
+		uint32_t GetPid() const;
 
 	private:
 		uint32_t EnumModulesWithVirtualQuery();
@@ -55,9 +55,9 @@ namespace WinLL {
 
 		std::vector<std::shared_ptr<ModuleInfo>> m_Modules, m_NewModules, m_UnloadedModules;
 		std::unordered_map<std::wstring, std::shared_ptr<ModuleInfo>> m_ModuleMap;
-		DWORD m_Pid;
+		uint32_t m_Pid;
 		wil::unique_handle m_Handle;
-		BOOL m_IsWow64;
+		bool m_IsWow64;
 
 	};
 

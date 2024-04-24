@@ -72,13 +72,16 @@
     <ClInclude Include="ProcessHelper.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="ModulesView.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TransientObject.h">
       <Filter>Helpers</Filter>
     </ClInclude>
     <ClInclude Include="IconManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ModulesView.h">
+      <Filter>Processes</Filter>
+    </ClInclude>
+    <ClInclude Include="UI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -131,10 +134,13 @@
     <ClCompile Include="ProcessHelper.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
-    <ClCompile Include="ModulesView.cpp">
+    <ClCompile Include="IconManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IconManager.cpp">
+    <ClCompile Include="ModulesView.cpp">
+      <Filter>Processes</Filter>
+    </ClCompile>
+    <ClCompile Include="UI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

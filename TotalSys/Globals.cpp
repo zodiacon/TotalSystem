@@ -19,11 +19,11 @@ ImFont* Globals::VarFont() {
 }
 
 bool Globals::IsDarkMode() {
-	return s_Dark;
+	return Settings().DarkMode;
 }
 
 void Globals::SetDarkMode(bool dark) {
-	if (s_Dark = dark)
+	if (Settings().DarkMode = dark)
 		ImGui::StyleColorsDark();
 	else
 		ImGui::StyleColorsLight();

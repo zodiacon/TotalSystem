@@ -8,6 +8,8 @@
 #include "MainWindow.h"
 #include "resource.h"
 #include "Globals.h"
+#include "FormatHelper.h"
+#include <Knownfolders.h>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "ntdll.lib")
@@ -33,6 +35,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 	if (WinLL::SecurityHelper::IsRunningElevated())
 		WinLL::SecurityHelper::EnablePrivilege(SE_DEBUG_NAME);
 
+	::SetPriorityClass(::GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+	::SetThreadPriority(::GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
+
 	// Create application window
 	ImGui_ImplWin32_EnableDpiAwareness();
 	WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, hInstance, nullptr, nullptr, nullptr, nullptr, L"Total System", nullptr };
@@ -57,6 +62,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 	ImGui::CreateContext();
 	auto& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
+	auto inifile = FormatHelper::GetFolderPath(FOLDERID_Documents) + "\\TotalSystem.ini";
+	io.IniFilename = inifile.c_str();
 
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();

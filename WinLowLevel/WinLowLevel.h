@@ -208,10 +208,11 @@ namespace WinLL {
 
 	class SystemInformation {
 	public:
-		static PerformanceInformation GetPerformanceInformation();
-		static const WindowsVersion& GetWindowsVersion();
-		static const BasicSystemInfo& GetBasicSystemInfo();
-		static uint64_t GetBootTime();
+		[[nodiscard]] static PerformanceInformation GetPerformanceInformation();
+		[[nodiscard]] static const WindowsVersion& GetWindowsVersion();
+		[[nodiscard]] static const BasicSystemInfo& GetBasicSystemInfo();
+		[[nodiscard]] static uint64_t GetBootTime();
+		[[nodiscard]] static std::wstring GetSystemDir();
 	};
 
 	struct AccessMask {
@@ -220,7 +221,7 @@ namespace WinLL {
 			return Access;
 		}
 		template<typename T>
-		bool HasFlag(T flag) const {
+		[[nodiscard]] bool HasFlag(T flag) const {
 			return ((ULONG)flag & Access) == flag;
 		}
 

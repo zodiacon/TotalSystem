@@ -4,16 +4,25 @@
 #include <ImageHlp.h>
 #include "FileHelper.h"
 
-using namespace WinLL;
+using namespace WinLLX;
 
-ProcessModuleTracker::ProcessModuleTracker(DWORD pid) {
+bool ProcessModuleTracker::TrackProcess(uint32_t pid) {
 	m_Handle.reset(::OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | SYNCHRONIZE, FALSE, pid));
-	if (m_Handle)
-		::IsWow64Process(m_Handle.get(), &m_IsWow64);
+	if (m_Handle) {
+		BOOL isWow = FALSE;
+		::IsWow64Process(m_Handle.get(), &isWow);
+		m_IsWow64 = isWow;
+		m_ModuleMap.clear();
+		m_Modules.clear();
+		return true;
+	}
+	return false;
 }
 
-ProcessModuleTracker::ProcessModuleTracker(HANDLE hProcess) : m_Handle(hProcess) {
-	::IsWow64Process(m_Handle.get(), &m_IsWow64);
+ProcessModuleTracker::ProcessModuleTracker(HANDLE hProcess) : m_Handle(hProcess), m_Pid(::GetProcessId(hProcess)) {
+	BOOL isWow = FALSE;
+	::IsWow64Process(m_Handle.get(), &isWow);
+	m_IsWow64 = isWow;
 }
 
 std::shared_ptr<ModuleInfo> ProcessModuleTracker::FillModule(const MODULEENTRY32& me) {
@@ -31,7 +40,7 @@ std::shared_ptr<ModuleInfo> ProcessModuleTracker::FillModule(const MEMORY_BASIC_
 	WCHAR name[MAX_PATH];
 	mi->ImageBase = 0;
 	if (::GetMappedFileName(m_Handle.get(), mbi.AllocationBase, name, _countof(name))) {
-		mi->Path = FileHelper::GetDosNameFromNtName(name);
+		mi->Path = WinLL::FileHelper::GetDosNameFromNtName(name);
 		mi->Name = ::wcsrchr(name, L'\\') + 1;
 		BYTE buffer[1 << 12];
 		if (::ReadProcessMemory(m_Handle.get(), mbi.BaseAddress, buffer, sizeof(buffer), nullptr)) {
@@ -59,7 +68,7 @@ ProcessModuleTracker::operator bool() const {
 	return m_Handle.is_valid();
 }
 
-uint32_t ProcessModuleTracker::EnumModules() {
+uint32_t ProcessModuleTracker::Update() {
 	return m_Handle ? EnumModulesWithVirtualQuery() : EnumModulesWithToolHelp();
 }
 
@@ -164,3 +173,6 @@ uint32_t ProcessModuleTracker::EnumModulesWithToolHelp() {
 	return static_cast<uint32_t>(m_Modules.size());
 }
 
+uint32_t ProcessModuleTracker::GetPid() const {
+	return m_Pid;
+}

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "FormatHelper.h"
-#include <shellapi.h>
+#include <ShlObj.h>
+#include <Shobjidl.h>
 
 using namespace WinLL;
 
@@ -122,4 +123,33 @@ std::string FormatHelper::Format(const char* fmt, ...) {
 	vsprintf_s(buffer, fmt, args);
 	va_end(args);
 	return buffer;
+}
+
+std::string FormatHelper::GetFolderPath(GUID const& id) {
+	auto spMgr = wil::CoCreateInstance<IKnownFolderManager>(CLSID_KnownFolderManager);
+	if (spMgr) {
+		wil::com_ptr<IKnownFolder> spFolder;
+		spMgr->GetFolder(id, &spFolder);
+		if (spFolder) {
+			PWSTR path;
+			if (SUCCEEDED(spFolder->GetPath(KF_FLAG_NO_ALIAS, &path))) {
+				auto result = UnicodeToUtf8(path);
+				::CoTaskMemFree(path);
+				return result;
+			}
+		}
+	}
+	return "";
+}
+
+std::string FormatHelper::UnicodeToUtf8(PCWSTR text) {
+	std::string result;
+	auto len = (int)wcslen(text);
+	result.resize(len * 2);
+	len = ::WideCharToMultiByte(CP_UTF8, WC_NO_BEST_FIT_CHARS, text, len, result.data(), (int)result.length(), nullptr, nullptr);
+	if (len) {
+		result.resize(len);
+		return result;
+	}
+	return "";
 }

@@ -3,6 +3,8 @@
 #include "SecurityHelper.h"
 #include "Globals.h"
 #include "resource.h"
+#include "TotalSysSettings.h"
+#include <Psapi.h>
 
 using namespace ImGui;
 using namespace WinLL;
@@ -17,13 +19,14 @@ MainWindow::MainWindow(HWND hWnd) : m_hWnd(hWnd) {
 }
 
 void MainWindow::BuildWindow() {
-	DockSpaceOverViewport(GetMainViewport());
+	auto viewport = GetMainViewport();
+	DockSpaceOverViewport(viewport, ImGuiDockNodeFlags_None);
 
 	if (BeginMainMenuBar()) {
 		PushFont(Globals::VarFont());
-		if(BeginMenu("File")) {
+		if (BeginMenu("File")) {
 			if (!WinLL::SecurityHelper::IsRunningElevated() && MenuItem("Run As Administrator...")) {
-				if(WinLL::SecurityHelper::RunElevated()) {
+				if (WinLL::SecurityHelper::RunElevated()) {
 					::DestroyWindow(m_hWnd);
 				}
 			}
@@ -35,7 +38,7 @@ void MainWindow::BuildWindow() {
 			}
 			ImGui::EndMenu();
 		}
-		if (BeginMenu("View")) {
+		if (BeginMenu("System")) {
 			if (MenuItem("Processes", "F4", m_ProcessesView.IsOpen(), !m_ProcessesView.IsOpen())) {
 				m_ProcessesView.Open();
 			}
@@ -50,14 +53,22 @@ void MainWindow::BuildWindow() {
 				ToggleAlwaysOnTop();
 			}
 			if (BeginMenu("Theme")) {
-				if (MenuItem("Dark", nullptr, Globals::IsDarkMode())) {
+				if (MenuItem("Dark", nullptr, Globals::IsDarkMode() && !Globals::Settings().ThemeAsSystem)) {
 					Globals::SetDarkMode(true);
 				}
-				if (MenuItem("Light", nullptr, !Globals::IsDarkMode())) {
+				if (MenuItem("Light", nullptr, !Globals::IsDarkMode() && !Globals::Settings().ThemeAsSystem)) {
 					Globals::SetDarkMode(false);
 				}
 				Separator();
-				if (MenuItem("As System")) {
+				if (MenuItem("As System", nullptr, Globals::Settings().ThemeAsSystem)) {
+					RegistryKey key;
+					if (ERROR_SUCCESS == key.Open(HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Themes\Personalize)")) {
+						DWORD value;
+						if (ERROR_SUCCESS == key.QueryDWORDValue(L"AppsUseLightTheme", value)) {
+							Globals::SetDarkMode(value == 0);
+							Globals::Settings().ThemeAsSystem = true;
+						}
+					}
 				}
 				ImGui::EndMenu();
 			}
@@ -78,10 +89,14 @@ void MainWindow::BuildWindow() {
 		EndMainMenuBar();
 	}
 
+	SetNextWindowPos(viewport->WorkPos, ImGuiCond_FirstUseEver);
+	SetNextWindowSize(viewport->WorkSize, ImGuiCond_FirstUseEver);
 	m_ProcessesView.BuildWindow();
 	if (m_ThreadsView.IsOpen()) {
 		m_ThreadsView.BuildWindow();
 	}
+
+
 }
 
 bool MainWindow::IsAlwaysOnTop() const {

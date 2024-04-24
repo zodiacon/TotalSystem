@@ -17,6 +17,7 @@ public:
 	void BuildTable(std::shared_ptr<ProcessInfoEx> p);
 	void BuildToolBar();
 	void Clear();
+	bool Refresh(std::shared_ptr<ProcessInfoEx>& p, bool now = false);
 
 	static PCSTR StateToString(WinLL::ThreadState state);
 	static PCSTR WaitReasonToString(WinLL::WaitReason reason);
@@ -45,7 +46,6 @@ private:
 	std::shared_ptr<WinLL::ThreadInfo> m_SelectedThread;
 	std::shared_ptr<WinLL::ProcessInfo> m_Process;
 	WinLL::ProcessManager<WinLL::ProcessInfo, ThreadInfoEx> m_ProcMgr;
-	DWORD64 m_LastUpdate{ 0 };
 	bool m_AllThreads;
 };
 
