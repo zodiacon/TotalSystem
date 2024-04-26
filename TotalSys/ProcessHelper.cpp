@@ -12,3 +12,7 @@ vector<uint32_t> ProcessHelper::GetProcessIdsByName(std::vector<std::shared_ptr<
     return pids;
 
 }
+
+ImColor ProcessHelper::GetColorByCPU(float cpu) {
+    return ImColor::HSV(1.0f, cpu / 60 + .4f, .3f);
+}

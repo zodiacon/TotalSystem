@@ -60,6 +60,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	auto ctx = ImGui::GetCurrentContext();
+	
+	// TODO: custom save/load
+
 	auto& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 	auto inifile = FormatHelper::GetFolderPath(FOLDERID_Documents) + "\\TotalSystem.ini";

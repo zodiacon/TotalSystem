@@ -8,6 +8,7 @@
 #include "SortHelper.h"
 #include "FormatHelper.h"
 #include <ImGuiExt.h>
+#include "ProcessHelper.h"
 
 using namespace ImGui;
 using namespace std;
@@ -72,7 +73,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 				ImVec4 color;
 				auto customColors = pid && value > 1.0f;
 				if (customColors) {
-					color = ImColor::HSV(.6f, value / 100 + .3f, .3f).Value;
+					color = ProcessHelper::GetColorByCPU(value).Value;
 				}
 				else {
 					color = orgBackColor;

@@ -4,6 +4,10 @@
 using namespace ImGui;
 using namespace std;
 
+SimpleMessageBox::SimpleMessageBox(std::string title, std::string text, MessageBoxButtons buttons) :
+	m_Title(move(title)), m_Text(move(text)), m_Buttons(buttons) {
+}
+
 void SimpleMessageBox::Init(string title, string text, MessageBoxButtons buttons) {
 	m_Title = move(title);
 	m_Text = move(text);
@@ -36,7 +40,8 @@ MessageBoxResult SimpleMessageBox::ShowModal() {
 			break;
 	}
 
-	if (BeginPopupModal(m_Title.c_str(), &m_Open, ImGuiWindowFlags_AlwaysAutoResize)) {
+	bool open = true;
+	if (BeginPopupModal(m_Title.c_str(), &open, ImGuiWindowFlags_AlwaysAutoResize)) {
 		auto winWidth = GetWindowSize().x;
 		Text(m_Text.c_str());
 		Dummy(ImVec2(0, 6));
@@ -65,8 +70,17 @@ MessageBoxResult SimpleMessageBox::ShowModal() {
 			result = MessageBoxResult::Cancel;
 			Empty();
 		}
+		if (IsKeyPressed(ImGuiKey_Enter)) {
+			CloseCurrentPopup();
+			result = MessageBoxResult::OK;
+			Empty();
+		}
 		EndPopup();
 	}
+
+	if (!open)
+		Empty();
+
 	return result;
 }
 

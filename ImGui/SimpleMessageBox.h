@@ -19,6 +19,8 @@ enum class MessageBoxButtons {
 
 class SimpleMessageBox {
 public:
+	SimpleMessageBox() = default;
+	SimpleMessageBox(std::string title, std::string text, MessageBoxButtons buttons = MessageBoxButtons::OK);
 	void Init(std::string title, std::string text, MessageBoxButtons buttons = MessageBoxButtons::OK);
 	MessageBoxResult ShowModal();
 

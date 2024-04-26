@@ -13,7 +13,8 @@
 #include <ShellApi.h>
 #include "TotalSysSettings.h"
 #include "ProcessHelper.h"
-#include "UI.h"
+#include "MainWindow.h"
+
 
 #pragma comment(lib, "Shlwapi.lib")
 #pragma comment(lib, "imagehlp.lib")
@@ -32,6 +33,9 @@ ProcessesView::ProcessesView() {
 void ProcessesView::BuildWindow() {
 	if (IsOpen()) {
 		if (Begin("Processes", GetOpenAddress(), ImGuiWindowFlags_MenuBar)) {
+			if (Globals::RootWindow().SaveSelected()) {
+				// handle Save...
+			}
 			if (BeginMenuBar()) {
 				if (m_SelectedProcess && BeginMenu("Process")) {
 					BuildProcessMenu(*m_SelectedProcess);
@@ -63,11 +67,11 @@ bool ProcessesView::Refresh(bool now) {
 		else {
 			for (auto& pi : pm.GetNewProcesses()) {
 				m_Processes.push_back(pi);
-				pi->New(2000);
+				pi->New(Globals::Settings().NewObjectsTime * 1000);
 			}
 
 			for (auto& pi : pm.GetTerminatedProcesses()) {
-				pi->Term(2000);
+				pi->Term(Globals::Settings().OldObjectsTime * 1000);
 			}
 		}
 
@@ -207,7 +211,7 @@ void ProcessesView::BuildTable() {
 				ImVec4 color;
 				auto customColors = p->Id && value > 1.0f;
 				if (customColors) {
-					color = ImColor::HSV(.7f, value / 100 + .3f, .3f).Value;
+					color = ProcessHelper::GetColorByCPU(value).Value;
 				}
 				else {
 					color = orgBackColor;
@@ -439,7 +443,7 @@ void ProcessesView::BuildTable() {
 		count = static_cast<int>(m_Processes.size());
 		ImGuiListClipper clipper;
 		clipper.Begin(count);
-
+		bool selected = false;
 		while (clipper.Step()) {
 			for (int j = clipper.DisplayStart; j < clipper.DisplayEnd; j++) {
 				auto& p = m_Processes[j];
@@ -456,12 +460,21 @@ void ProcessesView::BuildTable() {
 				for (c = 0; c < _countof(columns); c++) {
 					if (TableSetColumnIndex(c)) {
 						columns[c].Callback(p);
+
+						if (!selected && j > m_SelectedIndex && IsKeyPressed((ImGuiKey)(ImGuiKey_A + toupper(p->GetImageName()[0]) - 'A'))) {
+							SetKeyboardFocusHere(-1);
+							m_SelectedProcess = p;
+							m_SelectedIndex = j;
+							selected = true;
+						}
+
 						if (c == 0 && IsItemFocused()) {
 							m_SelectedProcess = p;
 							m_SelectedIndex = j;
 						}
 					}
 				}
+
 
 				PopStyleColor(popCount);
 
@@ -606,7 +619,7 @@ void ProcessesView::BuildLowerPane() {
 		if (BeginChild("lowerpane", ImVec2(0, 0), ImGuiWindowFlags_None, ImGuiWindowFlags_NoScrollbar)) {
 			if (BeginTabBar("lowertabs", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_Reorderable)) {
 				if (m_SelectedProcess) {
-					SameLine(450);
+					SameLine(500);
 					Text("PID: %u (%ws)", m_SelectedProcess->Id, m_SelectedProcess->GetImageName().c_str()); SameLine();
 				}
 				if (BeginTabItem("Threads", nullptr, ImGuiTabItemFlags_None)) {

@@ -17,8 +17,8 @@ struct TotalSysSettings {
 		Suspended,
 	};
 
-	uint32_t NewObjectsTime{ 2000 };
-	uint32_t OldObjectsTime{ 2000 };
+	uint32_t NewObjectsTime{ 2 };
+	uint32_t OldObjectsTime{ 2 };
 
 	std::vector<ProcessColor>& GetProcessColors();
 	bool DarkMode{ true };

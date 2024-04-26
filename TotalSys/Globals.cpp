@@ -39,3 +39,12 @@ TotalSysSettings& Globals::Settings() {
 	static TotalSysSettings settings;
 	return settings;
 }
+
+MainWindow& Globals::RootWindow() {
+	return *s_MainWindow;
+}
+
+void Globals::SetMainWindow(MainWindow* win) {
+	assert(s_MainWindow == nullptr);
+	s_MainWindow = win;
+}

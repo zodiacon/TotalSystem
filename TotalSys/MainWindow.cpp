@@ -10,31 +10,33 @@ using namespace ImGui;
 using namespace WinLL;
 
 MainWindow::MainWindow(HWND hWnd) : m_hWnd(hWnd) {
+	Globals::SetMainWindow(this);
 	UINT icons[]{ IDI_PAUSE, IDI_SPLIT, IDI_WINDOW, IDI_RUNNING };
 
 	for (auto& icon : icons) {
 		Globals::ImageManager().Add(icon);
 	}
-
 }
 
 void MainWindow::BuildWindow() {
 	auto viewport = GetMainViewport();
 	DockSpaceOverViewport(viewport, ImGuiDockNodeFlags_None);
 
+	static SimpleMessageBox about;
+
+	m_DoSave = false;
 	if (BeginMainMenuBar()) {
 		PushFont(Globals::VarFont());
 		if (BeginMenu("File")) {
-			if (!WinLL::SecurityHelper::IsRunningElevated() && MenuItem("Run As Administrator...")) {
-				if (WinLL::SecurityHelper::RunElevated()) {
-					::DestroyWindow(m_hWnd);
+			if (!SecurityHelper::IsRunningElevated() && MenuItem("Run As Administrator...")) {
+				if (SecurityHelper::RunElevated()) {
+					::PostMessage(m_hWnd, WM_CLOSE, 0, 0);
 				}
 			}
-			if (MenuItem("Save")) {
-			}
+			m_DoSave = MenuItem("Save...");
 			Separator();
 			if (MenuItem("Exit")) {
-				::DestroyWindow(m_hWnd);
+				::PostMessage(m_hWnd, WM_CLOSE, 0, 0);
 			}
 			ImGui::EndMenu();
 		}
@@ -52,15 +54,16 @@ void MainWindow::BuildWindow() {
 			if (MenuItem("Always on Top", nullptr, IsAlwaysOnTop())) {
 				ToggleAlwaysOnTop();
 			}
+			auto& settings = Globals::Settings();
 			if (BeginMenu("Theme")) {
-				if (MenuItem("Dark", nullptr, Globals::IsDarkMode() && !Globals::Settings().ThemeAsSystem)) {
+				if (MenuItem("Dark", nullptr, Globals::IsDarkMode() && settings.ThemeAsSystem)) {
 					Globals::SetDarkMode(true);
 				}
-				if (MenuItem("Light", nullptr, !Globals::IsDarkMode() && !Globals::Settings().ThemeAsSystem)) {
+				if (MenuItem("Light", nullptr, !Globals::IsDarkMode() && !settings.ThemeAsSystem)) {
 					Globals::SetDarkMode(false);
 				}
 				Separator();
-				if (MenuItem("As System", nullptr, Globals::Settings().ThemeAsSystem)) {
+				if (MenuItem("As System", nullptr, settings.ThemeAsSystem)) {
 					RegistryKey key;
 					if (ERROR_SUCCESS == key.Open(HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Themes\Personalize)")) {
 						DWORD value;
@@ -70,6 +73,11 @@ void MainWindow::BuildWindow() {
 						}
 					}
 				}
+				ImGui::EndMenu();
+			}
+			if (BeginMenu("Highlight Duration")) {
+				SliderInt("New Objects", (int*)&settings.NewObjectsTime, 1, 9, "%d Seconds");
+				SliderInt("Old Objects", (int*)&settings.OldObjectsTime, 1, 9, "%d Seconds");
 				ImGui::EndMenu();
 			}
 			auto replaced = SecurityHelper::IsExeReplaced(L"taskmgr.exe");
@@ -82,6 +90,7 @@ void MainWindow::BuildWindow() {
 		}
 		if (BeginMenu("Help")) {
 			if (MenuItem("About Total System...")) {
+				about.Init("About Total System", "(C)2024 Pavel Yosifovich");
 			}
 			ImGui::EndMenu();
 		}
@@ -89,14 +98,14 @@ void MainWindow::BuildWindow() {
 		EndMainMenuBar();
 	}
 
+	about.ShowModal();
+
 	SetNextWindowPos(viewport->WorkPos, ImGuiCond_FirstUseEver);
 	SetNextWindowSize(viewport->WorkSize, ImGuiCond_FirstUseEver);
 	m_ProcessesView.BuildWindow();
 	if (m_ThreadsView.IsOpen()) {
 		m_ThreadsView.BuildWindow();
 	}
-
-
 }
 
 bool MainWindow::IsAlwaysOnTop() const {
@@ -107,6 +116,10 @@ bool MainWindow::ToggleAlwaysOnTop() {
 	auto onTop = !IsAlwaysOnTop();
 	::SetWindowPos(m_hWnd, onTop ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 	return onTop;
+}
+
+bool MainWindow::SaveSelected() const {
+	return m_DoSave;
 }
 
 

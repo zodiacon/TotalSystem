@@ -6,6 +6,7 @@
 #include "IconManager.h"
 
 struct TotalSysSettings;
+class MainWindow;
 
 struct Globals abstract final {
 	static void SetMonoFont(ImFont* font);
@@ -16,8 +17,12 @@ struct Globals abstract final {
 	static void SetDarkMode(bool dark);
 	static IconManager& ImageManager();
 	static TotalSysSettings& Settings();
+	static MainWindow& RootWindow();
+	static void SetMainWindow(MainWindow* win);
 
+private:
 	inline static ImFont* s_pMonoFont;
 	inline static ImFont* s_pVarFont;
+	inline static MainWindow* s_MainWindow;
 };
 
