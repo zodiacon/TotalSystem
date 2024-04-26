@@ -61,6 +61,7 @@ bool ProcessesView::Refresh(bool now) {
 		auto& pm = m_ProcMgr;
 		auto empty = m_Processes.empty();
 		pm.Update();
+		std::string filter = m_FilterText;
 		if (empty) {
 			m_Processes = pm.GetProcesses();
 		}
@@ -75,6 +76,37 @@ bool ProcessesView::Refresh(bool now) {
 			}
 		}
 
+		if (m_FilterChanged) {
+			if (!filter.empty()) {
+				_strlwr_s(filter.data(), filter.length() + 1);
+				m_Processes.Filter([&](auto& p, auto) {
+					std::wstring name(p->GetImageName());
+					if (!name.empty()) {
+						_wcslwr_s(name.data(), name.length() + 1);
+						wstring wfilter(filter.begin(), filter.end());
+						if (name.find(wfilter) != wstring::npos) {
+							return true;
+						}
+					}
+					if (to_string(p->Id).find(filter) != string::npos) {
+						return true;
+					}
+					if (format("{:x}", p->Id).find(filter) != string::npos) {
+						return true;
+					}
+					return false;
+					});
+			}
+			else {
+				m_Processes.Filter(nullptr);
+			}
+			m_FilterChanged = false;
+		}
+
+		if (m_SortSpecs) {
+			DoSort(m_SortSpecs->ColumnIndex, m_SortSpecs->SortDirection == ImGuiSortDirection_Ascending);
+		}
+
 		UpdateTick();
 
 		return true;
@@ -87,7 +119,7 @@ void ProcessesView::DoSort(int col, bool asc) {
 		switch (static_cast<Column>(col)) {
 			case Column::ProcessName: return SortHelper::Sort(p1->GetImageName(), p2->GetImageName(), asc);
 			case Column::Pid: return SortHelper::Sort(p1->Id, p2->Id, asc);
-			case Column::UserName: return SortHelper::Sort(p1->UserName(), p2->UserName(), asc);
+			case Column::UserName: return SortHelper::Sort(p1->GetUserName(true), p2->GetUserName(true), asc);
 			case Column::Session: return SortHelper::Sort(p1->SessionId, p2->SessionId, asc);
 			case Column::CPU: return SortHelper::Sort(p1->CPU, p2->CPU, asc);
 			case Column::ParentPid: return SortHelper::Sort(p1->ParentId, p2->ParentId, asc);
@@ -394,37 +426,7 @@ void ProcessesView::BuildTable() {
 			}
 		}
 
-		if (update) {
-			std::string filter;
-			if (m_FilterText[0]) {
-				filter = m_FilterText;
-				_strlwr_s(filter.data(), filter.length() + 1);
-			}
-			if (m_FilterText[0]) {
-				m_Processes.Filter([&](auto& p, auto) {
-					std::wstring name(p->GetImageName());
-					if (!name.empty()) {
-						_wcslwr_s(name.data(), name.length() + 1);
-						wstring wfilter(filter.begin(), filter.end());
-						if (name.find(wfilter) != wstring::npos) {
-							return true;
-						}
-					}
-					if (to_string(p->Id).find(filter) != string::npos) {
-						return true;
-					}
-					if (format("{:x}", p->Id).find(filter) != string::npos) {
-						return true;
-					}
-					return false;
-					});
-			}
-			else {
-				m_Processes.Filter(nullptr);
-			}
-			auto specs = TableGetSortSpecs()->Specs;
-			DoSort(specs->ColumnIndex, specs->SortDirection == ImGuiSortDirection_Ascending);
-		}
+		m_SortSpecs = TableGetSortSpecs()->Specs;
 
 		auto count = static_cast<int>(m_Processes.size());
 		for (int i = 0; i < count; i++) {
@@ -444,6 +446,7 @@ void ProcessesView::BuildTable() {
 		ImGuiListClipper clipper;
 		clipper.Begin(count);
 		bool selected = false;
+		bool tableFocused = IsItemFocused();
 		while (clipper.Step()) {
 			for (int j = clipper.DisplayStart; j < clipper.DisplayEnd; j++) {
 				auto& p = m_Processes[j];
@@ -461,7 +464,7 @@ void ProcessesView::BuildTable() {
 					if (TableSetColumnIndex(c)) {
 						columns[c].Callback(p);
 
-						if (!selected && j > m_SelectedIndex && IsKeyPressed((ImGuiKey)(ImGuiKey_A + toupper(p->GetImageName()[0]) - 'A'))) {
+						if (!selected && j > m_SelectedIndex && tableFocused && IsKeyChordPressed((ImGuiKey)(ImGuiKey_A + toupper(p->GetImageName()[0]) - 'A'))) {
 							SetKeyboardFocusHere(-1);
 							m_SelectedProcess = p;
 							m_SelectedIndex = j;
@@ -496,7 +499,7 @@ void ProcessesView::BuildTable() {
 }
 
 void ProcessesView::BuildViewMenu() {
-	if (IsKeyPressed(ImGuiKey_L) && GetIO().KeyCtrl) {
+	if (IsKeyChordPressed(ImGuiKey_L | ImGuiMod_Ctrl)) {
 		m_ShowLowerPane = !m_ShowLowerPane;
 	}
 
@@ -567,11 +570,13 @@ void ProcessesView::BuildToolBar() {
 
 	SameLine();
 	SetNextItemWidth(120);
-	if (GetIO().KeyCtrl && IsKeyPressed(ImGuiKey_F))
+	if (IsKeyChordPressed(ImGuiKey_F | ImGuiMod_Ctrl))
 		SetKeyboardFocusHere();
 
-	InputTextWithHint("##Filter", "Filter (Ctrl+F)", m_FilterText, _countof(m_FilterText),
-		ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll);
+	if (InputTextWithHint("##Filter", "Filter (Ctrl+F)", m_FilterText, _countof(m_FilterText),
+		ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll)) {
+		m_FilterChanged = true;
+	}
 	if (IsItemHovered())
 		SetTooltip("Filter by name/ID");
 

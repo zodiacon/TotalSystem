@@ -48,9 +48,9 @@ namespace WinLL {
 		return ::ProcessIdToSessionId(::GetProcessId(m_hObject.get()), &session) ? session : -1;
 	}
 
-	wstring Process::GetUserName(bool includeDomain) const {
+	wstring Process::GetUserName(uint32_t pid, bool includeDomain) {
 		Token token;
-		if (!token.Open(TokenAccessMask::Query))
+		if (!token.Open(TokenAccessMask::Query, pid))
 			return L"";
 		return token.GetUserName(includeDomain);
 	}

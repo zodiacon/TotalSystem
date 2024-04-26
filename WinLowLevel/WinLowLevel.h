@@ -514,7 +514,7 @@ namespace WinLL {
 		[[nodiscard]] int32_t GetSessionId() const;
 		[[nodiscard]] wstring GetImagePath() const;
 		[[nodiscard]] wstring GetImageName() const;
-		[[nodiscard]] wstring GetUserName(bool includeDomain = false) const;
+		[[nodiscard]] static wstring GetUserName(uint32_t pid, bool includeDomain = false);
 		[[nodiscard]] wstring GetPackageName() const;
 		[[nodiscard]] wstring GetAppUserModelId() const;
 		[[nodiscard]] wstring GetAppId() const;

@@ -71,27 +71,6 @@ ProcessAttributes ProcessInfoEx::Attributes(ProcessManager<ProcessInfoEx, Thread
 	return m_Attributes;
 }
 
-const std::wstring& ProcessInfoEx::UserName() const {
-	if (m_UserName.empty()) {
-		if (Id <= 4)
-			m_UserName = L"NT AUTHORITY\\SYSTEM";
-		else {
-			Process process;
-			if (process.Open(Id)) {
-				m_UserName = process.GetUserName();
-			}
-			else if(::GetLastError() == ERROR_ACCESS_DENIED) {
-				m_UserName = L"<access denied>";
-			}
-			else {
-				m_UserName = L"<unknown>";
-			}
-		}
-	}
-	return m_UserName;
-}
-
-
 bool ProcessInfoEx::IsSuspended() const {
 	return m_Suspended;
 }

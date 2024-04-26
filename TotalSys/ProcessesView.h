@@ -51,13 +51,11 @@ private:
 	bool BuildPriorityClassMenu(WinLL::ProcessInfo& pi);
 	bool GotoFileLocation(WinLL::ProcessInfo const& pi);
 
-	//std::shared_ptr<ProcessProperties> GetProcessProperties(WinSys::ProcessInfo* pi);
-	//std::shared_ptr<ProcessProperties> GetOrAddProcessProperties(const std::shared_ptr<WinSys::ProcessInfo>& pi);
-
 	static std::string ProcessAttributesToString(ProcessAttributes attributes);
 
 private:
 	WinLL::ProcessManager<ProcessInfoEx, WinLL::ThreadInfo> m_ProcMgr;
+	const ImGuiTableColumnSortSpecs* m_SortSpecs{ nullptr };
 	std::vector<uint32_t> m_PidsToKill;
 	ThreadsView m_ThreadsView;
 	ModulesView m_ModulesView;
@@ -66,5 +64,5 @@ private:
 	std::shared_ptr<ProcessInfoEx> m_SelectedProcess;
 	SimpleMessageBox m_KillDlg;
 	int m_SelectedIndex{ -1 };
-	bool m_ShowLowerPane : 1{ false }, m_WasRunning : 1 { false };
+	bool m_ShowLowerPane : 1{ false }, m_WasRunning : 1 { false }, m_FilterChanged : 1 { false };
 };

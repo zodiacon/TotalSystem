@@ -8,7 +8,9 @@ namespace WinLL {
 		wil::unique_handle hProcess;
 		if (pid) {
 			CLIENT_ID cid = { UlongToHandle(pid) };
-			::NtOpenProcess(hProcess.addressof(), ProcessAccessMask::QueryInformation, ObjectAttributes(nullptr), &cid);
+			auto status = ::NtOpenProcess(hProcess.addressof(), ProcessAccessMask::QueryInformation, ObjectAttributes(nullptr), &cid);
+			if (!NT_SUCCESS(status))
+				::SetLastError(RtlNtStatusToDosError(status));
 		}
 		else {
 			hProcess.reset(NtCurrentProcess());
