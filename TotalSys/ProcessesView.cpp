@@ -32,7 +32,7 @@ ProcessesView::ProcessesView() {
 
 void ProcessesView::BuildWindow() {
 	if (IsOpen()) {
-		if (Begin("Processes", GetOpenAddress(), ImGuiWindowFlags_MenuBar)) {
+		if (Begin("Processes", GetOpenAddress(), ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar)) {
 			if (Globals::RootWindow().SaveSelected()) {
 				// handle Save...
 			}
@@ -54,6 +54,13 @@ void ProcessesView::BuildWindow() {
 
 void ProcessesView::ShowLowerPane(bool show) {
 	m_ShowLowerPane = show;
+	m_DoSize = true;
+}
+
+bool ProcessesView::ToggleLowerPane() {
+	m_ShowLowerPane = !m_ShowLowerPane;
+	m_DoSize = true;
+	return m_ShowLowerPane;
 }
 
 bool ProcessesView::Refresh(bool now) {
@@ -402,111 +409,116 @@ void ProcessesView::BuildTable() {
 
 	};
 
-	float y = 0;
-	if (m_ShowLowerPane) {
-		y = GetWindowSize().y / 2;
-		BeginChild("upper", ImVec2(0, y), ImGuiChildFlags_ResizeY);
-	}
-	if (IsKeyPressed(ImGuiKey_Space)) {
-		TogglePause();
-		m_ThreadsView.TogglePause();
-	}
+	auto size = GetWindowSize();
+	if (!m_ShowLowerPane)
+		m_DoSize = false;
 
-	if (BeginTable("Processes", _countof(columns), ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | 0 * ImGuiTableFlags_NoSavedSettings |
-		ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersOuterV)) {
-		TableSetupScrollFreeze(2, 1);
-
-		int c = 0;
-		PushFont(Globals::VarFont());
-		for (auto& ci : columns)
-			TableSetupColumn(ci.Header, ci.Flags, ci.Width, c++);
-		TableHeadersRow();
-		m_SortSpecs = TableGetSortSpecs()->Specs;
-		auto update = Refresh();
-		PopFont();
-
-		auto result = m_KillDlg.ShowModal();
-		if (result == MessageBoxResult::OK) {
-			if (m_PidsToKill.empty()) {
-				auto success = KillProcess(m_SelectedProcess->Id);
-				if (success)
-					m_SelectedProcess.reset();
-			}
-			else {
-				for (auto& pid : m_PidsToKill) {
-					Process p;
-					if (p.Open(pid, ProcessAccessMask::Terminate))
-						p.Terminate();
-				}
-
-			}
+	if (BeginChild("upper", ImVec2(), m_ShowLowerPane ? ImGuiChildFlags_ResizeY : 0, ImGuiWindowFlags_NoScrollbar)) {
+		if (m_DoSize) {
+			SetWindowSize(ImVec2(0, size.y / 2), ImGuiCond_Always);
+			m_DoSize = false;
 		}
+		if (IsKeyPressed(ImGuiKey_Space)) {
+			TogglePause();
+			m_ThreadsView.TogglePause();
+		}
+		if (BeginTable("ProcessesTable", _countof(columns),
+			ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable |
+			ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersOuterV)) {
+			TableSetupScrollFreeze(2, 1);
 
-		auto count = static_cast<int>(m_Processes.size());
-		ImGuiListClipper clipper;
-		clipper.Begin(count);
-		clipper.IncludeItemByIndex(m_SelectedIndex);
-		while (clipper.Step()) {
-			for (int j = clipper.DisplayStart; j < clipper.DisplayEnd; j++) {
-				auto& p = m_Processes[j];
-				TableNextRow();
+			int c = 0;
+			PushFont(Globals::VarFont());
+			for (auto& ci : columns)
+				TableSetupColumn(ci.Header, ci.Flags, ci.Width, c++);
+			TableHeadersRow();
 
-				auto popCount = 0;
-				auto colors = p->Colors(m_ProcMgr);
-				if (colors.first.x >= 0) {
-					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(colors.first));
-					PushStyleColor(ImGuiCol_Text, colors.second);
-					popCount = 1;
+			m_SortSpecs = TableGetSortSpecs()->Specs;
+			auto update = Refresh();
+			PopFont();
+
+			auto result = m_KillDlg.ShowModal();
+			if (result == MessageBoxResult::OK) {
+				if (m_PidsToKill.empty()) {
+					auto success = KillProcess(m_SelectedProcess->Id);
+					if (success)
+						m_SelectedProcess.reset();
 				}
+				else {
+					for (auto& pid : m_PidsToKill) {
+						Process p;
+						if (p.Open(pid, ProcessAccessMask::Terminate))
+							p.Terminate();
+					}
 
-				for (c = 0; c < _countof(columns); c++) {
-					if (TableSetColumnIndex(c)) {
-						columns[c].Callback(p);
-						if (c == 0 && IsItemFocused()) {
-							m_SelectedProcess = p;
-							m_SelectedIndex = j;
+				}
+			}
+
+			auto count = static_cast<int>(m_Processes.size());
+			ImGuiListClipper clipper;
+			clipper.Begin(count);
+			clipper.IncludeItemByIndex(m_SelectedIndex);
+			while (clipper.Step()) {
+				for (int j = clipper.DisplayStart; j < clipper.DisplayEnd; j++) {
+					auto& p = m_Processes[j];
+					TableNextRow();
+
+					auto popCount = 0;
+					auto colors = p->Colors(m_ProcMgr);
+					if (colors.first.x >= 0) {
+						TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(colors.first));
+						PushStyleColor(ImGuiCol_Text, colors.second);
+						popCount = 1;
+					}
+
+					for (c = 0; c < _countof(columns); c++) {
+						if (TableSetColumnIndex(c)) {
+							columns[c].Callback(p);
+							if (c == 0 && IsItemFocused()) {
+								m_SelectedProcess = p;
+								m_SelectedIndex = j;
+							}
 						}
 					}
+
+					PopStyleColor(popCount);
+
 				}
-
-				PopStyleColor(popCount);
-
 			}
-		}
 
-		//for (size_t i = m_SelectedIndex + 1; i < m_Processes.size(); i++) {
-		//	auto& p = m_Processes[i];
-		//	if (IsKeyChordPressed((ImGuiKey)(ImGuiKey_A + toupper(p->GetImageName()[0]) - 'A'))) {
-		//		m_SelectedProcess = p;
-		//		m_SelectedIndex = (int)i;
-		//		break;
-		//	}
-		//}
+			//for (size_t i = m_SelectedIndex + 1; i < m_Processes.size(); i++) {
+			//	auto& p = m_Processes[i];
+			//	if (IsKeyChordPressed((ImGuiKey)(ImGuiKey_A + toupper(p->GetImageName()[0]) - 'A'))) {
+			//		m_SelectedProcess = p;
+			//		m_SelectedIndex = (int)i;
+			//		break;
+			//	}
+			//}
 
-		EndTable();
+			EndTable();
 
 
-		if (m_SelectedProcess && IsKeyChordPressed(ImGuiKey_Delete)) {
-			TryKillProcess(*m_SelectedProcess);
+			if (m_SelectedProcess && IsKeyChordPressed(ImGuiKey_Delete)) {
+				TryKillProcess(*m_SelectedProcess);
+			}
+
 		}
 
 	}
-	if (m_ShowLowerPane) {
-		EndChild();
-		BuildLowerPane();
-	}
+	EndChild();
 
+	BuildLowerPane();
 }
 
 void ProcessesView::BuildViewMenu() {
 	if (IsKeyChordPressed(ImGuiKey_L | ImGuiMod_Ctrl)) {
-		m_ShowLowerPane = !m_ShowLowerPane;
+		ToggleLowerPane();
 	}
 
 	PushFont(Globals::VarFont());
 	if (BeginMenu("View")) {
 		if (MenuItem("Show Lower Pane", "Ctrl+L", m_ShowLowerPane)) {
-			m_ShowLowerPane = !m_ShowLowerPane;
+			ToggleLowerPane();
 		}
 		BuildUpdateIntervalMenu();
 		Separator();
@@ -556,7 +568,7 @@ void ProcessesView::BuildProcessMenu(ProcessInfoEx& pi) {
 void ProcessesView::BuildToolBar() {
 	PushFont(Globals::VarFont());
 	if (ImageButton("LowerPane", Globals::ImageManager().GetImage(m_ShowLowerPane ? IDI_WINDOW : IDI_SPLIT), ImVec2(16, 16))) {
-		m_ShowLowerPane = !m_ShowLowerPane;
+		ToggleLowerPane();
 	}
 	if (IsItemHovered())
 		SetTooltip(((m_ShowLowerPane ? "Hide" : "Show") + string(" Lower Pane")).c_str());
@@ -621,30 +633,26 @@ void ProcessesView::BuildToolBar() {
 
 void ProcessesView::BuildLowerPane() {
 	if (m_ShowLowerPane) {
-		if (BeginChild("lowerpane", ImVec2(0, 0), ImGuiWindowFlags_None, ImGuiWindowFlags_NoScrollbar)) {
-			if (BeginTabBar("lowertabs", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_Reorderable)) {
-				if (m_SelectedProcess) {
+		if (BeginChild("lowerpane", ImVec2(), ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar)) {
+			if (m_SelectedProcess) {
+				if (BeginTabBar("lowertabs", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_Reorderable)) {
 					SameLine(500);
 					Text("PID: %u (%ws)", m_SelectedProcess->Id, m_SelectedProcess->GetImageName().c_str()); SameLine();
 				}
 				if (BeginTabItem("Threads", nullptr, ImGuiTabItemFlags_None)) {
-					if (m_SelectedProcess) {
-						m_ThreadsView.BuildToolBar();
-						m_ThreadsView.BuildTable(m_SelectedProcess);
-					}
+					m_ThreadsView.BuildToolBar();
+					m_ThreadsView.BuildTable(m_SelectedProcess);
 					EndTabItem();
 				}
 				if (BeginTabItem("Modules", nullptr, ImGuiTabItemFlags_None)) {
-					if (m_SelectedProcess) {
-						m_ModulesView.Track(m_SelectedProcess->Id);
-						m_ModulesView.BuildTable();
-					}
+					m_ModulesView.Track(m_SelectedProcess->Id);
+					m_ModulesView.BuildTable();
 					EndTabItem();
 				}
 				if (BeginTabItem("Handles", nullptr, ImGuiTabItemFlags_None)) {
 					EndTabItem();
 				}
-				if ((m_SelectedProcess && (m_SelectedProcess->Attributes(m_ProcMgr) & ProcessAttributes::InJob) == ProcessAttributes::InJob)) {
+				if ((m_SelectedProcess->Attributes(m_ProcMgr) & ProcessAttributes::InJob) == ProcessAttributes::InJob) {
 					if (BeginTabItem("Job", nullptr, ImGuiTabItemFlags_None)) {
 						EndTabItem();
 					}

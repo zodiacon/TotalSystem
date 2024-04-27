@@ -67,6 +67,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 	auto& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 	auto inifile = FormatHelper::GetFolderPath(FOLDERID_Documents) + "\\TotalSystem.ini";
+
+	if(::IsDebuggerPresent())
+		::DeleteFileA(inifile.c_str());
+
 	io.IniFilename = inifile.c_str();
 
 	// Setup Dear ImGui style

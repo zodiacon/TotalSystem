@@ -3,6 +3,7 @@
 #include "Globals.h"
 #include "TotalSysSettings.h"
 #include "FormatHelper.h"
+#include "SortHelper.h"
 
 using namespace ImGui;
 using namespace WinLLX;
@@ -74,6 +75,7 @@ void ModulesView::BuildTable() {
 			ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersOuterV)) {
 			TableSetupScrollFreeze(1, 1);
 
+			auto& settings = Globals::Settings();
 			int c = 0;
 			PushFont(Globals::VarFont());
 			for (auto& ci : columns)
@@ -82,6 +84,7 @@ void ModulesView::BuildTable() {
 
 			TableHeadersRow();
 
+			m_SortSpecs = TableGetSortSpecs()->Specs;
 			auto count = static_cast<int>(m_Modules.size());
 			ImGuiListClipper clipper;
 			clipper.Begin(count);
@@ -92,12 +95,14 @@ void ModulesView::BuildTable() {
 					TableNextRow();
 
 					if (m->IsNew()) {
-						TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(Globals::Settings().GetProcessColors()[TotalSysSettings::NewObjects].Color));
+						TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(settings.GetProcessColors()[TotalSysSettings::NewObjects].Color));
 					}
 					else if (m->IsTerminated()) {
-						TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(Globals::Settings().GetProcessColors()[TotalSysSettings::DeletedObjects].Color));
+						TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(settings.GetProcessColors()[TotalSysSettings::DeletedObjects].Color));
 					}
-
+					else if (m->ImageBase && m->ImageBase != m->Base) {
+						TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(settings.GetRelocatedColor()));
+					}
 					for (int c = 0; c < _countof(columns); c++) {
 						if (TableSetColumnIndex(c)) {
 							columns[c].Callback(m);
@@ -145,7 +150,25 @@ bool ModulesView::Refresh(bool now) {
 			}
 		}
 
+		if (m_SortSpecs)
+			DoSort(m_SortSpecs->ColumnIndex, m_SortSpecs->SortDirection == ImGuiSortDirection_Ascending);
+	
 		return true;
 	}
 	return false;
+}
+
+void ModulesView::DoSort(int col, bool asc) {
+	m_Modules.Sort([&](auto& m1, auto& m2) {
+		switch (static_cast<Column>(col)) {
+			case Column::Name: return SortHelper::Sort(m1->Name, m2->Name, asc);
+			case Column::Type: return SortHelper::Sort(m1->Type, m2->Type, asc);
+			case Column::BaseAddress: return SortHelper::Sort(m1->Base, m2->Base, asc);
+			case Column::ImageBase: return SortHelper::Sort(m1->ImageBase, m2->ImageBase, asc);
+			case Column::Size: return SortHelper::Sort(m1->ModuleSize, m2->ModuleSize, asc);
+			case Column::Path: return SortHelper::Sort(m1->Path, m2->Path, asc);
+			case Column::Characteristics: return SortHelper::Sort(m1->Characteristics, m2->Characteristics, asc);
+		}
+		return false;
+		});
 }

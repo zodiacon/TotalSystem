@@ -19,6 +19,7 @@ struct Globals abstract final {
 	static TotalSysSettings& Settings();
 	static MainWindow& RootWindow();
 	static void SetMainWindow(MainWindow* win);
+	static void SetAsSystem(bool dark);
 
 private:
 	inline static ImFont* s_pMonoFont;

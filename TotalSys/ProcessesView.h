@@ -17,6 +17,7 @@ public:
 	ProcessesView();
 	void BuildWindow();
 	void ShowLowerPane(bool show);
+	bool ToggleLowerPane();
 	bool Refresh(bool now = false);
 
 private:
@@ -65,4 +66,5 @@ private:
 	SimpleMessageBox m_KillDlg;
 	int m_SelectedIndex{ -1 };
 	bool m_ShowLowerPane : 1{ false }, m_WasRunning : 1 { false }, m_FilterChanged : 1 { false };
+	bool m_DoSize{ false };
 };

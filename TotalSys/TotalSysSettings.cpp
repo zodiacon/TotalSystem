@@ -33,8 +33,15 @@ TotalSysSettings::TotalSysSettings() {
 		ProcessColor("Suspended", FormatHelper::ColorWithAlpha(StandardColors::Gray, .6f), black, false),
 	};
 
+	m_RelocatedColor[0] = ImVec4(.3f, .3f, 0, .8f);
+	m_RelocatedColor[1] = ImVec4(.8f, .8f, 0, .8f);
+
 }
 
 std::vector<ProcessColor>& TotalSysSettings::GetProcessColors() {
-	return m_ProcessColors[Globals::IsDarkMode() ? 0 : 1];
+	return m_ProcessColors[DarkMode ? 0 : 1];
+}
+
+ImVec4 TotalSysSettings::GetRelocatedColor() const {
+	return m_RelocatedColor[DarkMode ? 0 : 1];
 }

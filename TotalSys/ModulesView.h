@@ -16,6 +16,8 @@ public:
 	bool Refresh(bool now = false);
 
 private:
+	void DoSort(int col, bool asc);
+
 	enum class Column {
 		Name, Type, Size, BaseAddress, ImageBase, Path, Characteristics,
 	};
@@ -30,5 +32,6 @@ private:
 	WinLLX::ProcessModuleTracker<ModuleInfoEx> m_Tracker;
 	std::shared_ptr<ModuleInfoEx> m_SelectedModule;
 	SortedFilteredVector<std::shared_ptr<ModuleInfoEx>> m_Modules;
+	const ImGuiTableColumnSortSpecs* m_SortSpecs{ nullptr };
 };
 

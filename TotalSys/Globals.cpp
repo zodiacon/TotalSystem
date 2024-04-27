@@ -27,6 +27,7 @@ void Globals::SetDarkMode(bool dark) {
 		ImGui::StyleColorsDark();
 	else
 		ImGui::StyleColorsLight();
+	Settings().ThemeAsSystem = false;
 
 }
 
@@ -47,4 +48,9 @@ MainWindow& Globals::RootWindow() {
 void Globals::SetMainWindow(MainWindow* win) {
 	assert(s_MainWindow == nullptr);
 	s_MainWindow = win;
+}
+
+void Globals::SetAsSystem(bool dark) {
+	Settings().DarkMode = dark;
+	Settings().ThemeAsSystem = true;
 }

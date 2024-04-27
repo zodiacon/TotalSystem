@@ -14,6 +14,10 @@ void SimpleMessageBox::Init(string title, string text, MessageBoxButtons buttons
 	m_Buttons = buttons;
 }
 
+void SimpleMessageBox::SetFont(ImFont* font) {
+	m_Font = font;
+}
+
 void SimpleMessageBox::Empty() {
 	m_Title.clear();
 	m_Text.clear();
@@ -41,6 +45,8 @@ MessageBoxResult SimpleMessageBox::ShowModal() {
 	}
 
 	bool open = true;
+	if (m_Font)
+		PushFont(m_Font);
 	if (BeginPopupModal(m_Title.c_str(), &open, ImGuiWindowFlags_AlwaysAutoResize)) {
 		auto winWidth = GetWindowSize().x;
 		Text(m_Text.c_str());
@@ -78,6 +84,8 @@ MessageBoxResult SimpleMessageBox::ShowModal() {
 		EndPopup();
 	}
 
+	if (m_Font)
+		PopFont();
 	if (!open)
 		Empty();
 

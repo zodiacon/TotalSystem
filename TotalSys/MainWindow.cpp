@@ -24,6 +24,8 @@ void MainWindow::BuildWindow() {
 
 	static SimpleMessageBox about;
 
+	//ImGui::ShowIDStackToolWindow();
+
 	m_DoSave = false;
 	if (BeginMainMenuBar()) {
 		PushFont(Globals::VarFont());
@@ -56,7 +58,7 @@ void MainWindow::BuildWindow() {
 			}
 			auto& settings = Globals::Settings();
 			if (BeginMenu("Theme")) {
-				if (MenuItem("Dark", nullptr, Globals::IsDarkMode() && settings.ThemeAsSystem)) {
+				if (MenuItem("Dark", nullptr, Globals::IsDarkMode() && !settings.ThemeAsSystem)) {
 					Globals::SetDarkMode(true);
 				}
 				if (MenuItem("Light", nullptr, !Globals::IsDarkMode() && !settings.ThemeAsSystem)) {
@@ -68,8 +70,7 @@ void MainWindow::BuildWindow() {
 					if (ERROR_SUCCESS == key.Open(HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Themes\Personalize)")) {
 						DWORD value;
 						if (ERROR_SUCCESS == key.QueryDWORDValue(L"AppsUseLightTheme", value)) {
-							Globals::SetDarkMode(value == 0);
-							Globals::Settings().ThemeAsSystem = true;
+							Globals::SetAsSystem(value == 0);
 						}
 					}
 				}
@@ -89,8 +90,9 @@ void MainWindow::BuildWindow() {
 			ImGui::EndMenu();
 		}
 		if (BeginMenu("Help")) {
-			if (MenuItem("About Total System...")) {
-				about.Init("About Total System", "(C)2024 Pavel Yosifovich");
+			if (MenuItem("About Total System...")) {			
+				about.Init("About Total System", "Version 0.1.5 (C)2024 Pavel Yosifovich");
+				about.SetFont(Globals::VarFont());
 			}
 			ImGui::EndMenu();
 		}
