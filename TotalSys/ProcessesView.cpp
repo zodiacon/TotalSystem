@@ -62,6 +62,21 @@ bool ProcessesView::Refresh(bool now) {
 		auto empty = m_Processes.empty();
 		pm.Update();
 		std::string filter = m_FilterText;
+
+		auto count = static_cast<int>(m_Processes.size());
+		for (int i = 0; i < count; i++) {
+			auto& p = m_Processes[i];
+			if (p->Update()) {
+				// process terminated
+				if (p == m_SelectedProcess)
+					m_SelectedProcess.reset();
+				m_Processes.Remove(i);
+				i--;
+				count--;
+				continue;
+			}
+		}
+
 		if (empty) {
 			m_Processes = pm.GetProcesses();
 		}
@@ -145,6 +160,7 @@ void ProcessesView::DoSort(int col, bool asc) {
 			case Column::PEB: return SortHelper::Sort(p1->GetPeb(), p2->GetPeb(), asc);
 			case Column::Protection: return SortHelper::Sort(p1->GetProtection().Level, p2->GetProtection().Level, asc);
 			case Column::Company: return SortHelper::Sort(p1->GetCompanyName(), p2->GetCompanyName(), asc);
+			case Column::Description: return SortHelper::Sort(p1->GetDescription(), p2->GetDescription(), asc);
 			case Column::Platform: return SortHelper::Sort(p1->GetBitness(), p2->GetBitness(), asc);
 			case Column::JobId: return SortHelper::Sort(p1->JobObjectId, p2->JobObjectId, asc);
 			case Column::MemoryPriority: return SortHelper::Sort(p1->GetMemoryPriority(), p2->GetMemoryPriority(), asc);
@@ -183,7 +199,6 @@ void ProcessesView::TryKillProcess(ProcessInfo& pi) {
 void ProcessesView::BuildTable() {
 	auto orgBackColor = GetStyle().Colors[ImGuiCol_TableRowBg];
 	auto& pm = m_ProcMgr;
-	auto update = Refresh();
 
 	static const ColumnInfo columns[] = {
 		{ "Name", [this](auto& p) {
@@ -191,11 +206,10 @@ void ProcessesView::BuildTable() {
 			char name[64];
 			PushFont(Globals::VarFont());
 			sprintf_s(name, "%ws##%u %u", p->GetImageName().c_str(), p->Id, p->ParentId);
-			Selectable(name, m_SelectedProcess == p, ImGuiSelectableFlags_SpanAllColumns);
-			PopFont();
-			if (IsItemClicked()) {
+			if (Selectable(name, m_SelectedProcess == p, ImGuiSelectableFlags_SpanAllColumns)) {
 				m_SelectedProcess = p;
 			}
+			PopFont();
 
 			auto item = format("{} {}", p->Id, p->ParentId);
 			if (BeginPopupContextItem(item.c_str())) {
@@ -393,6 +407,11 @@ void ProcessesView::BuildTable() {
 		y = GetWindowSize().y / 2;
 		BeginChild("upper", ImVec2(0, y), ImGuiChildFlags_ResizeY);
 	}
+	if (IsKeyPressed(ImGuiKey_Space)) {
+		TogglePause();
+		m_ThreadsView.TogglePause();
+	}
+
 	if (BeginTable("Processes", _countof(columns), ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | 0 * ImGuiTableFlags_NoSavedSettings |
 		ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersOuterV)) {
 		TableSetupScrollFreeze(2, 1);
@@ -402,12 +421,9 @@ void ProcessesView::BuildTable() {
 		for (auto& ci : columns)
 			TableSetupColumn(ci.Header, ci.Flags, ci.Width, c++);
 		TableHeadersRow();
+		m_SortSpecs = TableGetSortSpecs()->Specs;
+		auto update = Refresh();
 		PopFont();
-
-		if (IsKeyPressed(ImGuiKey_Space)) {
-			TogglePause();
-			m_ThreadsView.TogglePause();
-		}
 
 		auto result = m_KillDlg.ShowModal();
 		if (result == MessageBoxResult::OK) {
@@ -426,27 +442,10 @@ void ProcessesView::BuildTable() {
 			}
 		}
 
-		m_SortSpecs = TableGetSortSpecs()->Specs;
-
 		auto count = static_cast<int>(m_Processes.size());
-		for (int i = 0; i < count; i++) {
-			auto& p = m_Processes[i];
-			if (p->Update()) {
-				// process terminated
-				if (p == m_SelectedProcess)
-					m_SelectedProcess.reset();
-				m_Processes.Remove(i);
-				i--;
-				count--;
-				continue;
-			}
-		}
-
-		count = static_cast<int>(m_Processes.size());
 		ImGuiListClipper clipper;
 		clipper.Begin(count);
-		bool selected = false;
-		bool tableFocused = IsItemFocused();
+		clipper.IncludeItemByIndex(m_SelectedIndex);
 		while (clipper.Step()) {
 			for (int j = clipper.DisplayStart; j < clipper.DisplayEnd; j++) {
 				auto& p = m_Processes[j];
@@ -463,14 +462,6 @@ void ProcessesView::BuildTable() {
 				for (c = 0; c < _countof(columns); c++) {
 					if (TableSetColumnIndex(c)) {
 						columns[c].Callback(p);
-
-						if (!selected && j > m_SelectedIndex && tableFocused && IsKeyChordPressed((ImGuiKey)(ImGuiKey_A + toupper(p->GetImageName()[0]) - 'A'))) {
-							SetKeyboardFocusHere(-1);
-							m_SelectedProcess = p;
-							m_SelectedIndex = j;
-							selected = true;
-						}
-
 						if (c == 0 && IsItemFocused()) {
 							m_SelectedProcess = p;
 							m_SelectedIndex = j;
@@ -478,15 +469,24 @@ void ProcessesView::BuildTable() {
 					}
 				}
 
-
 				PopStyleColor(popCount);
 
 			}
 		}
 
+		//for (size_t i = m_SelectedIndex + 1; i < m_Processes.size(); i++) {
+		//	auto& p = m_Processes[i];
+		//	if (IsKeyChordPressed((ImGuiKey)(ImGuiKey_A + toupper(p->GetImageName()[0]) - 'A'))) {
+		//		m_SelectedProcess = p;
+		//		m_SelectedIndex = (int)i;
+		//		break;
+		//	}
+		//}
+
 		EndTable();
 
-		if (m_SelectedProcess && IsKeyPressed(ImGuiKey_Delete)) {
+
+		if (m_SelectedProcess && IsKeyChordPressed(ImGuiKey_Delete)) {
 			TryKillProcess(*m_SelectedProcess);
 		}
 
@@ -527,8 +527,8 @@ void ProcessesView::BuildProcessMenu(ProcessInfoEx& pi) {
 		auto name = make_unique<char[]>(len);
 		sprintf_s(name.get(), len, "Kill all %ws processes...", pi.GetImageName().c_str());
 		if (MenuItem(name.get())) {
-			auto processes = ProcessHelper::GetProcessIdsByName(m_Processes.GetAllItems(), pi.GetImageName());
 			if (m_KillDlg.IsEmpty()) {
+				auto processes = ProcessHelper::GetProcessIdsByName(m_Processes.GetAllItems(), pi.GetImageName());
 				m_KillDlg.Init("Kill Processes", FormatHelper::Format("Kill %u processes named %ws?",
 					(uint32_t)processes.size(), pi.GetImageName().c_str()), MessageBoxButtons::OkCancel);
 				m_PidsToKill = move(processes);
@@ -636,7 +636,8 @@ void ProcessesView::BuildLowerPane() {
 				}
 				if (BeginTabItem("Modules", nullptr, ImGuiTabItemFlags_None)) {
 					if (m_SelectedProcess) {
-						m_ModulesView.BuildTable(m_SelectedProcess);
+						m_ModulesView.Track(m_SelectedProcess->Id);
+						m_ModulesView.BuildTable();
 					}
 					EndTabItem();
 				}

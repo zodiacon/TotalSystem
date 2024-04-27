@@ -2,8 +2,10 @@
 #include "FormatHelper.h"
 #include <ShlObj.h>
 #include <Shobjidl.h>
+#include <ProcessModuleTracker.h>
 
 using namespace WinLL;
+using namespace WinLLX;
 
 std::string FormatHelper::FormatDateTime(int64_t time) {
 	TIME_FIELDS tf;
@@ -152,4 +154,35 @@ std::string FormatHelper::UnicodeToUtf8(PCWSTR text) {
 		return result;
 	}
 	return "";
+}
+
+std::string FormatHelper::DllCharacteristicsToString(uint16_t dc) {
+	std::string result;
+
+	static const struct {
+		DllCharacteristics cs;
+		PCSTR text;
+	} chars[] = {
+		{ DllCharacteristics::AppContainer,			"App Container" },
+		{ DllCharacteristics::HighEntropyVA,		"High Entropy VA" },
+		{ DllCharacteristics::DynamicBase,			"Dynamic Base" },
+		{ DllCharacteristics::ForceIntegrity,		"Force Integrity" },
+		{ DllCharacteristics::NxCompat,				"NX Compat" },
+		{ DllCharacteristics::ControlFlowGuard,		"CFG" },
+		{ DllCharacteristics::NoBind,				"No Bind" },
+		{ DllCharacteristics::WDMDriver,			"WDM Driver" },
+		{ DllCharacteristics::NoIsolation,			"No Isolation" },
+		{ DllCharacteristics::TerminalServerAware,	"TS Aware" },
+		{ DllCharacteristics::NoSEH,				"No SEH" },
+	};
+
+	for (auto& ch : chars) {
+		if ((ch.cs & (DllCharacteristics)dc) == ch.cs)
+			result += std::string(ch.text) + ", ";
+	}
+
+	if (!result.empty())
+		result = result.substr(0, result.size() - 2);
+	return result;
+
 }

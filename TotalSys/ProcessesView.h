@@ -13,11 +13,18 @@
 struct ImGuiTableSortSpecsColumn;
 
 class ProcessesView : public ViewBase {
+public:
+	ProcessesView();
+	void BuildWindow();
+	void ShowLowerPane(bool show);
+	bool Refresh(bool now = false);
+
+private:
 	enum class Column {
 		ProcessName, Pid, UserName, Session, CPU, ParentPid, CreateTime, Commit, BasePriority, Threads,
 		Handles, WorkingSet, ExePath, CPUTime, PeakThreads, VirtualSize, PeakWS, Attributes,
 		PagedPool, NonPagedPool, KernelTime, UserTime,
-		PeakPagedPool, PeakNonPagedPool, Integrity, PEB, Protection, 
+		PeakPagedPool, PeakNonPagedPool, Integrity, PEB, Protection,
 		Platform, Description, Company, JobId, MemoryPriority, IoPriority, Virtualization,
 		ReadOperationsCount, WriteOperationsCount, OtherOperationsCount,
 		ReadOperationsBytes, WriteOperationsBytes, OtherOperationsBytes,
@@ -31,13 +38,6 @@ class ProcessesView : public ViewBase {
 		float Width{ 0.0f };
 	};
 
-public:
-	ProcessesView();
-	void BuildWindow();
-	void ShowLowerPane(bool show);
-	bool Refresh(bool now = false);
-
-private:
 	void DoSort(int col, bool asc);
 	bool KillProcess(uint32_t id);
 	void TryKillProcess(WinLL::ProcessInfo& pi);

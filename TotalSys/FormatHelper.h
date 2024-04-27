@@ -17,5 +17,6 @@ struct FormatHelper abstract final {
 	static std::string Format(const char* fmt, ...);
 	static std::string GetFolderPath(GUID const& id);
 	static std::string UnicodeToUtf8(PCWSTR text);
+	static std::string DllCharacteristicsToString(uint16_t dc);
 };
 
