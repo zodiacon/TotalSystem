@@ -11,7 +11,7 @@
 using namespace std;
 using namespace WinLL;
 
-std::pair<const ImVec4, const ImVec4> ProcessInfoEx::Colors(ProcessManager<ProcessInfoEx, ThreadInfo>& pm) const {
+std::pair<const ImVec4, const ImVec4> ProcessInfoEx::Colors(DefaultProcessManager& pm) const {
 	using namespace ImGui;
 	auto& colors = Globals::Settings().GetProcessColors();
 
@@ -20,6 +20,10 @@ std::pair<const ImVec4, const ImVec4> ProcessInfoEx::Colors(ProcessManager<Proce
 
 	if (colors[TotalSysSettings::NewObjects].Enabled && IsNew())
 		return { colors[TotalSysSettings::NewObjects].Color, colors[TotalSysSettings::NewObjects].TextColor };
+
+	if (colors[TotalSysSettings::Suspended].Enabled && IsSuspended()) {
+		return { colors[TotalSysSettings::Suspended].Color, colors[TotalSysSettings::Suspended].TextColor };
+	}
 
 	auto attributes = Attributes(pm);
 	if (colors[TotalSysSettings::Manageed].Enabled && (attributes & ProcessAttributes::Managed) == ProcessAttributes::Managed) {
@@ -40,14 +44,11 @@ std::pair<const ImVec4, const ImVec4> ProcessInfoEx::Colors(ProcessManager<Proce
 	if (colors[TotalSysSettings::InJob].Enabled && (attributes & ProcessAttributes::InJob) == ProcessAttributes::InJob) {
 		return { colors[TotalSysSettings::InJob].Color, colors[TotalSysSettings::InJob].TextColor };
 	}
-	if (colors[TotalSysSettings::Suspended].Enabled && IsSuspended()) {
-		return { colors[TotalSysSettings::Suspended].Color, colors[TotalSysSettings::Suspended].TextColor };
-	}
 
 	return { ImVec4(-1, 0, 0, 0), ImVec4() };
 }
 
-ProcessAttributes ProcessInfoEx::Attributes(ProcessManager<ProcessInfoEx, ThreadInfo>& pm) const {
+ProcessAttributes ProcessInfoEx::Attributes(DefaultProcessManager& pm) const {
 	if (m_Attributes == ProcessAttributes::NotComputed) {
 		m_Attributes = ProcessAttributes::None;
 		auto parent = pm.GetProcessById(ParentId);
@@ -55,7 +56,7 @@ ProcessAttributes ProcessInfoEx::Attributes(ProcessManager<ProcessInfoEx, Thread
 			m_Attributes |= ProcessAttributes::Service;
 
 		Process process;
-		if(process.Open(Id, ProcessAccessMask::QueryLimitedInformation)) {
+		if (process.Open(Id, ProcessAccessMask::QueryLimitedInformation)) {
 			if (process.IsManaged())
 				m_Attributes |= ProcessAttributes::Managed;
 			if (process.IsProtected())
@@ -72,7 +73,7 @@ ProcessAttributes ProcessInfoEx::Attributes(ProcessManager<ProcessInfoEx, Thread
 }
 
 bool ProcessInfoEx::IsSuspended() const {
-	return m_Suspended;
+	return m_Suspended || AreAllThreadsSuspended();
 }
 
 bool ProcessInfoEx::SuspendResume() {
@@ -166,6 +167,24 @@ DpiAwareness ProcessInfoEx::GetDpiAwareness() const {
 		pGetProcessDpiAware(p.Handle(), reinterpret_cast<PROCESS_DPI_AWARENESS*>(&da));
 	}
 	return da;
+}
+
+bool ProcessInfoEx::AreAllThreadsSuspended() const {
+	if (GetThreads().empty())
+		return false;
+
+	size_t suspended = 0;
+	for (auto& t : GetThreads()) {
+		if (t->State != ThreadState::Waiting)
+			return false;
+
+		if (t->WaitReason == WaitReason::Suspended || t->WaitReason == WaitReason::WrSuspended)
+			++suspended;
+	}
+	//
+	// heuristic that should be good enough for immersive processes
+	//
+	return suspended >= GetThreads().size() / 2;
 }
 
 wstring ProcessInfoEx::GetVersionObject(const wstring& name) const {

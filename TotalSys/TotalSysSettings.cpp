@@ -18,8 +18,8 @@ TotalSysSettings::TotalSysSettings() {
 		ProcessColor("Services", FormatHelper::ColorWithAlpha(StandardColors::DarkSalmon, .6f), white),
 		ProcessColor("Protected", FormatHelper::ColorWithAlpha(StandardColors::Fuchsia, .6f), white),
 		ProcessColor("Secure", FormatHelper::ColorWithAlpha(StandardColors::Purple, .6f), white),
-		ProcessColor("In Job", FormatHelper::ColorWithAlpha(StandardColors::Brown, .6f), white, false),
-		ProcessColor("Suspended", FormatHelper::ColorWithAlpha(StandardColors::DarkGray, .6f), white, false),
+		ProcessColor("In Job", FormatHelper::ColorWithAlpha(StandardColors::Brown, .7f), white, false),
+		ProcessColor("Suspended", FormatHelper::ColorWithAlpha(StandardColors::DimGray, .9f), white, true),
 	};
 	m_ProcessColors[1] = {
 		ProcessColor("Created", FormatHelper::ColorWithAlpha(StandardColors::LightGreen, .9f), black),
@@ -29,8 +29,8 @@ TotalSysSettings::TotalSysSettings() {
 		ProcessColor("Services", FormatHelper::ColorWithAlpha(StandardColors::Salmon, .6f), black),
 		ProcessColor("Protected", FormatHelper::ColorWithAlpha(StandardColors::Fuchsia, .6f), black),
 		ProcessColor("Secure", FormatHelper::ColorWithAlpha(StandardColors::Magenta, .6f), black),
-		ProcessColor("In Job", FormatHelper::ColorWithAlpha(StandardColors::Brown, .6f), black, false),
-		ProcessColor("Suspended", FormatHelper::ColorWithAlpha(StandardColors::Gray, .6f), black, false),
+		ProcessColor("In Job", FormatHelper::ColorWithAlpha(StandardColors::Brown, .7f), black, false),
+		ProcessColor("Suspended", FormatHelper::ColorWithAlpha(StandardColors::Gray, .8f), black, true),
 	};
 
 	m_RelocatedColor[0] = ImVec4(.3f, .3f, 0, .8f);

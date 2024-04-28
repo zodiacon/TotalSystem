@@ -17,10 +17,12 @@ enum class ProcessAttributes {
 };
 DEFINE_ENUM_FLAG_OPERATORS(ProcessAttributes);
 
+#include "ViewBase.h"
+
 class ProcessInfoEx : public WinLL::ProcessInfo, public TransientObject {
 public:
-	std::pair<const ImVec4, const ImVec4> Colors(WinLL::ProcessManager<ProcessInfoEx, WinLL::ThreadInfo>& pm) const;
-	ProcessAttributes Attributes(WinLL::ProcessManager<ProcessInfoEx, WinLL::ThreadInfo>& pm) const;
+	std::pair<const ImVec4, const ImVec4> Colors(DefaultProcessManager& pm) const;
+	ProcessAttributes Attributes(DefaultProcessManager& pm) const;
 	bool SuspendResume();
 
 	[[nodiscard]] bool IsSuspended() const;
@@ -38,6 +40,7 @@ public:
 	[[nodiscard]] WinLL::VirtualizationState GetVirtualizationState() const;
 
 private:
+	[[nodiscard]] bool AreAllThreadsSuspended() const;
 	std::wstring GetVersionObject(const std::wstring& name) const;
 
 private:

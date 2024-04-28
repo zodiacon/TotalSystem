@@ -14,7 +14,11 @@ using namespace ImGui;
 using namespace std;
 using namespace WinLL;
 
-ThreadsView::ThreadsView(bool allThreads) : m_AllThreads(allThreads) {
+ThreadsView::ThreadsView(DefaultProcessManager* external) : m_ActualProcMgr(external) {
+	if (external == nullptr) {
+		m_AllThreads = true;
+		m_ActualProcMgr = &m_ProcMgr;
+	}
 }
 
 void ThreadsView::BuildWindow() {
@@ -30,6 +34,7 @@ void ThreadsView::BuildWindow() {
 			EndMenuBar();
 		}
 		BuildToolBar();
+		RefreshAll();
 		BuildTable(nullptr);
 	}
 	ImGui::End();
@@ -38,7 +43,6 @@ void ThreadsView::BuildWindow() {
 void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 	auto pid = p ? p->Id : -1;
 	auto orgBackColor = GetStyle().Colors[ImGuiCol_TableRowBg];
-	auto updated = Refresh(p);
 
 	static const ColumnInfo columns[]{
 		{ "State", [&](auto& t) {
@@ -152,7 +156,6 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 
 	if (BeginTable("Threads", _countof(columns), ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
 		ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit)) {
-
 		TableSetupScrollFreeze(2, 1);
 
 		int c = 0;
@@ -164,29 +167,9 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 		}
 
 		TableHeadersRow();
+		m_SortSpecs = TableGetSortSpecs()->Specs;
+
 		PopFont();
-
-		auto specs = TableGetSortSpecs();
-		if (specs) {
-			if (updated)
-				specs->SpecsDirty = true;
-
-			if (specs->SpecsDirty) {
-				auto sort = specs->Specs;
-				DoSort(sort->ColumnIndex, sort->SortDirection == ImGuiSortDirection_Ascending);
-				specs->SpecsDirty = false;
-			}
-		}
-		auto count = (int)m_Threads.size();
-		for (int i = 0; i < count; i++) {
-			auto t = static_pointer_cast<ThreadInfoEx>(m_Threads[i]);
-			if (t->Update()) {
-				m_Threads.erase(m_Threads.begin() + i);
-				i--;
-				count--;
-				continue;
-			}
-		}
 
 		ImGuiListClipper clipper;
 		clipper.Begin((int)m_Threads.size());
@@ -257,37 +240,69 @@ void ThreadsView::Clear() {
 		m_Threads.reserve(4096);
 }
 
-bool ThreadsView::Refresh(std::shared_ptr<ProcessInfoEx>& p, bool now) {
-	auto pid = p ? p->Id : -1;
-	bool newProcess = m_Threads.empty() || (m_Process && m_Process->Id != pid);
+bool ThreadsView::RefreshAll(bool now) {
+	bool empty = m_Threads.empty();
 
 	auto& pm = m_ProcMgr;
 	bool updated = now;
-	if (now || newProcess || (updated = NeedUpdate())) {
-		pm.UpdateWithThreads(pid);
+	if (now || (updated = NeedUpdate())) {
+		pm.UpdateWithThreads();
 		UpdateTick();
 	}
+	if (empty) {
+		m_Threads.insert(m_Threads.end(), pm.GetThreads().begin(), pm.GetThreads().end());
+	}
+	CommonRefresh(!empty);
+
+	return updated;
+}
+
+bool ThreadsView::RefreshProcess(std::shared_ptr<ProcessInfoEx>& p, bool now) {
+	assert(p);
+	auto pid = p->Id;
+	bool newProcess = m_Threads.empty() || (m_Process && m_Process->Id != pid);
+
+	assert(m_ActualProcMgr);
+	auto& pm = *m_ActualProcMgr;
+
 	if (newProcess) {
-		if (pid != -1) {
-			m_Process = pm.GetProcessById(pid);
-			m_Threads = m_Process->GetThreads();
-			m_SelectedThread = nullptr;
-		}
-		else if (m_Threads.empty()) {
-			m_Threads.insert(m_Threads.end(), pm.GetThreads().begin(), pm.GetThreads().end());
+		m_Process = pm.GetProcessById(pid);
+		m_Threads = m_Process->GetThreads();
+		m_SelectedThread = nullptr;
+	}
+	CommonRefresh(true);
+
+	return !newProcess;
+}
+
+void ThreadsView::CommonRefresh(bool update) {
+	auto count = (int)m_Threads.size();
+	for (int i = 0; i < count; i++) {
+		auto t = static_pointer_cast<ThreadInfoEx>(m_Threads[i]);
+		if (t->Update()) {
+			m_Threads.erase(m_Threads.begin() + i);
+			i--;
+			count--;
+			continue;
 		}
 	}
-	else if (updated) {
+
+	if (update) {
+		auto& pm = *m_ActualProcMgr;
+
 		for (auto t : pm.GetNewThreads()) {
 			t->New(2000);
-			m_Threads.push_back(t);
+			if (m_AllThreads || (m_Process && t->ProcessId == m_Process->Id)) {
+				m_Threads.push_back(t);
+			}
 		}
 		for (auto t : pm.GetTerminatedThreads()) {
 			t->Term(2000);
 		}
-
 	}
-	return updated;
+
+	if (m_SortSpecs)
+		DoSort(m_SortSpecs->ColumnIndex, m_SortSpecs->SortDirection == ImGuiSortDirection_Ascending);
 }
 
 PCSTR ThreadsView::StateToString(ThreadState state) {
@@ -407,3 +422,4 @@ void ThreadsView::DoSort(int column, bool asc) {
 		return false;
 		});
 }
+

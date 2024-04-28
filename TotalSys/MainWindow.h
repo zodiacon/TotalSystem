@@ -13,7 +13,7 @@ public:
 private:
 	HWND m_hWnd;
 	ProcessesView m_ProcessesView;
-	ThreadsView m_ThreadsView{ true };
+	ThreadsView m_ThreadsView;
 	DWORD64 m_LastCount{ 0 };
 	bool m_DoSave{ false };
 };

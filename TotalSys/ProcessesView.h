@@ -8,8 +8,6 @@
 #include "SortedFilteredVector.h"
 #include "ModulesView.h"
 
-//#include "ProcessProperties.h"
-
 struct ImGuiTableSortSpecsColumn;
 
 class ProcessesView : public ViewBase {
@@ -55,7 +53,7 @@ private:
 	static std::string ProcessAttributesToString(ProcessAttributes attributes);
 
 private:
-	WinLL::ProcessManager<ProcessInfoEx, WinLL::ThreadInfo> m_ProcMgr;
+	DefaultProcessManager m_ProcMgr;
 	const ImGuiTableColumnSortSpecs* m_SortSpecs{ nullptr };
 	std::vector<uint32_t> m_PidsToKill;
 	ThreadsView m_ThreadsView;

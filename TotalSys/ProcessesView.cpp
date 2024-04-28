@@ -26,7 +26,7 @@ using namespace WinLL;
 extern ID3D11Device* g_pd3dDevice;
 extern ID3D11DeviceContext* g_pd3dDeviceContext;
 
-ProcessesView::ProcessesView() {
+ProcessesView::ProcessesView() : m_ThreadsView(&m_ProcMgr) {
 	Open(true);
 }
 
@@ -67,7 +67,9 @@ bool ProcessesView::Refresh(bool now) {
 	if (NeedUpdate() || now) {
 		auto& pm = m_ProcMgr;
 		auto empty = m_Processes.empty();
-		pm.Update();
+		pm.Update(true);
+		if (m_ShowLowerPane && m_SelectedProcess)
+			m_ThreadsView.RefreshProcess(m_SelectedProcess);
 		std::string filter = m_FilterText;
 
 		auto count = static_cast<int>(m_Processes.size());

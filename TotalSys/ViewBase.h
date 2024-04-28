@@ -1,5 +1,12 @@
 #pragma once
 
+#include <ProcessManager.h>
+
+class ProcessInfoEx;
+class ThreadInfoEx;
+
+using DefaultProcessManager = WinLL::ProcessManager<ProcessInfoEx, ThreadInfoEx>;
+
 class ViewBase abstract {
 public:
 	bool IsOpen() const;

@@ -11,13 +11,14 @@ class ThreadInfoEx;
 
 class ThreadsView : public ViewBase {
 public:
-	explicit ThreadsView(bool allThreads = false);
+	explicit ThreadsView(DefaultProcessManager* extarnal = nullptr);
 	void BuildThreadMenu();
 	void BuildWindow();
 	void BuildTable(std::shared_ptr<ProcessInfoEx> p);
 	void BuildToolBar();
 	void Clear();
-	bool Refresh(std::shared_ptr<ProcessInfoEx>& p, bool now = false);
+	bool RefreshAll(bool now = false);
+	bool RefreshProcess(std::shared_ptr<ProcessInfoEx>& p, bool now = false);
 
 	static PCSTR StateToString(WinLL::ThreadState state);
 	static PCSTR WaitReasonToString(WinLL::WaitReason reason);
@@ -40,12 +41,15 @@ private:
 	};
 
 	void DoSort(int column, bool asc);
+	void CommonRefresh(bool update);
 
 	inline static D3D11Image s_StateIcons[10];
 	std::vector<std::shared_ptr<WinLL::ThreadInfo>> m_Threads;
 	std::shared_ptr<WinLL::ThreadInfo> m_SelectedThread;
 	std::shared_ptr<WinLL::ProcessInfo> m_Process;
-	WinLL::ProcessManager<WinLL::ProcessInfo, ThreadInfoEx> m_ProcMgr;
-	bool m_AllThreads;
+	DefaultProcessManager m_ProcMgr;
+	DefaultProcessManager* m_ActualProcMgr;
+	const ImGuiTableColumnSortSpecs* m_SortSpecs{ nullptr };
+	bool m_AllThreads{ false };
 };
 
