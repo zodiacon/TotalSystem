@@ -64,5 +64,6 @@ private:
 	SimpleMessageBox m_KillDlg;
 	int m_SelectedIndex{ -1 };
 	bool m_ShowLowerPane : 1{ false }, m_WasRunning : 1 { false }, m_FilterChanged : 1 { false };
-	bool m_DoSize{ false };
+	bool m_DoSize: 1{ false };
+	bool m_ThreadsActive : 1 { false }, m_ModulesActive : 1 { false }, m_HandlesActive : 1 { false };
 };

@@ -68,8 +68,12 @@ bool ProcessesView::Refresh(bool now) {
 		auto& pm = m_ProcMgr;
 		auto empty = m_Processes.empty();
 		pm.Update(true);
-		if (m_ShowLowerPane && m_SelectedProcess)
-			m_ThreadsView.RefreshProcess(m_SelectedProcess);
+		if (m_ShowLowerPane && m_SelectedProcess) {
+			if (m_ThreadsActive)
+				m_ThreadsView.RefreshProcess(m_SelectedProcess);
+			else if (m_ModulesActive)
+				m_ModulesView.Refresh();
+		}
 		std::string filter = m_FilterText;
 
 		auto count = static_cast<int>(m_Processes.size());
@@ -641,17 +645,17 @@ void ProcessesView::BuildLowerPane() {
 					SameLine(500);
 					Text("PID: %u (%ws)", m_SelectedProcess->Id, m_SelectedProcess->GetImageName().c_str()); SameLine();
 				}
-				if (BeginTabItem("Threads", nullptr, ImGuiTabItemFlags_None)) {
+				if (m_ThreadsActive = BeginTabItem("Threads", nullptr, ImGuiTabItemFlags_None)) {
 					m_ThreadsView.BuildToolBar();
 					m_ThreadsView.BuildTable(m_SelectedProcess);
 					EndTabItem();
 				}
-				if (BeginTabItem("Modules", nullptr, ImGuiTabItemFlags_None)) {
+				if (m_ModulesActive = BeginTabItem("Modules", nullptr, ImGuiTabItemFlags_None)) {
 					m_ModulesView.Track(m_SelectedProcess->Id);
 					m_ModulesView.BuildTable();
 					EndTabItem();
 				}
-				if (BeginTabItem("Handles", nullptr, ImGuiTabItemFlags_None)) {
+				if (m_HandlesActive = BeginTabItem("Handles", nullptr, ImGuiTabItemFlags_None)) {
 					EndTabItem();
 				}
 				if ((m_SelectedProcess->Attributes(m_ProcMgr) & ProcessAttributes::InJob) == ProcessAttributes::InJob) {

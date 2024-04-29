@@ -59,10 +59,10 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 				Text(" CPU %4u", t->Id);
 			else
 				Text("%7u (0x%05X)", t->Id, t->Id);
-			}, 0 },
+			}, 0, 100 },
 		{ "PID", [&](auto& t) {
 			Text("%7u (0x%05X)", t->ProcessId, t->ProcessId);
-			},  pid == -1 ? 0 : ImGuiTableColumnFlags_DefaultHide },
+			}, pid == -1 ? 0 : ImGuiTableColumnFlags_DefaultHide },
 		{ "Process Name", [&](auto& t) {
 			Text("%ws", t->GetProcessImageName().c_str());
 			}, pid == -1 ? 0 : ImGuiTableColumnFlags_DefaultHide },
@@ -99,36 +99,36 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 			}, ImGuiTableColumnFlags_NoResize, 65 },
 		{ "CPU Time", [](auto& t) {
 			TextUnformatted(FormatHelper::FormatTimeSpan(t->UserTime + t->KernelTime).c_str());
-			}, },
+			}, ImGuiTableColumnFlags_NoResize },
 		{ "Create Time", [](auto& t) {
 			Text(FormatHelper::FormatDateTime(t->CreateTime).c_str());
-			},ImGuiTableColumnFlags_NoResize },
+			}, ImGuiTableColumnFlags_NoResize | ImGuiTableColumnFlags_WidthFixed },
 		{ "Kernel Time", [](auto& t) {
 			TextUnformatted(FormatHelper::FormatTimeSpan(t->KernelTime).c_str());
-			}, ImGuiTableColumnFlags_DefaultHide },
+			}, ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_NoResize },
 		{ "User Time", [](auto& t) {
 			TextUnformatted(FormatHelper::FormatTimeSpan(t->UserTime).c_str());
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Start Address", [](auto& t) {
 			if (t->StartAddress)
 				Text("0x%p", t->StartAddress);
-			}, },
+			}, 0, 120 },
 		{ "Win32 Start Address", [](auto& t) {
 			if (t->Win32StartAddress)
 				Text("0x%p", t->Win32StartAddress);
-			}, },
+			}, 0, 120 },
 		{ "TEB", [](auto& t) {
 			if (t->TebBase)
 				Text("0x%p", t->TebBase);
-			}, ImGuiTableColumnFlags_DefaultHide },
+			}, ImGuiTableColumnFlags_DefaultHide, 0 },
 		{ "Stack Base", [](auto& t) {
 			if (t->StackBase)
 				Text("0x%p", t->StackBase);
-			}, ImGuiTableColumnFlags_DefaultHide },
+			}, ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_NoResize, 120 },
 		{ "Stack Limit", [](auto& t) {
 			if (t->StackLimit)
 				Text("0x%p", t->StackLimit);
-			}, ImGuiTableColumnFlags_DefaultHide },
+			}, ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_NoResize, 120 },
 		{ "Suspend Cnt", [](auto& t) {
 			auto count = t->GetSuspendCount();
 			if (count)
@@ -246,14 +246,15 @@ bool ThreadsView::RefreshAll(bool now) {
 	auto& pm = m_ProcMgr;
 	bool updated = now;
 	if (now || (updated = NeedUpdate())) {
-		pm.UpdateWithThreads();
+		pm.Update(true);
 		UpdateTick();
 	}
 	if (empty) {
-		m_Threads.insert(m_Threads.end(), pm.GetThreads().begin(), pm.GetThreads().end());
+		m_Threads = pm.GetThreads();
 	}
-	CommonRefresh(!empty);
-
+	else if (updated) {
+		CommonRefresh();
+	}
 	return updated;
 }
 
@@ -267,18 +268,22 @@ bool ThreadsView::RefreshProcess(std::shared_ptr<ProcessInfoEx>& p, bool now) {
 
 	if (newProcess) {
 		m_Process = pm.GetProcessById(pid);
-		m_Threads = m_Process->GetThreads();
+		m_Threads.clear();
+		for (auto& t : m_Process->GetThreads())
+			m_Threads.push_back(static_pointer_cast<ThreadInfoEx>(t));
+
 		m_SelectedThread = nullptr;
 	}
-	CommonRefresh(true);
-
+	else {
+		CommonRefresh();
+	}
 	return !newProcess;
 }
 
-void ThreadsView::CommonRefresh(bool update) {
-	auto count = (int)m_Threads.size();
-	for (int i = 0; i < count; i++) {
-		auto t = static_pointer_cast<ThreadInfoEx>(m_Threads[i]);
+void ThreadsView::CommonRefresh() {
+	auto count = m_Threads.size();
+	for (size_t i = 0; i < count; i++) {
+		auto& t = m_Threads[i];
 		if (t->Update()) {
 			m_Threads.erase(m_Threads.begin() + i);
 			i--;
@@ -287,22 +292,19 @@ void ThreadsView::CommonRefresh(bool update) {
 		}
 	}
 
-	if (update) {
-		auto& pm = *m_ActualProcMgr;
+	auto& pm = *m_ActualProcMgr;
 
-		for (auto t : pm.GetNewThreads()) {
-			t->New(2000);
-			if (m_AllThreads || (m_Process && t->ProcessId == m_Process->Id)) {
-				m_Threads.push_back(t);
-			}
-		}
-		for (auto t : pm.GetTerminatedThreads()) {
-			t->Term(2000);
-		}
+	for (auto t : pm.GetNewThreads()) {
+		t->New(Globals::Settings().NewObjectsTime * 1000);
+		if (m_AllThreads || t->ProcessId == m_Process->Id)
+			m_Threads.push_back(t);
 	}
-
+	for (auto t : pm.GetTerminatedThreads()) {
+		t->Term(Globals::Settings().OldObjectsTime * 1000);
+	}
 	if (m_SortSpecs)
 		DoSort(m_SortSpecs->ColumnIndex, m_SortSpecs->SortDirection == ImGuiSortDirection_Ascending);
+
 }
 
 PCSTR ThreadsView::StateToString(ThreadState state) {
@@ -388,8 +390,8 @@ bool ThreadsView::Init() {
 
 void ThreadsView::DoSort(int column, bool asc) {
 	std::sort(m_Threads.begin(), m_Threads.end(), [&](const auto& tx1, const auto& tx2) {
-		auto t1 = static_pointer_cast<ThreadInfoEx>(tx1);
-		auto t2 = static_pointer_cast<ThreadInfoEx>(tx2);
+		auto t1 = static_pointer_cast<ThreadInfoEx>(tx1).get();
+		auto t2 = static_pointer_cast<ThreadInfoEx>(tx2).get();
 
 		switch (static_cast<Column>(column)) {
 			case Column::State: return SortHelper::Sort(t1->State, t2->State, asc);
