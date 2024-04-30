@@ -1,12 +1,12 @@
 #pragma once
 
 #include "ProcessInfoEx.h"
-#include <functional>
 #include <SimpleMessageBox.h>
 #include "ThreadsView.h"
 #include "ViewBase.h"
 #include "SortedFilteredVector.h"
 #include "ModulesView.h"
+#include "HandlesView.h"
 
 struct ImGuiTableSortSpecsColumn;
 
@@ -58,6 +58,7 @@ private:
 	std::vector<uint32_t> m_PidsToKill;
 	ThreadsView m_ThreadsView;
 	ModulesView m_ModulesView;
+	HandlesView m_HandlesView;
 	char m_FilterText[24]{};
 	SortedFilteredVector<std::shared_ptr<ProcessInfoEx>> m_Processes;
 	std::shared_ptr<ProcessInfoEx> m_SelectedProcess;

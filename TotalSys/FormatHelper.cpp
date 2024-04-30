@@ -184,5 +184,17 @@ std::string FormatHelper::DllCharacteristicsToString(uint16_t dc) {
 	if (!result.empty())
 		result = result.substr(0, result.size() - 2);
 	return result;
+}
 
+string FormatHelper::HandleAttributesToString(ULONG attributes) {
+	if (attributes == 0)
+		return "";
+	string text;
+	if (attributes & OBJ_INHERIT)
+		text += "Inherit, ";
+	if (attributes & 1)
+		text += "Protect, ";
+	if (attributes & 4)
+		text += "Audit, ";
+	return text.empty() ? text : text.substr(0, text.length() - 2) + " (" + std::to_string(attributes) + ")";
 }

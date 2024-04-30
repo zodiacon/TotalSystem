@@ -70,10 +70,13 @@ bool ProcessesView::Refresh(bool now) {
 		pm.Update(true);
 		if (m_ShowLowerPane && m_SelectedProcess) {
 			if (m_ThreadsActive)
-				m_ThreadsView.RefreshProcess(m_SelectedProcess);
+				m_ThreadsView.RefreshProcess(m_SelectedProcess, true);
 			else if (m_ModulesActive)
-				m_ModulesView.Refresh();
+				m_ModulesView.Refresh(true);
+			else if (m_HandlesActive)
+				m_HandlesView.Refresh(true);
 		}
+
 		std::string filter = m_FilterText;
 
 		auto count = static_cast<int>(m_Processes.size());
@@ -656,6 +659,8 @@ void ProcessesView::BuildLowerPane() {
 					EndTabItem();
 				}
 				if (m_HandlesActive = BeginTabItem("Handles", nullptr, ImGuiTabItemFlags_None)) {
+					m_HandlesView.Track(m_SelectedProcess->Id);
+					m_HandlesView.BuildTable();
 					EndTabItem();
 				}
 				if ((m_SelectedProcess->Attributes(m_ProcMgr) & ProcessAttributes::InJob) == ProcessAttributes::InJob) {

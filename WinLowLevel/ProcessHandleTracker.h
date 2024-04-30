@@ -27,9 +27,9 @@ struct ::std::hash<WinLLX::HandleKey> {
 namespace WinLLX {
 	template<typename TInfo = HandleInfo>
 		requires std::is_base_of_v<HandleInfo, TInfo>
-	class ProcessHandlesTracker final {
+	class ProcessHandleTracker final {
 	public:
-		bool Track(uint32_t pid, PCWSTR typeName = nullptr) {
+		bool Track(uint32_t pid, PCWSTR typeName = L"") {
 			if (m_Pid == pid && typeName == m_Type)
 				return false;
 
@@ -37,6 +37,10 @@ namespace WinLLX {
 			m_Type = typeName;
 			m_Handles.clear();
 			return true;
+		}
+
+		uint32_t GetPid() const {
+			return m_Pid;
 		}
 
 		ULONG Update(bool clearHistory = false) {
@@ -81,9 +85,15 @@ namespace WinLLX {
 
 			return static_cast<uint32_t>(m_Handles.size());
 		}
+
+		const std::vector<std::shared_ptr<TInfo>>& GetHandles() const {
+			return m_Handles;
+		}
+
 		const std::vector<std::shared_ptr<TInfo>>& GetNewHandles() const {
 			return m_NewHandles;
 		}
+
 		const std::vector<std::shared_ptr<TInfo>>& GetClosedHandles() const {
 			return m_ClosedHandles;
 		}

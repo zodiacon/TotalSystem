@@ -226,6 +226,7 @@
   <ItemGroup>
     <ClInclude Include="FormatHelper.h" />
     <ClInclude Include="Globals.h" />
+    <ClInclude Include="HandlesView.h" />
     <ClInclude Include="IconManager.h" />
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="ModulesView.h" />
@@ -247,6 +248,7 @@
   <ItemGroup>
     <ClCompile Include="FormatHelper.cpp" />
     <ClCompile Include="Globals.cpp" />
+    <ClCompile Include="HandlesView.cpp" />
     <ClCompile Include="IconManager.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="ModulesView.cpp" />

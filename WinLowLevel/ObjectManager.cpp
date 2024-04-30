@@ -35,7 +35,7 @@ int ObjectManager::EnumTypes() {
 		s_changes.clear();
 		assert(count == s_types.size());
 	}
-	auto raw = (OBJECT_TYPE_INFORMATION*)((PBYTE)p + 1);
+	auto raw = (OBJECT_TYPE_INFORMATION*)((PBYTE)p + sizeof(size_t));
 	TotalHandles = TotalObjects = PeakObjects = PeakHandles = 0;
 
 	for (ULONG i = 0; i < count; i++) {
@@ -340,7 +340,7 @@ wstring ObjectManager::GetObjectName(HANDLE hDup, USHORT type) {
 		if (type == processTypeIndex || type == threadTypeIndex)
 			break;
 
-		BYTE buffer[2048];
+		thread_local static BYTE buffer[2048];
 		if (type == fileTypeIndex) {
 			// special case for files in case they're locked
 			struct Data {

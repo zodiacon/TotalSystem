@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <ranges>
 #include <format>
+#include <functional>
 #include <wil\resource.h>
 #include <wil\com.h>
 #include <imgui.h>

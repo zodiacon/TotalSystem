@@ -84,6 +84,9 @@
     <ClInclude Include="UI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="HandlesView.h">
+      <Filter>Processes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TotalSys.cpp">
@@ -142,6 +145,9 @@
     </ClCompile>
     <ClCompile Include="TransientObject.cpp">
       <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="HandlesView.cpp">
+      <Filter>Processes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

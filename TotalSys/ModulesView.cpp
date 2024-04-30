@@ -24,8 +24,6 @@ bool ModulesView::Track(uint32_t pid) {
 }
 
 void ModulesView::BuildTable() {
-	Refresh();
-
 	static const ColumnInfo columns[]{
 		{ "Name", [&](auto& m) {
 			sprintf_s(text.get(), textSize, "%ws", m->Name.c_str());
