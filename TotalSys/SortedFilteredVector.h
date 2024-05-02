@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <functional>
+#include <execution>
 
 template<typename T>
 class SortedFilteredVector {
@@ -118,8 +119,13 @@ public:
 		return m_Items[index];
 	}
 
-	void Sort(std::function<bool(const T& value1, const T& value2)> compare) {
-		std::sort(m_Indices.begin(), m_Indices.end(), [&](size_t i1, size_t i2) {
+	void Sort(std::function<bool(const T& value1, const T& value2)> compare, bool parallel = false) {
+		if(parallel)
+			std::sort(std::execution::par, m_Indices.begin(), m_Indices.end(), [&](size_t i1, size_t i2) {
+			return compare(m_Items[i1], m_Items[i2]);
+				});
+		else
+			std::sort(m_Indices.begin(), m_Indices.end(), [&](size_t i1, size_t i2) {
 			return compare(m_Items[i1], m_Items[i2]);
 			});
 	}

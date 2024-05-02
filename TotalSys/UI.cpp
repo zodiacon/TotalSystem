@@ -19,6 +19,7 @@ UI::WorkItem* UI::SubmitWork(std::function<void()> work, std::function<void()> c
     thread_local static bool hooked = false;
     if (!hooked) {
         ::SetWindowsHookEx(WH_GETMESSAGE, HookMessages, nullptr, ::GetCurrentThreadId());
+        hooked = true;
     }
 
     auto item = new WorkItem {

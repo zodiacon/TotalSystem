@@ -14,6 +14,7 @@ private:
 	HWND m_hWnd;
 	ProcessesView m_ProcessesView;
 	ThreadsView m_ThreadsView;
+	HandlesView m_HandlesView;
 	DWORD64 m_LastCount{ 0 };
 	bool m_DoSave{ false };
 };

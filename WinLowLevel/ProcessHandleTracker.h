@@ -100,7 +100,7 @@ namespace WinLLX {
 
 	private:
 		ObjectManager m_Mgr;
-		DWORD m_Pid{ 0 };
+		DWORD m_Pid{ (DWORD)-1 };
 		std::wstring m_Type;
 		std::vector<std::shared_ptr<TInfo>> m_ClosedHandles, m_NewHandles;
 		std::unordered_map<HandleKey, std::shared_ptr<TInfo>> m_Handles;

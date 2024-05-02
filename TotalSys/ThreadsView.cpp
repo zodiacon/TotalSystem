@@ -22,6 +22,9 @@ ThreadsView::ThreadsView(DefaultProcessManager* external) : m_ActualProcMgr(exte
 }
 
 void ThreadsView::BuildWindow() {
+	if (!IsOpen())
+		return;
+
 	if (Begin("All Threads", GetOpenAddress(), ImGuiWindowFlags_MenuBar)) {
 		if (BeginMenuBar()) {
 			if (BeginMenu("View")) {

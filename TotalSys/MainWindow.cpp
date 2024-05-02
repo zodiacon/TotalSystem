@@ -50,6 +50,10 @@ void MainWindow::BuildWindow() {
 				m_ThreadsView.Clear();
 				m_ThreadsView.Open();
 			}
+			if (MenuItem("Handles", nullptr, m_HandlesView.IsOpen(), !m_HandlesView.IsOpen())) {
+				m_HandlesView.Track(0);
+				m_HandlesView.Open();
+			}
 			ImGui::EndMenu();
 		}
 		if (BeginMenu("Options")) {
@@ -105,9 +109,8 @@ void MainWindow::BuildWindow() {
 	SetNextWindowPos(viewport->WorkPos, ImGuiCond_FirstUseEver);
 	SetNextWindowSize(viewport->WorkSize, ImGuiCond_FirstUseEver);
 	m_ProcessesView.BuildWindow();
-	if (m_ThreadsView.IsOpen()) {
-		m_ThreadsView.BuildWindow();
-	}
+	m_ThreadsView.BuildWindow();
+	m_HandlesView.BuildWindow();
 }
 
 bool MainWindow::IsAlwaysOnTop() const {
