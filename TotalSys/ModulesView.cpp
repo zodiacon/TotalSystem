@@ -46,17 +46,17 @@ void ModulesView::BuildTable() {
 
 		{ "Base Address", [](auto& m) {
 			Text("0x%p", m->Base);
-		}, 0, 130.0f },
+		}, ImGuiTableColumnFlags_NoResize },
 
 		{ "Image Base", [](auto& m) {
 			if (m->ImageBase)
 				Text("0x%p", m->ImageBase);
-		}, 0, 130.0f },
-		{ "Name", [&](auto& m) {
+		}, ImGuiTableColumnFlags_NoResize },
+		{ "Full Path", [&](auto& m) {
 			PushFont(Globals::VarFont());
 			Text("%ws", m->Path.c_str());
 			PopFont();
-			}, 0, 300 },
+			}, 0, 400 },
 		{ "Characteristics", [](auto& m) {
 			Text("0x%04X", (uint16_t)m->Characteristics);
 			if (m->Characteristics != DllCharacteristics::None) {
@@ -65,59 +65,62 @@ void ModulesView::BuildTable() {
 				Text("(%s)", FormatHelper::DllCharacteristicsToString((uint16_t)m->Characteristics).c_str());
 				PopFont();
 			}
-			}, 0, 180 },
+			}, 0, 260 },
 	};
 
-	if (m_Tracker.GetPid()) {
-		if (BeginTable("Modules", _countof(columns), ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
-			ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersOuterV)) {
-			TableSetupScrollFreeze(1, 1);
+	if (BeginTable("Modules", _countof(columns), ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
+		ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersOuterV)) {
+		TableSetupScrollFreeze(1, 1);
 
-			auto& settings = Globals::Settings();
-			int c = 0;
-			PushFont(Globals::VarFont());
-			for (auto& ci : columns)
-				TableSetupColumn(ci.Header, ci.Flags, ci.Width, c++);
-			PopFont();
+		auto& settings = Globals::Settings();
+		int c = 0;
+		PushFont(Globals::VarFont());
+		for (auto& ci : columns)
+			TableSetupColumn(ci.Header, ci.Flags, ci.Width, c++);
+		PopFont();
 
-			TableHeadersRow();
+		TableHeadersRow();
+		auto specs = m_Specs = TableGetSortSpecs();
+		if (specs->SpecsDirty) {
+			specs->SpecsDirty = false;
+			DoSort(specs->Specs->ColumnIndex, specs->Specs->SortDirection == ImGuiSortDirection_Ascending);
+		}
 
-			m_SortSpecs = TableGetSortSpecs()->Specs;
-			auto count = static_cast<int>(m_Modules.size());
-			ImGuiListClipper clipper;
-			clipper.Begin(count);
+		auto count = static_cast<int>(m_Modules.size());
+		ImGuiListClipper clipper;
+		clipper.Begin(count);
 
-			while (clipper.Step()) {
-				for (int j = clipper.DisplayStart; j < clipper.DisplayEnd; j++) {
-					auto& m = m_Modules[j];
-					TableNextRow();
+		while (clipper.Step()) {
+			for (int j = clipper.DisplayStart; j < clipper.DisplayEnd; j++) {
+				auto& m = m_Modules[j];
+				TableNextRow();
 
-					if (m->IsNew()) {
-						TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(settings.GetProcessColors()[TotalSysSettings::NewObjects].Color));
-					}
-					else if (m->IsTerminated()) {
-						TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(settings.GetProcessColors()[TotalSysSettings::DeletedObjects].Color));
-					}
-					else if (m->ImageBase && m->ImageBase != m->Base) {
-						TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(settings.GetRelocatedColor()));
-					}
-					for (int c = 0; c < _countof(columns); c++) {
-						if (TableSetColumnIndex(c)) {
-							columns[c].Callback(m);
-							if (c == 0 && IsItemFocused())
-								m_SelectedModule = m;
-						}
+				if (m->IsNew()) {
+					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(settings.GetProcessColors()[TotalSysSettings::NewObjects].Color));
+				}
+				else if (m->IsTerminated()) {
+					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(settings.GetProcessColors()[TotalSysSettings::DeletedObjects].Color));
+				}
+				else if (m->ImageBase && m->ImageBase != m->Base) {
+					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(settings.GetRelocatedColor()));
+				}
+				for (int c = 0; c < _countof(columns); c++) {
+					if (TableSetColumnIndex(c)) {
+						columns[c].Callback(m);
+						if (c == 0 && IsItemFocused())
+							m_SelectedModule = m;
 					}
 				}
 			}
-
-			EndTable();
 		}
+
+		EndTable();
 	}
 }
 
-bool ModulesView::Refresh(bool now) {
+bool ModulesView::Refresh(uint32_t pid, bool now) {
 	if (NeedUpdate() || now) {
+		Track(pid);
 		auto empty = m_Modules.empty();
 		m_Tracker.Update();
 
@@ -148,9 +151,9 @@ bool ModulesView::Refresh(bool now) {
 			}
 		}
 
-		if (m_SortSpecs)
-			DoSort(m_SortSpecs->ColumnIndex, m_SortSpecs->SortDirection == ImGuiSortDirection_Ascending);
-	
+		if (m_Specs)
+			m_Specs->SpecsDirty = true;
+
 		return true;
 	}
 	return false;

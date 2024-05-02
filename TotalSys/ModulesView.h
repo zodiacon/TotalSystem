@@ -13,7 +13,7 @@ class ModulesView : public ViewBase {
 public:
 	bool Track(uint32_t pid);
 	void BuildTable();
-	bool Refresh(bool now = false);
+	bool Refresh(uint32_t pid, bool now = false);
 
 private:
 	void DoSort(int col, bool asc);
@@ -32,6 +32,6 @@ private:
 	WinLLX::ProcessModuleTracker<ModuleInfoEx> m_Tracker;
 	std::shared_ptr<ModuleInfoEx> m_SelectedModule;
 	SortedFilteredVector<std::shared_ptr<ModuleInfoEx>> m_Modules;
-	const ImGuiTableColumnSortSpecs* m_SortSpecs{ nullptr };
+	ImGuiTableSortSpecs* m_Specs{ nullptr };
 };
 

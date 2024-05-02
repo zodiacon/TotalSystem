@@ -54,7 +54,7 @@ private:
 
 private:
 	DefaultProcessManager m_ProcMgr;
-	const ImGuiTableColumnSortSpecs* m_SortSpecs{ nullptr };
+	ImGuiTableSortSpecs* m_Specs{ nullptr };
 	std::vector<uint32_t> m_PidsToKill;
 	ThreadsView m_ThreadsView;
 	ModulesView m_ModulesView;

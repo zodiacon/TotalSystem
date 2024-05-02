@@ -72,9 +72,9 @@ bool ProcessesView::Refresh(bool now) {
 			if (m_ThreadsActive)
 				m_ThreadsView.RefreshProcess(m_SelectedProcess, true);
 			else if (m_ModulesActive)
-				m_ModulesView.Refresh(true);
+				m_ModulesView.Refresh(m_SelectedProcess->Id, true);
 			else if (m_HandlesActive)
-				m_HandlesView.Refresh(true);
+				m_HandlesView.Refresh(m_SelectedProcess->Id, true);
 		}
 
 		std::string filter = m_FilterText;
@@ -134,8 +134,8 @@ bool ProcessesView::Refresh(bool now) {
 			m_FilterChanged = false;
 		}
 
-		if (m_SortSpecs) {
-			DoSort(m_SortSpecs->ColumnIndex, m_SortSpecs->SortDirection == ImGuiSortDirection_Ascending);
+		if (m_Specs) {
+			m_Specs->SpecsDirty = true;
 		}
 
 		UpdateTick();
@@ -442,7 +442,12 @@ void ProcessesView::BuildTable() {
 				TableSetupColumn(ci.Header, ci.Flags, ci.Width, c++);
 			TableHeadersRow();
 
-			m_SortSpecs = TableGetSortSpecs()->Specs;
+			auto specs = m_Specs = TableGetSortSpecs();
+			if (specs->SpecsDirty) {
+				specs->SpecsDirty = false;
+				DoSort(specs->Specs->ColumnIndex, specs->Specs->SortDirection == ImGuiSortDirection_Ascending);
+			}
+
 			auto update = Refresh();
 			PopFont();
 

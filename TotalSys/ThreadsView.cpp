@@ -170,7 +170,11 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 		}
 
 		TableHeadersRow();
-		m_SortSpecs = TableGetSortSpecs()->Specs;
+		auto specs = m_Specs = TableGetSortSpecs();
+		if (specs->SpecsDirty) {
+			specs->SpecsDirty = false;
+			DoSort(specs->Specs->ColumnIndex, specs->Specs->SortDirection == ImGuiSortDirection_Ascending);
+		}
 
 		PopFont();
 
@@ -305,8 +309,8 @@ void ThreadsView::CommonRefresh() {
 	for (auto t : pm.GetTerminatedThreads()) {
 		t->Term(Globals::Settings().OldObjectsTime * 1000);
 	}
-	if (m_SortSpecs)
-		DoSort(m_SortSpecs->ColumnIndex, m_SortSpecs->SortDirection == ImGuiSortDirection_Ascending);
+	if (m_Specs)
+		m_Specs->SpecsDirty = true;
 
 }
 

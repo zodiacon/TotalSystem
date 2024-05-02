@@ -4,7 +4,6 @@
 #include "TransientObject.h"
 #include <ProcessHandleTracker.h>
 #include "SortedFilteredVector.h"
-#include <atomic>
 
 struct HandleInfoEx : WinLLX::HandleInfo, TransientObject {
 	std::wstring Type;
@@ -17,7 +16,7 @@ public:
 	bool Track(uint32_t pid, PCWSTR type = L"");
 	void BuildTable();
 	void BuildWindow();
-	bool Refresh(bool now = false);
+	bool Refresh(uint32_t pid, bool now = false);
 	std::wstring const& GetObjectName(HandleInfoEx* hi) const;
 	std::wstring const& GetObjectType(HandleInfoEx* hi) const;
 
@@ -25,7 +24,7 @@ private:
 	void DoSort(int col, bool asc);
 
 	enum class Column {
-		Handle, Name, Type, Access, Address, Attributes, DecodedAccess, PID, ProcessName,
+		Handle, Type, Name, Access, Address, Attributes, DecodedAccess, PID, ProcessName,
 	};
 
 	struct ColumnInfo {
@@ -40,7 +39,6 @@ private:
 	std::shared_ptr<HandleInfoEx> m_SelectedHandle;
 	SortedFilteredVector<std::shared_ptr<HandleInfoEx>> m_Handles;
 	ImGuiTableSortSpecs* m_Specs{ nullptr };
-	std::atomic<bool> m_DataReady{ false };
 	bool m_Updating{ false };
 };
 

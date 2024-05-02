@@ -27,17 +27,17 @@ void HandlesView::BuildTable() {
 			}
 			}, ImGuiTableColumnFlags_NoResize, },
 
-		{ "Name", [&](auto& h) {
-			PushFont(Globals::VarFont());
-			Text("%ws", GetObjectName(h.get()).c_str());
-			PopFont();
-		}, 0, 400.0f },
-
 		{ "Type", [&](auto& h) {
 			PushFont(Globals::VarFont());
 			Text("%ws", GetObjectType(h.get()).c_str());
 			PopFont();
 		}, ImGuiTableColumnFlags_NoHide, 150.0f },
+
+		{ "Name", [&](auto& h) {
+			PushFont(Globals::VarFont());
+			Text("%ws", GetObjectName(h.get()).c_str());
+			PopFont();
+		}, 0, 400.0f },
 
 		{ "Access", [](auto& h) {
 			Text("0x%08X", h->GrantedAccess);
@@ -96,6 +96,7 @@ void HandlesView::BuildTable() {
 					m_Handles.Remove(j);
 					j--;
 					clipper.DisplayEnd--;
+					clipper.ItemsCount--;
 					continue;
 				}
 
@@ -125,14 +126,15 @@ void HandlesView::BuildWindow() {
 		return;
 
 	if (Begin("All Handles", GetOpenAddress())) {
-		Refresh();
+		Refresh(0);
 		BuildTable();
 	}
 	End();
 }
 
-bool HandlesView::Refresh(bool now) {
+bool HandlesView::Refresh(uint32_t pid, bool now) {
 	if (!m_Updating && (NeedUpdate() || now)) {
+		Track(pid);
 		m_Updating = true;
 		UI::SubmitWork(
 			[&]() {

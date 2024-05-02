@@ -49,7 +49,7 @@ private:
 	std::shared_ptr<WinLL::ProcessInfo> m_Process;
 	DefaultProcessManager m_ProcMgr;
 	DefaultProcessManager* m_ActualProcMgr;
-	const ImGuiTableColumnSortSpecs* m_SortSpecs{ nullptr };
+	ImGuiTableSortSpecs* m_Specs{ nullptr };
 	bool m_AllThreads{ false };
 };
 
