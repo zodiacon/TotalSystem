@@ -87,6 +87,9 @@
     <ClInclude Include="HandlesView.h">
       <Filter>Processes</Filter>
     </ClInclude>
+    <ClInclude Include="AccessMaskDecoder.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TotalSys.cpp">
@@ -148,6 +151,9 @@
     </ClCompile>
     <ClCompile Include="HandlesView.cpp">
       <Filter>Processes</Filter>
+    </ClCompile>
+    <ClCompile Include="AccessMaskDecoder.cpp">
+      <Filter>Helpers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

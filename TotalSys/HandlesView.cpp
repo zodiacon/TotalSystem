@@ -5,6 +5,7 @@
 #include "FormatHelper.h"
 #include "SortHelper.h"
 #include "UI.h"
+#include "AccessMaskDecoder.h"
 
 using namespace ImGui;
 using namespace std;
@@ -36,7 +37,7 @@ void HandlesView::BuildTable() {
 			PushFont(Globals::VarFont());
 			Text("%ws", GetObjectType(h.get()).c_str());
 			PopFont();
-		}, 0, 150.0f },
+		}, ImGuiTableColumnFlags_NoHide, 150.0f },
 
 		{ "Access", [](auto& h) {
 			Text("0x%08X", h->GrantedAccess);
@@ -52,8 +53,8 @@ void HandlesView::BuildTable() {
 			PopFont();
 		}, 0, 90},
 
-		{ "Decoded Access", [](auto& h) {
-			Text("0x%08X", h->GrantedAccess);
+		{ "Decoded Access", [&](auto& h) {
+			TextUnformatted(AccessMaskDecoder::DecodeAccessMask(GetObjectType(h.get()), h->GrantedAccess).c_str());
 		}, 0, 150 },
 	};
 	if (m_Tracker.GetPid() == 0)
