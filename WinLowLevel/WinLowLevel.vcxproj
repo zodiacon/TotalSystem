@@ -249,6 +249,7 @@
     <ClInclude Include="XString.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Event.cpp" />
     <ClCompile Include="FileHelper.cpp" />
     <ClCompile Include="KernelObject.cpp" />
     <ClCompile Include="ObjectManager.cpp" />

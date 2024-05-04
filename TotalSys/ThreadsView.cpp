@@ -25,6 +25,8 @@ void ThreadsView::BuildWindow() {
 	if (!IsOpen())
 		return;
 
+	PushFont(Globals::VarFont());
+	SetNextWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
 	if (Begin("All Threads", GetOpenAddress(), ImGuiWindowFlags_MenuBar)) {
 		if (BeginMenuBar()) {
 			if (BeginMenu("View")) {
@@ -40,6 +42,7 @@ void ThreadsView::BuildWindow() {
 		RefreshAll();
 		BuildTable(nullptr);
 	}
+	PopFont();
 	ImGui::End();
 }
 
@@ -51,27 +54,38 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 		{ "State", [&](auto& t) {
 			Image(GetStateImage(t->State).Get(), ImVec2(16, 16)); SameLine();
 			auto str = format("{}##{}" ,StateToString(t->State), t->Id);
+			PushFont(Globals::VarFont());
 			Selectable(str.c_str(), m_SelectedThread == t, ImGuiSelectableFlags_SpanAllColumns);
+			PopFont();
 			if (IsItemClicked()) {
 				m_SelectedThread = t;
 				SetItemDefaultFocus();
 			}
 			}, 0, 90 },
 		{ "TID", [&](auto& t) {
+			PushFont(Globals::MonoFont());
 			if (m_Process && m_Process->Id == 0)
 				Text(" CPU %4u", t->Id);
 			else
-				Text("%7u (0x%05X)", t->Id, t->Id);
+				Text(Globals::Settings().HexIds ? "0x%08X" : "%8u", t->Id);
+			PopFont();
 			}, 0, 100 },
 		{ "PID", [&](auto& t) {
-			Text("%7u (0x%05X)", t->ProcessId, t->ProcessId);
+			PushFont(Globals::MonoFont());
+			Text(Globals::Settings().HexIds ? "0x%08X" : "%8u", t->ProcessId);
+			PopFont();
 			}, pid == -1 ? 0 : ImGuiTableColumnFlags_DefaultHide },
 		{ "Process Name", [&](auto& t) {
+			PushFont(Globals::VarFont());
 			Text("%ws", t->GetProcessImageName().c_str());
+			PopFont();
 			}, pid == -1 ? 0 : ImGuiTableColumnFlags_DefaultHide },
 		{ "Wait Reason", [](auto& t) {
-			if (t->State == ThreadState::Waiting)
+			if (t->State == ThreadState::Waiting) {
+				PushFont(Globals::VarFont());
 				TextUnformatted(WaitReasonToString(t->WaitReason));
+				PopFont();
+			}
 			}, 0, 120 },
 		{ "CPU %", [&](auto& t) {
 			if (t->CPU > 0 && t->State != ThreadState::Terminated) {
@@ -85,6 +99,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 				else {
 					color = orgBackColor;
 				}
+				PushFont(Globals::MonoFont());
 				if (customColors) {
 					TableSetBgColor(ImGuiTableBgTarget_CellBg, ColorConvertFloat4ToU32(color));
 					TextColored(ImVec4(1, 1, 1, 1), str.c_str());
@@ -92,77 +107,119 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 				else {
 					TextUnformatted(str.c_str());
 				}
+				PopFont();
 			}
 		}, 0, 70 },
 		{ "Base Pri", [&](auto& t) {
+			PushFont(Globals::MonoFont());
 			Text("%4u", t->BasePriority);
+			PopFont();
 			}, ImGuiTableColumnFlags_NoResize, 65, },
 		{ "Dyn Pri", [&](auto& t) {
+			PushFont(Globals::MonoFont());
 			Text("%4u", t->Priority);
+			PopFont();
 			}, ImGuiTableColumnFlags_NoResize, 65 },
 		{ "CPU Time", [](auto& t) {
+			PushFont(Globals::MonoFont());
 			TextUnformatted(FormatHelper::FormatTimeSpan(t->UserTime + t->KernelTime).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_NoResize },
 		{ "Create Time", [](auto& t) {
+			PushFont(Globals::MonoFont());
 			Text(FormatHelper::FormatDateTime(t->CreateTime).c_str());
-			}, ImGuiTableColumnFlags_NoResize | ImGuiTableColumnFlags_WidthFixed },
+			PopFont();
+			}, ImGuiTableColumnFlags_NoResize },
 		{ "Kernel Time", [](auto& t) {
+			PushFont(Globals::MonoFont());
 			TextUnformatted(FormatHelper::FormatTimeSpan(t->KernelTime).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_NoResize },
 		{ "User Time", [](auto& t) {
+			PushFont(Globals::MonoFont());
 			TextUnformatted(FormatHelper::FormatTimeSpan(t->UserTime).c_str());
-			}, ImGuiTableColumnFlags_DefaultHide },
+			PopFont();
+			}, ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_NoResize },
 		{ "Start Address", [](auto& t) {
-			if (t->StartAddress)
+			if (t->StartAddress) {
+				PushFont(Globals::MonoFont());
 				Text("0x%p", t->StartAddress);
-			}, 0, 120 },
+				PopFont();
+				}
+			}, ImGuiTableColumnFlags_NoResize },
 		{ "Win32 Start Address", [](auto& t) {
-			if (t->Win32StartAddress)
+			if (t->Win32StartAddress) {
+				PushFont(Globals::MonoFont());
 				Text("0x%p", t->Win32StartAddress);
-			}, 0, 120 },
+				PopFont();
+			}
+			}, ImGuiTableColumnFlags_NoResize },
 		{ "TEB", [](auto& t) {
-			if (t->TebBase)
+			if (t->TebBase) {
+				PushFont(Globals::MonoFont());
 				Text("0x%p", t->TebBase);
-			}, ImGuiTableColumnFlags_DefaultHide, 0 },
+				PopFont();
+			}
+			}, ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_NoResize },
 		{ "Stack Base", [](auto& t) {
-			if (t->StackBase)
+			if (t->StackBase) {
+				PushFont(Globals::MonoFont());
 				Text("0x%p", t->StackBase);
-			}, ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_NoResize, 120 },
+				PopFont();
+			}
+			}, ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_NoResize },
 		{ "Stack Limit", [](auto& t) {
-			if (t->StackLimit)
+			if (t->StackLimit) {
+				PushFont(Globals::MonoFont());
 				Text("0x%p", t->StackLimit);
+				PopFont();
+			}
 			}, ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_NoResize, 120 },
 		{ "Suspend Cnt", [](auto& t) {
 			auto count = t->GetSuspendCount();
-			if (count)
+			if (count) {
+				PushFont(Globals::MonoFont());
 				Text("%4d", count);
+				PopFont();
+			}
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Service", [](auto& t) {
+			PushFont(Globals::VarFont());
 			Text("%ws", t->GetServiceName().c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Ctx Switch", [](auto& t) {
+			PushFont(Globals::MonoFont());
 			Text("%12ws", FormatHelper::FormatNumber(t->ContextSwitches).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide, 100 },
 		{ "Mem Pri", [](auto& t) {
 			auto priority = t->GetMemoryPriority();
-			if (priority >= 0)
+			if (priority >= 0) {
+				PushFont(Globals::MonoFont());
 				Text("%d", priority);
+				PopFont();
+			}
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "I/O Pri", [](auto& t) {
+			PushFont(Globals::VarFont());
 			Text("%s", FormatHelper::IoPriorityToString(t->GetIoPriority()));
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Wait Time", [](auto& t) {
+			PushFont(Globals::MonoFont());
 			TextUnformatted(FormatHelper::FormatTimeSpan(t->WaitTime).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 
 	};
 
+	PushFont(Globals::VarFont());
 	if (BeginTable("Threads", _countof(columns), ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
 		ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit)) {
 		TableSetupScrollFreeze(2, 1);
 
 		int c = 0;
-		PushFont(Globals::VarFont());
 		auto header = pid == 0 ? "Processor" : "TID";
 		for (auto& ci : columns) {
 			TableSetupColumn(c == 1 ? header : ci.Header, ci.Flags, ci.Width, c);
@@ -175,8 +232,6 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 			specs->SpecsDirty = false;
 			DoSort(specs->Specs->ColumnIndex, specs->Specs->SortDirection == ImGuiSortDirection_Ascending);
 		}
-
-		PopFont();
 
 		ImGuiListClipper clipper;
 		clipper.Begin((int)m_Threads.size());
@@ -205,7 +260,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 
 		EndTable();
 	}
-
+	PopFont();
 	if (m_AllThreads && IsKeyReleased(ImGuiKey_Space)) {
 		TogglePause();
 	}

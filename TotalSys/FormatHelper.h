@@ -19,5 +19,6 @@ struct FormatHelper abstract final {
 	static std::string UnicodeToUtf8(PCWSTR text);
 	static std::string DllCharacteristicsToString(uint16_t dc);
 	static std::string HandleAttributesToString(ULONG attributes);
+	static std::string SectionAttributesToString(DWORD value);
 };
 

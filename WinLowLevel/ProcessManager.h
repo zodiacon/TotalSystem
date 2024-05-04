@@ -249,8 +249,7 @@ namespace WinLL {
 			ThreadMap& threadsByKey, int64_t delta, shared_ptr<TProcessInfo> pi, bool extended) {
 			SYSTEM_PROCESS_INFORMATION_EXTENSION* ext = nullptr;
 			if (pi == nullptr) {
-				pi = make_shared<TProcessInfo>();
-				pi->Id = HandleToULong(info->UniqueProcessId);
+				pi = make_shared<TProcessInfo>(HandleToULong(info->UniqueProcessId));
 				pi->SessionId = info->SessionId;
 				pi->CreateTime = info->CreateTime.QuadPart;
 				pi->Key.Created = pi->CreateTime;

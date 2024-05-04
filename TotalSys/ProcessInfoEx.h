@@ -21,6 +21,7 @@ DEFINE_ENUM_FLAG_OPERATORS(ProcessAttributes);
 
 class ProcessInfoEx : public WinLL::ProcessInfo, public TransientObject {
 public:
+	explicit ProcessInfoEx(uint32_t pid);
 	std::pair<const ImVec4, const ImVec4> Colors(DefaultProcessManager& pm) const;
 	ProcessAttributes Attributes(DefaultProcessManager& pm) const;
 	bool SuspendResume();
@@ -53,5 +54,6 @@ private:
 	mutable int m_Bitness{ 0 };
 	mutable	bool m_Suspended : 1 { false };
 	mutable bool m_CompanyChecked{ false }, m_DescChecked{ false };
+	WinLL::Process m_Process;
 };
 

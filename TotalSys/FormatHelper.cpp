@@ -198,3 +198,31 @@ string FormatHelper::HandleAttributesToString(ULONG attributes) {
 		text += "Audit, ";
 	return text.empty() ? text : text.substr(0, text.length() - 2) + " (" + std::to_string(attributes) + ")";
 }
+
+string FormatHelper::SectionAttributesToString(DWORD value) {
+	string text;
+	static const struct {
+		DWORD attribute;
+		PCSTR text;
+	} attributes[] = {
+		{ SEC_COMMIT, "Commit" },
+		{ SEC_RESERVE, "Reserve" },
+		{ SEC_IMAGE, "Image" },
+		{ SEC_NOCACHE, "No Cache" },
+		{ SEC_FILE, "File" },
+		{ SEC_WRITECOMBINE, "Write Combine" },
+		{ SEC_PROTECTED_IMAGE, "Protected Image" },
+		{ SEC_LARGE_PAGES, "Large Pages" },
+		{ SEC_IMAGE_NO_EXECUTE, "No Execute" },
+	};
+
+	for (auto& item : attributes)
+		if (value & item.attribute)
+			(text += item.text) += ", ";
+	if (text.length() == 0)
+		text = "None";
+	else
+		text = text.substr(0, text.length() - 2);
+	return text;
+}
+

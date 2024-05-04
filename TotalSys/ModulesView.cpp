@@ -41,16 +41,23 @@ void ModulesView::BuildTable() {
 		}, ImGuiTableColumnFlags_NoResize, 70.0f },
 
 		{ "Size", [](auto& m) {
+			PushFont(Globals::MonoFont());
 			Text("0x%08X", m->ModuleSize);
+			PopFont();
 		}, 0, 90.0f },
 
 		{ "Base Address", [](auto& m) {
+			PushFont(Globals::MonoFont());
 			Text("0x%p", m->Base);
+			PopFont();
 		}, ImGuiTableColumnFlags_NoResize },
 
 		{ "Image Base", [](auto& m) {
-			if (m->ImageBase)
+			if (m->ImageBase) {
+				PushFont(Globals::MonoFont());
 				Text("0x%p", m->ImageBase);
+				PopFont();
+			}
 		}, ImGuiTableColumnFlags_NoResize },
 		{ "Full Path", [&](auto& m) {
 			PushFont(Globals::VarFont());
@@ -58,7 +65,9 @@ void ModulesView::BuildTable() {
 			PopFont();
 			}, 0, 400 },
 		{ "Characteristics", [](auto& m) {
+			PushFont(Globals::MonoFont());
 			Text("0x%04X", (uint16_t)m->Characteristics);
+			PopFont();
 			if (m->Characteristics != DllCharacteristics::None) {
 				PushFont(Globals::VarFont());
 				SameLine();

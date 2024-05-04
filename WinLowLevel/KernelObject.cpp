@@ -67,4 +67,13 @@ namespace WinLL {
 		status = ::NtQueryObject(m_hObject.get(), ObjectNameInformation, name.data(), len, nullptr);
 		return NT_SUCCESS(status) ? name : L"";
 	}
+
+	WaitOneResult DispatcherObject::WaitOne(uint32_t msec) const {
+		return static_cast<WaitOneResult>(::WaitForSingleObject(Handle(), msec));
+	}
+
+	//WaitAllResult DispatcherObject::WaitAll(span<DispatcherObject> objects, bool waitAll, uint32_t msec) {
+	//	return static_cast<WaitAllResult>(::WaitForMultipleObjects((DWORD)objects.size(), objects.data(), waitAll, msec));
+	//}
+
 }

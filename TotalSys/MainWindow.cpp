@@ -81,8 +81,8 @@ void MainWindow::BuildWindow() {
 				ImGui::EndMenu();
 			}
 			if (BeginMenu("Highlight Duration")) {
-				SliderInt("New Objects", (int*)&settings.NewObjectsTime, 1, 9, "%d Seconds");
-				SliderInt("Old Objects", (int*)&settings.OldObjectsTime, 1, 9, "%d Seconds");
+				SliderInt("New Objects", &settings.NewObjectsTime, 1, 9, "%d Seconds");
+				SliderInt("Old Objects", &settings.OldObjectsTime, 1, 9, "%d Seconds");
 				ImGui::EndMenu();
 			}
 			auto replaced = SecurityHelper::IsExeReplaced(L"taskmgr.exe");

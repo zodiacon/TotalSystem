@@ -32,6 +32,8 @@ ProcessesView::ProcessesView() : m_ThreadsView(&m_ProcMgr) {
 
 void ProcessesView::BuildWindow() {
 	if (IsOpen()) {
+		thread_local static char buffer[128];
+		PushFont(Globals::VarFont());
 		if (Begin("Processes", GetOpenAddress(), ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar)) {
 			if (Globals::RootWindow().SaveSelected()) {
 				// handle Save...
@@ -48,6 +50,7 @@ void ProcessesView::BuildWindow() {
 			BuildTable();
 		}
 		ImGui::End();
+		PopFont();
 	}
 }
 
@@ -252,7 +255,9 @@ void ProcessesView::BuildTable() {
 
 			}, ImGuiTableColumnFlags_NoHide | ImGuiTableColumnFlags_NoReorder },
 		{ "PID", [](auto& p) {
-			Text("%7u (0x%05X)", p->Id, p->Id);
+			PushFont(Globals::MonoFont());
+			Text(Globals::Settings().HexIds ? "0x%08X" : "%8u", p->Id);
+			PopFont();
 			}, 0, 130.0f },
 		{ "User Name", [](auto p) {
 			auto& username = p->GetUserName(true);
@@ -264,10 +269,13 @@ void ProcessesView::BuildTable() {
 			PopFont();
 			}, 0, 110.0f },
 		{ "Session", [](auto p) {
+			PushFont(Globals::MonoFont());
 			Text("%4u", p->SessionId);
+			PopFont();
 			}, ImGuiTableColumnFlags_NoResize, 50.0f },
 		{ "CPU %", [&](auto p) {
 			if (p->CPU > 0 && !p->IsTerminated()) {
+				PushFont(Globals::MonoFont());
 				auto value = p->CPU / 10000.0f;
 				auto str = format("{:7.2f}  ", value);
 				ImVec4 color;
@@ -285,6 +293,7 @@ void ProcessesView::BuildTable() {
 				else {
 					TextUnformatted(str.c_str());
 				}
+				PopFont();
 			}
 		}, 0, 70 },
 		{ "Parent", [&](auto p) {
@@ -300,22 +309,34 @@ void ProcessesView::BuildTable() {
 			}
 		}, 0, 140.0f },
 		{ "Create Time", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text(FormatHelper::FormatDateTime(p->CreateTime).c_str());
+			PopFont();
 			},ImGuiTableColumnFlags_NoResize },
 		{ "Private Bytes", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%12ws K", FormatHelper::FormatNumber(p->PrivatePageCount >> 10).c_str());
+			PopFont();
 			}, },
 		{ "Pri", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%4d", p->BasePriority);
+			PopFont();
 			}, },
 		{ "Threads", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%6ws", FormatHelper::FormatNumber(p->ThreadCount).c_str());
+			PopFont();
 			}, },
 		{ "Handles", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%6ws", FormatHelper::FormatNumber(p->HandleCount).c_str());
+			PopFont();
 			}, },
 		{ "Working Set", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%12ws K", FormatHelper::FormatNumber(p->WorkingSetSize >> 10).c_str());
+			PopFont();
 			}, },
 		{ "Executable Path", [](auto& p) {
 			PushFont(Globals::VarFont());
@@ -323,45 +344,72 @@ void ProcessesView::BuildTable() {
 			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide, 150.0f },
 		{ "CPU Time", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			TextUnformatted(FormatHelper::FormatTimeSpan(p->UserTime + p->KernelTime).c_str());
+			PopFont();
 			}, },
 		{ "Peak Thr", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%7ws", FormatHelper::FormatNumber(p->PeakThreads).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Virtual Size", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%14ws K", FormatHelper::FormatNumber(p->VirtualSize >> 10).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Peak WS", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%12ws K", FormatHelper::FormatNumber(p->PeakWorkingSetSize >> 10).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Attributes", [this](auto& p) {
+			PushFont(Globals::MonoFont());
 			TextUnformatted(ProcessAttributesToString(p->Attributes(m_ProcMgr)).c_str());
+			PopFont();
 			}, },
 		{ "Paged Pool", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%9ws K", FormatHelper::FormatNumber(p->PagedPoolUsage >> 10).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "NP Pool", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%9ws K", FormatHelper::FormatNumber(p->NonPagedPoolUsage >> 10).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "kernel Time", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			TextUnformatted(FormatHelper::FormatTimeSpan(p->KernelTime).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "User Time", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			TextUnformatted(FormatHelper::FormatTimeSpan(p->UserTime).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Peak Paged", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%9ws K", FormatHelper::FormatNumber(p->PeakPagedPoolUsage >> 10).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Peak Non-Paged", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%9ws K", FormatHelper::FormatNumber(p->PeakNonPagedPoolUsage >> 10).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Integrity", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			TextUnformatted(FormatHelper::IntegrityToString(p->GetIntegrityLevel()));
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "PEB", [](auto& p) {
 			auto peb = p->GetPeb();
-			if (peb)
+			if (peb) {
+				PushFont(Globals::MonoFont());
 				Text("0x%p", peb);
+				PopFont();
+			}
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Protection", [](auto& p) {
 			auto protection = p->GetProtection();
@@ -370,7 +418,9 @@ void ProcessesView::BuildTable() {
 			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Platform", [](auto& p) {
+			PushFont(Globals::VarFont());
 			Text("%d-Bit", p->GetBitness());
+			PopFont();
 			}, 0 },
 		{ "Description", [](auto& p) {
 			PushFont(Globals::VarFont());
@@ -383,37 +433,59 @@ void ProcessesView::BuildTable() {
 			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide, 150, },
 		{ "Job ID", [](auto& p) {
-			if (p->JobObjectId)
+			if (p->JobObjectId) {
+				PushFont(Globals::MonoFont());
 				Text("%4u", p->JobObjectId);
+				PopFont();
+			}
 			}, ImGuiTableColumnFlags_DefaultHide, 60, },
 		{ "Memory Pri", [](auto& p) {
 			auto priority = p->GetMemoryPriority();
-			if (priority >= 0)
+			if (priority >= 0) {
+				PushFont(Globals::MonoFont());
 				Text("%4u", priority);
+				PopFont();
+			}
 			}, ImGuiTableColumnFlags_DefaultHide, 60, },
 		{ "I/O Pri", [](auto& p) {
+			PushFont(Globals::VarFont());
 			TextUnformatted(FormatHelper::IoPriorityToString(p->GetIoPriority()));
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide, 70, },
 		{ "Virtualization", [](auto& p) {
+			PushFont(Globals::VarFont());
 			TextUnformatted(FormatHelper::VirtualizationStateToString(p->GetVirtualizationState()));
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide, 70, },
 		{ "Read Op Count", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%12ws", FormatHelper::FormatNumber(p->ReadOperationCount).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide, 100, },
 		{ "Write Op Count", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%12ws", FormatHelper::FormatNumber(p->WriteOperationCount).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide, 100, },
 		{ "Other Op Count", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%12ws", FormatHelper::FormatNumber(p->OtherOperationCount).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide, 100, },
 		{ "Read Bytes", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%17ws", FormatHelper::FormatNumber(p->ReadTransferCount).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide, 130, },
 		{ "Write Bytes", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%17ws", FormatHelper::FormatNumber(p->WriteTransferCount).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide, 130, },
 		{ "Other Bytes", [](auto& p) {
+			PushFont(Globals::MonoFont());
 			Text("%17ws", FormatHelper::FormatNumber(p->OtherTransferCount).c_str());
+			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide, 130, },
 
 	};
@@ -442,13 +514,13 @@ void ProcessesView::BuildTable() {
 				TableSetupColumn(ci.Header, ci.Flags, ci.Width, c++);
 			TableHeadersRow();
 
+			auto update = Refresh();
 			auto specs = m_Specs = TableGetSortSpecs();
 			if (specs->SpecsDirty) {
 				specs->SpecsDirty = false;
 				DoSort(specs->Specs->ColumnIndex, specs->Specs->SortDirection == ImGuiSortDirection_Ascending);
 			}
 
-			auto update = Refresh();
 			PopFont();
 
 			auto result = m_KillDlg.ShowModal();
@@ -472,6 +544,7 @@ void ProcessesView::BuildTable() {
 			ImGuiListClipper clipper;
 			clipper.Begin(count);
 			clipper.IncludeItemByIndex(m_SelectedIndex);
+			bool pressed = false;
 			while (clipper.Step()) {
 				for (int j = clipper.DisplayStart; j < clipper.DisplayEnd; j++) {
 					auto& p = m_Processes[j];
@@ -485,10 +558,18 @@ void ProcessesView::BuildTable() {
 						popCount = 1;
 					}
 
+					if (!pressed && j > m_SelectedIndex && IsKeyChordPressed((ImGuiKey)(ImGuiKey_A + toupper(p->GetImageName()[0]) - 'A'))) {
+						m_SelectedIndex = j;
+						m_SelectedProcess = p;
+						SetKeyboardFocusHere();
+						pressed = true;
+						OutputDebugString(format(L"Selected index: {}, process: {}\n", m_SelectedIndex, m_SelectedProcess->GetImageName()).c_str());
+					}
+
 					for (c = 0; c < _countof(columns); c++) {
 						if (TableSetColumnIndex(c)) {
 							columns[c].Callback(p);
-							if (c == 0 && IsItemFocused()) {
+							if (!pressed && c == 0 && IsItemFocused()) {
 								m_SelectedProcess = p;
 								m_SelectedIndex = j;
 							}
@@ -649,6 +730,7 @@ void ProcessesView::BuildLowerPane() {
 	if (m_ShowLowerPane) {
 		if (BeginChild("lowerpane", ImVec2(), ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar)) {
 			if (m_SelectedProcess) {
+				PushFont(Globals::VarFont());
 				if (BeginTabBar("lowertabs", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_Reorderable)) {
 					SameLine(500);
 					Text("PID: %u (%ws)", m_SelectedProcess->Id, m_SelectedProcess->GetImageName().c_str()); SameLine();
@@ -683,6 +765,7 @@ void ProcessesView::BuildLowerPane() {
 					EndTabItem();
 				}
 				EndTabBar();
+				PopFont();
 			}
 		}
 		EndChild();

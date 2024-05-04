@@ -11,6 +11,10 @@
 using namespace std;
 using namespace WinLL;
 
+ProcessInfoEx::ProcessInfoEx(uint32_t pid) : ProcessInfo(pid) {
+	m_Process.Open(pid, ProcessAccessMask::QueryLimitedInformation);
+}
+
 std::pair<const ImVec4, const ImVec4> ProcessInfoEx::Colors(DefaultProcessManager& pm) const {
 	using namespace ImGui;
 	auto& colors = Globals::Settings().GetProcessColors();
@@ -55,17 +59,16 @@ ProcessAttributes ProcessInfoEx::Attributes(DefaultProcessManager& pm) const {
 		if (parent && _wcsicmp(parent->GetImageName().c_str(), L"services.exe") == 0)
 			m_Attributes |= ProcessAttributes::Service;
 
-		Process process;
-		if (process.Open(Id, ProcessAccessMask::QueryLimitedInformation)) {
-			if (process.IsManaged())
+		if (m_Process) {
+			if (m_Process.IsManaged())
 				m_Attributes |= ProcessAttributes::Managed;
-			if (process.IsProtected())
+			if (m_Process.IsProtected())
 				m_Attributes |= ProcessAttributes::Protected;
-			if (process.IsImmersive())
+			if (m_Process.IsImmersive())
 				m_Attributes |= ProcessAttributes::Immersive;
-			if (process.IsSecure())
+			if (m_Process.IsSecure())
 				m_Attributes |= ProcessAttributes::Secure;
-			if (process.IsInJob())
+			if (m_Process.IsInJob())
 				m_Attributes |= ProcessAttributes::InJob;
 		}
 	}
@@ -86,11 +89,8 @@ bool ProcessInfoEx::SuspendResume() {
 }
 
 const std::wstring& ProcessInfoEx::GetExecutablePath() const {
-	if (m_ExecutablePath.empty() && Id != 0) {
-		Process process;
-		if (process.Open(Id, ProcessAccessMask::QueryLimitedInformation)) {
-			m_ExecutablePath = process.GetFullImageName();
-		}
+	if (m_ExecutablePath.empty() && Id > 4 && m_Process) {
+		m_ExecutablePath = m_Process.GetFullImageName();
 	}
 	return m_ExecutablePath;
 }
@@ -114,9 +114,8 @@ IntegrityLevel ProcessInfoEx::GetIntegrityLevel() const {
 	if (Id <= 4)
 		return IntegrityLevel::System;
 
-	Process p;
-	if (p.Open(Id, ProcessAccessMask::QueryLimitedInformation)) {
-		return p.GetIntegrityLevel();
+	if(m_Process) {
+		return m_Process.GetIntegrityLevel();
 	}
 	return IntegrityLevel::Error;
 }
@@ -125,18 +124,15 @@ PVOID ProcessInfoEx::GetPeb() const {
 	if (Id <= 4)
 		return nullptr;
 
-	if (!m_Peb) {
-		Process p;
-		if (p.Open(Id, ProcessAccessMask::QueryLimitedInformation))
-			m_Peb = p.GetPeb();
+	if (!m_Peb && m_Process) {
+		m_Peb = m_Process.GetPeb();
 	}
 	return m_Peb;
 }
 
 WinLL::ProcessProtection ProcessInfoEx::GetProtection() const {
-	Process p;
-	if (p.Open(Id, ProcessAccessMask::QueryLimitedInformation))
-		return p.GetProtection();
+	if (m_Process)
+		return m_Process.GetProtection();
 	return ProcessProtection();
 }
 
@@ -209,9 +205,8 @@ int ProcessInfoEx::GetBitness() const {
 		static SYSTEM_INFO si = { 0 };
 		if (si.dwNumberOfProcessors == 0)
 			::GetNativeSystemInfo(&si);
-		Process p;
-		if (p.Open(Id, ProcessAccessMask::QueryLimitedInformation)) {
-			if (p.IsWow64Process())
+		if(m_Process) {
+			if (m_Process.IsWow64Process())
 				m_Bitness = 32;
 			else
 				m_Bitness = si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL || si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM ? 32 : 64;
@@ -224,16 +219,14 @@ int ProcessInfoEx::GetBitness() const {
 }
 
 int ProcessInfoEx::GetMemoryPriority() const {
-	Process p;
-	if (p.Open(Id, ProcessAccessMask::QueryLimitedInformation))
-		return p.GetMemoryPriority();
+	if(m_Process)
+		return m_Process.GetMemoryPriority();
 	return -1;
 }
 
 WinLL::IoPriority ProcessInfoEx::GetIoPriority() const {
-	Process p;
-	if (p.Open(Id, ProcessAccessMask::QueryLimitedInformation))
-		return p.GetIoPriority();
+	if(m_Process)
+		return m_Process.GetIoPriority();
 	return IoPriority::Unknown;
 }
 

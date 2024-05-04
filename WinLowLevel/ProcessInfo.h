@@ -13,6 +13,7 @@ namespace WinLL {
 	struct ThreadInfo;
 
 	struct ProcessInfo {
+		ProcessInfo(uint32_t pid) : Id(pid) {}
 		template<typename TProcessInfo, typename TThreadInfo>
 		friend class ProcessManager;
 

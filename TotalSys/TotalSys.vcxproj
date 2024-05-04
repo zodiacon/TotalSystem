@@ -243,6 +243,7 @@
     <ClInclude Include="IconManager.h" />
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="ModulesView.h" />
+    <ClInclude Include="ObjectHelper.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ProcessColor.h" />
     <ClInclude Include="ProcessesView.h" />
@@ -266,6 +267,7 @@
     <ClCompile Include="IconManager.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="ModulesView.cpp" />
+    <ClCompile Include="ObjectHelper.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

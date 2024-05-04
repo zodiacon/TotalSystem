@@ -6,9 +6,11 @@
 #include "SortHelper.h"
 #include "UI.h"
 #include "AccessMaskDecoder.h"
+#include "ObjectHelper.h"
 
 using namespace ImGui;
 using namespace std;
+using namespace WinLL;
 
 bool HandlesView::Track(uint32_t pid, PCWSTR type) {
 	auto tracking = m_Tracker.Track(pid, type);
@@ -21,10 +23,12 @@ bool HandlesView::Track(uint32_t pid, PCWSTR type) {
 void HandlesView::BuildTable() {
 	static const ColumnInfo columns[]{
 		{ "Handle", [&](auto& h) {
+			PushFont(Globals::MonoFont());
 			auto text = format("0x{:08X}", h->HandleValue);
 			if (Selectable(text.c_str(), m_SelectedHandle == h, ImGuiSelectableFlags_SpanAllColumns)) {
 				m_SelectedHandle = h;
 			}
+			PopFont();
 			}, ImGuiTableColumnFlags_NoResize, },
 
 		{ "Type", [&](auto& h) {
@@ -39,12 +43,28 @@ void HandlesView::BuildTable() {
 			PopFont();
 		}, 0, 400.0f },
 
+		{ "Process Id", [](auto& h) {
+			PushFont(Globals::MonoFont());
+			Text(Globals::Settings().HexIds ? "0x%08" : "%8u", h->ProcessId);
+			PopFont();
+		}, m_Tracker.GetPid() <= 0 ? 0 : ImGuiTableColumnFlags_DefaultHide },
+
+		{ "Process Name", [&](auto& h) {
+			PushFont(Globals::VarFont());
+			Text("%ws", GetProcessName(h.get()).c_str());
+			PopFont();
+		}, m_Tracker.GetPid() <= 0 ? 0 : ImGuiTableColumnFlags_DefaultHide },
+
 		{ "Access", [](auto& h) {
+			PushFont(Globals::MonoFont());
 			Text("0x%08X", h->GrantedAccess);
+			PopFont();
 		}, ImGuiTableColumnFlags_NoResize, },
 
 		{ "Address", [](auto& h) {
+			PushFont(Globals::MonoFont());
 			Text("0x%p", h->Object);
+			PopFont();
 		}, ImGuiTableColumnFlags_NoResize },
 
 		{ "Attributes", [](auto& h) {
@@ -54,11 +74,22 @@ void HandlesView::BuildTable() {
 		}, 0, 90},
 
 		{ "Decoded Access", [&](auto& h) {
+			PushFont(Globals::VarFont());
 			TextUnformatted(AccessMaskDecoder::DecodeAccessMask(GetObjectType(h.get()), h->GrantedAccess).c_str());
-		}, 0, 150 },
+			PopFont();
+		}, 0, 200 },
+
+		{ "Details", [&](auto& h) {
+			auto hDup = WinLLX::ObjectManager::DupHandle(ULongToHandle(h->HandleValue), h->ProcessId);
+			if (hDup) {
+				PushFont(Globals::VarFont());
+				TextUnformatted(ObjectHelper::GetObjectDetails(hDup, h.get(), GetObjectType(h.get()), &m_ProcMgr).c_str());
+				PopFont();
+				::CloseHandle(hDup);
+			}
+		}, 0, 250 },
+
 	};
-	if (m_Tracker.GetPid() == 0)
-		SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
 
 	if (BeginTable("Handles", _countof(columns), ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
 		ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersOuterV)) {
@@ -69,9 +100,8 @@ void HandlesView::BuildTable() {
 		PushFont(Globals::VarFont());
 		for (auto& ci : columns)
 			TableSetupColumn(ci.Header, ci.Flags, ci.Width, c++);
-		PopFont();
-
 		TableHeadersRow();
+		PopFont();
 
 		auto specs = m_Specs = TableGetSortSpecs();
 		if (specs->SpecsDirty) {
@@ -125,15 +155,22 @@ void HandlesView::BuildWindow() {
 	if (!IsOpen())
 		return;
 
+	if (m_Tracker.GetPid() == 0)
+		SetNextWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
+
+	PushFont(Globals::VarFont());
 	if (Begin("All Handles", GetOpenAddress())) {
 		Refresh(0);
 		BuildTable();
 	}
+	PopFont();
 	End();
 }
 
 bool HandlesView::Refresh(uint32_t pid, bool now) {
 	if (!m_Updating && (NeedUpdate() || now)) {
+		if (pid == 0)
+			m_ProcMgr.Update();
 		Track(pid);
 		m_Updating = true;
 		UI::SubmitWork(
@@ -141,6 +178,7 @@ bool HandlesView::Refresh(uint32_t pid, bool now) {
 				m_Tracker.Update();
 			},
 			[&]() {
+
 				auto empty = m_Handles.empty();
 				if (empty) {
 					m_Handles = m_Tracker.GetNewHandles();
@@ -176,6 +214,16 @@ std::wstring const& HandlesView::GetObjectType(HandleInfoEx* hi) const {
 	if (hi->Type.empty())
 		hi->Type = WinLLX::ObjectManager::GetType(hi->ObjectTypeIndex)->TypeName;
 	return hi->Type;
+}
+
+std::wstring const& HandlesView::GetProcessName(HandleInfoEx* hi) const {
+	if (!hi->ProcessNameChecked) {
+		hi->ProcessNameChecked = true;
+		auto p = m_ProcMgr.GetProcessById(hi->ProcessId);
+		if (p)
+			hi->ProcessName = p->GetImageName();
+	}
+	return hi->ProcessName;
 }
 
 void HandlesView::DoSort(int col, bool asc) {

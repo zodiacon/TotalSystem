@@ -13,6 +13,7 @@
 #endif
 
 #include <wil\resource.h>
+#include <span>
 
 //#define DEFINE_ENUM(Name, Type) \
 //    struct Name {   \
@@ -260,6 +261,16 @@ namespace WinLL {
 		};
 	};
 
+	struct EventAccessMask : DispatcherAccessMask {
+		using DispatcherAccessMask::DispatcherAccessMask;
+
+		enum : uint32_t {
+			ModifyState = EVENT_MODIFY_STATE,
+			QueryState = EVENT_QUERY_STATE,
+			All = EVENT_ALL_ACCESS,
+		};
+	};
+
 	struct ProcessAccessMask : DispatcherAccessMask {
 		using DispatcherAccessMask::DispatcherAccessMask;
 
@@ -369,14 +380,12 @@ namespace WinLL {
 		Error = WAIT_FAILED,
 	};
 
-	struct WaitAllResult {
-		enum : DWORD {
-			Success = WAIT_OBJECT_0,
-			Timeout = WAIT_TIMEOUT,
-			Abandoned = WAIT_ABANDONED,
-			Error = WAIT_FAILED,
-			Index = 0,
-		};
+	enum class WaitAllResult : uint32_t {
+		Success = WAIT_OBJECT_0,
+		Timeout = WAIT_TIMEOUT,
+		Abandoned = WAIT_ABANDONED,
+		Error = WAIT_FAILED,
+		Index = 0,
 	};
 
 	template<typename TLock>
@@ -402,16 +411,17 @@ namespace WinLL {
 	public:
 		using KernelObject::KernelObject;
 
-		void Lock();
-		void Unlock();
 		WaitOneResult WaitOne(uint32_t msec = Timeout::Infinite) const;
-		WaitAllResult WaitAll(uint32_t msec = Timeout::Infinite) const;
-		bool IsSignaled() const;
+		static WaitAllResult WaitAll(std::span<DispatcherObject> objects, bool waitAll, uint32_t msec = Timeout::Infinite);
+		//virtual bool IsSignaled() const;
 	};
 
 	class Mutex final : public DispatcherObject {
 	public:
 		using DispatcherObject::DispatcherObject;
+
+		Mutex() = default;
+		explicit Mutex(bool owned);
 
 		WaitOneResult Lock(uint32_t timeout = Timeout::Infinite);
 		bool Unlock();
@@ -426,7 +436,13 @@ namespace WinLL {
 	public:
 		using DispatcherObject::DispatcherObject;
 
-		Event(EventType type, bool signaled = false);
+		Event() = default;
+		explicit Event(EventType type, bool signaled = false);
+		Event(EventType type, std::wstring_view name, bool signaled = false);
+
+		bool Create(EventType type, bool signaled = false);
+		bool Create(EventType type, std::wstring_view name, bool signaled = false);
+		bool Open(EventAccessMask access, std::wstring_view name, bool inherit = false);
 		bool Set();
 		bool Reset();
 		bool Pulse();
