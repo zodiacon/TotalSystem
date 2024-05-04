@@ -4,6 +4,7 @@
 #include "TotalSysSettings.h"
 #include "FormatHelper.h"
 #include "SortHelper.h"
+#include "resource.h"
 
 using namespace ImGui;
 using namespace WinLLX;
@@ -27,6 +28,7 @@ void ModulesView::BuildTable() {
 	static const ColumnInfo columns[]{
 		{ "Name", [&](auto& m) {
 			sprintf_s(text.get(), textSize, "%ws", m->Name.c_str());
+			Image(s_Icons[m->Type == MapType::Data ? 1 : 0].Get(), ImVec2(16, 16)); SameLine();
 			PushFont(Globals::VarFont());
 			if (Selectable(text[0] ? text.get() : "<Pagefile backed>", m_SelectedModule == m, ImGuiSelectableFlags_SpanAllColumns)) {
 				m_SelectedModule = m;
@@ -166,6 +168,18 @@ bool ModulesView::Refresh(uint32_t pid, bool now) {
 		return true;
 	}
 	return false;
+}
+
+void ModulesView::Init() {
+	UINT icons[]{
+		IDI_DLL, IDI_MOD_DATA,
+	};
+
+	int i = 0;
+	for (auto icon : icons) {
+		s_Icons[i++] = D3D11Image::FromIcon(
+			(HICON)::LoadImage(::GetModuleHandle(nullptr), MAKEINTRESOURCE(icon), IMAGE_ICON, 16, 16, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE));
+	}
 }
 
 void ModulesView::DoSort(int col, bool asc) {

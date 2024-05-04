@@ -294,13 +294,27 @@
     <ResourceCompile Include="TotalSys.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Icons\briefcase.ico" />
+    <Image Include="Icons\dll-database.ico" />
+    <Image Include="Icons\dll.ico" />
+    <Image Include="Icons\file.ico" />
+    <Image Include="Icons\gear.ico" />
     <Image Include="Icons\Initialized.ico" />
+    <Image Include="Icons\key.ico" />
+    <Image Include="Icons\mutex.ico" />
+    <Image Include="Icons\Object.ico" />
     <Image Include="Icons\Ready.ico" />
     <Image Include="Icons\Running.ico" />
+    <Image Include="Icons\semaphore.ico" />
     <Image Include="Icons\Standby.ico" />
+    <Image Include="Icons\symboliclink.ico" />
     <Image Include="Icons\Terminated.ico" />
+    <Image Include="Icons\thread.ico" />
+    <Image Include="Icons\timer.ico" />
+    <Image Include="Icons\token.ico" />
     <Image Include="Icons\TotalSys.ico" />
     <Image Include="Icons\transition.ico" />
+    <Image Include="Icons\types.ico" />
     <Image Include="Icons\Waiting.ico" />
     <Image Include="Icons\Window.ico" />
     <Image Include="Icons\window_split.ico" />

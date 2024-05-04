@@ -5,6 +5,7 @@
 #include <functional>
 #include "SortedFilteredVector.h"
 #include "TransientObject.h"
+#include <d3d11Image.h>
 
 struct ModuleInfoEx : WinLLX::ModuleInfo, TransientObject {
 };
@@ -14,6 +15,7 @@ public:
 	bool Track(uint32_t pid);
 	void BuildTable();
 	bool Refresh(uint32_t pid, bool now = false);
+	static void Init();
 
 private:
 	void DoSort(int col, bool asc);
@@ -33,5 +35,6 @@ private:
 	std::shared_ptr<ModuleInfoEx> m_SelectedModule;
 	SortedFilteredVector<std::shared_ptr<ModuleInfoEx>> m_Modules;
 	ImGuiTableSortSpecs* m_Specs{ nullptr };
+	inline static D3D11Image s_Icons[2];
 };
 

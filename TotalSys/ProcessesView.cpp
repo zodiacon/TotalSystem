@@ -34,6 +34,8 @@ void ProcessesView::BuildWindow() {
 	if (IsOpen()) {
 		thread_local static char buffer[128];
 		PushFont(Globals::VarFont());
+		auto view = GetMainViewport();
+		SetNextWindowSize(view->WorkSize, ImGuiCond_FirstUseEver);
 		if (Begin("Processes", GetOpenAddress(), ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar)) {
 			if (Globals::RootWindow().SaveSelected()) {
 				// handle Save...

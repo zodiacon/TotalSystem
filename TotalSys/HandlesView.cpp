@@ -7,10 +7,36 @@
 #include "UI.h"
 #include "AccessMaskDecoder.h"
 #include "ObjectHelper.h"
+#include "resource.h"
 
 using namespace ImGui;
 using namespace std;
 using namespace WinLL;
+
+void HandlesView::Init() {
+	const struct {
+		PCWSTR type;
+		UINT icon;
+	} icons[] = {
+		{ L"", IDI_OBJECT },
+		{ L"Process", IDI_PROCESS },
+		{ L"Thread", IDI_THREAD },
+		{ L"Mutant", IDI_LOCK },
+		{ L"Semaphore", IDI_SEMAPHORE },
+		{ L"Job", IDI_JOB },
+		{ L"Section", IDI_SECTION },
+		{ L"SymbolicLink", IDI_SYMLINK },
+		{ L"Token", IDI_TOKEN },
+		{ L"Key", IDI_KEY },
+		{ L"File", IDI_FILE },
+	};
+
+	for(auto& icon : icons)
+		s_Icons.insert({ icon.type, D3D11Image::FromIcon(
+			(HICON)::LoadImage(::GetModuleHandle(nullptr), MAKEINTRESOURCE(icon.icon), IMAGE_ICON, 16, 16, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE)) });
+
+
+}
 
 bool HandlesView::Track(uint32_t pid, PCWSTR type) {
 	auto tracking = m_Tracker.Track(pid, type);
@@ -24,7 +50,13 @@ void HandlesView::BuildTable() {
 	static const ColumnInfo columns[]{
 		{ "Handle", [&](auto& h) {
 			PushFont(Globals::MonoFont());
-			auto text = format("0x{:08X}", h->HandleValue);
+			auto text = format("0x{:08X}##%X", h->HandleValue, h->ProcessId);
+			ImTextureID image;
+			if (auto it = s_Icons.find(GetObjectType(h.get())); it != s_Icons.end())
+				image = it->second.Get();
+			else
+				image = s_Icons[L""].Get();
+			Image(image, ImVec2(16, 16)); SameLine();
 			if (Selectable(text.c_str(), m_SelectedHandle == h, ImGuiSelectableFlags_SpanAllColumns)) {
 				m_SelectedHandle = h;
 			}

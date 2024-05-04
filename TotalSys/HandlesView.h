@@ -5,6 +5,7 @@
 #include <ProcessHandleTracker.h>
 #include "SortedFilteredVector.h"
 #include <ProcessManager.h>
+#include <d3d11Image.h>
 #include <WinLowLevel.h>
 
 struct HandleInfoEx : WinLLX::HandleInfo, TransientObject {
@@ -15,6 +16,7 @@ struct HandleInfoEx : WinLLX::HandleInfo, TransientObject {
 
 class HandlesView : public ViewBase {
 public:
+	static void Init();
 	bool Track(uint32_t pid, PCWSTR type = L"");
 	void BuildTable();
 	void BuildWindow();
@@ -44,5 +46,6 @@ private:
 	ImGuiTableSortSpecs* m_Specs{ nullptr };
 	WinLL::ProcessManager<> m_ProcMgr;
 	bool m_Updating{ false };
+	inline static std::unordered_map<std::wstring, D3D11Image> s_Icons;
 };
 

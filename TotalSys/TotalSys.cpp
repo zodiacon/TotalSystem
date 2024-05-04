@@ -106,6 +106,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 	const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
 
 	ThreadsView::Init();
+	ModulesView::Init();
+	HandlesView::Init();
+
 	MainWindow mainWindow(hwnd);
 
 	// Main loop
