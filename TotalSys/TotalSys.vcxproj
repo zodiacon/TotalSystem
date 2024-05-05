@@ -299,16 +299,23 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="Icons\briefcase.ico" />
+    <Image Include="Icons\desktop.ico" />
+    <Image Include="Icons\directory.ico" />
     <Image Include="Icons\dll-database.ico" />
     <Image Include="Icons\dll.ico" />
+    <Image Include="Icons\event.ico" />
+    <Image Include="Icons\factory.ico" />
     <Image Include="Icons\file.ico" />
     <Image Include="Icons\gear.ico" />
     <Image Include="Icons\Initialized.ico" />
     <Image Include="Icons\key.ico" />
     <Image Include="Icons\mutex.ico" />
     <Image Include="Icons\Object.ico" />
+    <Image Include="Icons\package.ico" />
+    <Image Include="Icons\port.ico" />
     <Image Include="Icons\Ready.ico" />
     <Image Include="Icons\Running.ico" />
+    <Image Include="Icons\section.ico" />
     <Image Include="Icons\semaphore.ico" />
     <Image Include="Icons\Standby.ico" />
     <Image Include="Icons\symboliclink.ico" />

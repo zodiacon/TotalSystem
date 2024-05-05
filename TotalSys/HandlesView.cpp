@@ -8,6 +8,7 @@
 #include "AccessMaskDecoder.h"
 #include "ObjectHelper.h"
 #include "resource.h"
+#include <ImGuiExt.h>
 
 using namespace ImGui;
 using namespace std;
@@ -19,16 +20,23 @@ void HandlesView::Init() {
 		UINT icon;
 	} icons[] = {
 		{ L"", IDI_OBJECT },
+		{ L"Event", IDI_EVENT },
 		{ L"Process", IDI_PROCESS },
+		{ L"Directory", IDI_DIRECTORY },
 		{ L"Thread", IDI_THREAD },
 		{ L"Mutant", IDI_LOCK },
 		{ L"Semaphore", IDI_SEMAPHORE },
 		{ L"Job", IDI_JOB },
+		{ L"Timer", IDI_TIMER },
+		{ L"IRTimer", IDI_TIMER },
 		{ L"Section", IDI_SECTION },
 		{ L"SymbolicLink", IDI_SYMLINK },
 		{ L"Token", IDI_TOKEN },
 		{ L"Key", IDI_KEY },
 		{ L"File", IDI_FILE },
+		{ L"ALPC Port", IDI_PLUG },
+		{ L"Desktop", IDI_DESKTOP },
+		{ L"TpWorkerFactory", IDI_FACTORY },
 	};
 
 	for(auto& icon : icons)
@@ -199,8 +207,22 @@ void HandlesView::BuildWindow() {
 	End();
 }
 
+void HandlesView::BuildToolBar() {
+	bool selected = m_SelectedHandle != nullptr;
+	PushFont(Globals::VarFont());
+	if (Checkbox("Named Objects", &m_NamedObjects)) {
+		m_UpdateNow = true;
+	}
+	SameLine();  Spacing(); SameLine();
+	if (ButtonEnabled("Close Handle", selected)) {
+		ObjectHelper::CloseHandle(m_SelectedHandle.get());
+	}
+	PopFont();
+}
+
 bool HandlesView::Refresh(uint32_t pid, bool now) {
-	if (!m_Updating && (NeedUpdate() || now)) {
+	if (!m_Updating && (NeedUpdate() || now || m_UpdateNow)) {
+		m_UpdateNow = false;
 		if (pid == 0)
 			m_ProcMgr.Update();
 		Track(pid);
@@ -230,6 +252,15 @@ bool HandlesView::Refresh(uint32_t pid, bool now) {
 						m_Specs->SpecsDirty = true;
 				}
 				m_Updating = false;
+				if (m_NamedObjects) {
+					m_Filter = [this](auto& h, auto) {
+						return !GetObjectName(h.get()).empty();
+						};
+					m_Handles.Filter(m_Filter);
+				}
+				else {
+					m_Handles.Filter(nullptr);
+				}
 			});
 		return true;
 	}

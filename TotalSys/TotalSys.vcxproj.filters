@@ -255,5 +255,26 @@
     <Image Include="Icons\semaphore.ico">
       <Filter>Resource Files\Icons</Filter>
     </Image>
+    <Image Include="Icons\desktop.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="Icons\event.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="Icons\factory.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="Icons\package.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="Icons\port.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="Icons\directory.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Icons\section.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

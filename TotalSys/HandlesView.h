@@ -20,6 +20,7 @@ public:
 	bool Track(uint32_t pid, PCWSTR type = L"");
 	void BuildTable();
 	void BuildWindow();
+	void BuildToolBar();
 	bool Refresh(uint32_t pid, bool now = false);
 	std::wstring const& GetObjectName(HandleInfoEx* hi) const;
 	std::wstring const& GetObjectType(HandleInfoEx* hi) const;
@@ -43,9 +44,12 @@ private:
 	WinLLX::ProcessHandleTracker<HandleInfoEx> m_Tracker;
 	std::shared_ptr<HandleInfoEx> m_SelectedHandle;
 	SortedFilteredVector<std::shared_ptr<HandleInfoEx>> m_Handles;
+	std::function<bool(std::shared_ptr<HandleInfoEx> const&, size_t)> m_Filter{ nullptr };
 	ImGuiTableSortSpecs* m_Specs{ nullptr };
 	WinLL::ProcessManager<> m_ProcMgr;
 	bool m_Updating{ false };
+	bool m_NamedObjects{ true };
+	bool m_UpdateNow{ false };
 	inline static std::unordered_map<std::wstring, D3D11Image> s_Icons;
 };
 

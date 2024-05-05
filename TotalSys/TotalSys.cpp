@@ -63,6 +63,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 	winifile += L"\\TotalSystem.ini";
 	Globals::Settings().LoadFromFile(winifile.c_str());
 
+	MainWindow mainWindow(hwnd);
+	g_pMainWindow = &mainWindow;
+
 	// Show the window
 	::ShowWindow(hwnd, SW_SHOWDEFAULT);
 	::UpdateWindow(hwnd);
@@ -77,7 +80,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 	auto inifile = FormatHelper::UnicodeToUtf8(winifile.c_str());
 
 	//if(::IsDebuggerPresent())
-	//	::DeleteFileA(inifile.c_str());
+	//	::DeleteFile(winifile.c_str());
 
 	io.IniFilename = inifile.c_str();
 
@@ -103,8 +106,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 	// - Read 'docs/FONTS.md' for more instructions and details.
 	// - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
 	//io.Fonts->AddFontDefault();
-	Globals::SetMonoFont(io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\consola.ttf", 15.0f));
-	Globals::SetVarFont(io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\Arial.ttf", 16.0f));
+	auto fontsdir = FormatHelper::UnicodeToUtf8(FormatHelper::GetFolderPath(FOLDERID_Fonts).c_str());
+	Globals::SetMonoFont(io.Fonts->AddFontFromFileTTF((fontsdir + "\\consola.ttf").c_str(), 15.0f));
+	Globals::SetVarFont(io.Fonts->AddFontFromFileTTF((fontsdir + "\\Arial.ttf").c_str(), 16.0f));
 	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
 	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
 	//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
@@ -116,9 +120,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 	ThreadsView::Init();
 	ModulesView::Init();
 	HandlesView::Init();
-
-	MainWindow mainWindow(hwnd);
-	g_pMainWindow = &mainWindow;
 
 	MainWindow::SetTheme();
 

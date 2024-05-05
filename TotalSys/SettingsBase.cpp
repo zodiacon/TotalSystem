@@ -190,7 +190,8 @@ bool SettingsBase::LoadWindowPosition(HWND hWnd, PCWSTR name) const {
 	if (wp == nullptr)
 		return false;
 
-	::SetWindowPlacement(hWnd, wp);
+	if(wp->showCmd != SW_HIDE)
+		::SetWindowPlacement(hWnd, wp);
 	return true;
 }
 

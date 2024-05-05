@@ -87,3 +87,12 @@ string ObjectHelper::GetObjectDetails(HANDLE h, HandleInfoEx* hi, std::wstring c
 	}
 	return details;
 }
+
+bool ObjectHelper::CloseHandle(HandleInfoEx* hi) {
+	auto hDup = WinLLX::ObjectManager::DupHandle(ULongToHandle(hi->HandleValue), hi->ProcessId, 0, DUPLICATE_CLOSE_SOURCE);
+	if (hDup) {
+		::CloseHandle(hDup);
+		return true;
+	}
+	return false;
+}

@@ -136,6 +136,11 @@ bool MainWindow::SaveSelected() const {
 bool MainWindow::HandleMessage(UINT msg, WPARAM wp, LPARAM lp) {
 	switch (msg) {
 		case WM_SHOWWINDOW:
+			Globals::Settings().LoadWindowPosition(m_hWnd, L"MainWindowPlacement");
+			break;
+
+		case WM_CLOSE:
+			Globals::Settings().SaveWindowPosition(m_hWnd, L"MainWindowPlacement");
 			break;
 	}
 	return false;

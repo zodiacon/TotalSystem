@@ -140,7 +140,6 @@ public:
 	T* GetAddress(PCWSTR name) {
 		auto it = m_settings.find(name);
 		assert(it != m_settings.end());
-		assert(it->second.Size == sizeof(T));
 		return (T*)it->second.Buffer.get();
 	}
 
@@ -148,7 +147,6 @@ public:
 	T const* GetAddress(PCWSTR name) const {
 		auto it = m_settings.find(name);
 		assert(it != m_settings.end());
-		assert(it->second.Size == sizeof(T));
 		return (T const*)it->second.Buffer.get();
 	}
 
@@ -156,7 +154,6 @@ public:
 	T& GetValueRef(PCWSTR name) const {
 		auto it = m_settings.find(name);
 		assert(it != m_settings.end());
-		assert(it->second.Size == sizeof(T));
 		return *(T*)it->second.Buffer.get();
 	}
 

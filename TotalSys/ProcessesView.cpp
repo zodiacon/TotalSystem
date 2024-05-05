@@ -749,6 +749,7 @@ void ProcessesView::BuildLowerPane() {
 				}
 				if (m_HandlesActive = BeginTabItem("Handles", nullptr, ImGuiTabItemFlags_None)) {
 					m_HandlesView.Track(m_SelectedProcess->Id);
+					m_HandlesView.BuildToolBar();
 					m_HandlesView.BuildTable();
 					EndTabItem();
 				}
