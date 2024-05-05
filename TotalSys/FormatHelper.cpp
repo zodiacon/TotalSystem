@@ -6,6 +6,7 @@
 
 using namespace WinLL;
 using namespace WinLLX;
+using namespace std;
 
 std::string FormatHelper::FormatDateTime(int64_t time) {
 	TIME_FIELDS tf;
@@ -127,7 +128,7 @@ std::string FormatHelper::Format(const char* fmt, ...) {
 	return buffer;
 }
 
-std::string FormatHelper::GetFolderPath(GUID const& id) {
+wstring FormatHelper::GetFolderPath(GUID const& id) {
 	auto spMgr = wil::CoCreateInstance<IKnownFolderManager>(CLSID_KnownFolderManager);
 	if (spMgr) {
 		wil::com_ptr<IKnownFolder> spFolder;
@@ -135,13 +136,13 @@ std::string FormatHelper::GetFolderPath(GUID const& id) {
 		if (spFolder) {
 			PWSTR path;
 			if (SUCCEEDED(spFolder->GetPath(KF_FLAG_NO_ALIAS, &path))) {
-				auto result = UnicodeToUtf8(path);
+				wstring result = path;
 				::CoTaskMemFree(path);
 				return result;
 			}
 		}
 	}
-	return "";
+	return L"";
 }
 
 std::string FormatHelper::UnicodeToUtf8(PCWSTR text) {

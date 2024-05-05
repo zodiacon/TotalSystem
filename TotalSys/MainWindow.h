@@ -9,6 +9,9 @@ public:
 	bool IsAlwaysOnTop() const;
 	bool ToggleAlwaysOnTop();
 	bool SaveSelected() const;
+	bool HandleMessage(UINT msg, WPARAM wp, LPARAM lp);
+
+	static void SetTheme();
 
 private:
 	HWND m_hWnd;

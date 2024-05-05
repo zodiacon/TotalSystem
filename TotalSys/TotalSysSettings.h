@@ -1,8 +1,9 @@
 #pragma once
 
 #include "ProcessColor.h"
+#include "SettingsBase.h"
 
-struct TotalSysSettings {
+struct TotalSysSettings : SettingsBase {
 	TotalSysSettings();
 
 	enum ProcessColorIndex {
@@ -17,18 +18,32 @@ struct TotalSysSettings {
 		Suspended,
 	};
 
-	int32_t NewObjectsTime{ 2 };
-	int32_t OldObjectsTime{ 2 };
+	BEGIN_SETTINGS(TotalSysSettings)
+		SETTING(NewObjectsTime, 2, SettingType::Int32);
+		SETTING(OldObjectsTime, 2, SettingType::Int32);
+		SETTING(MainWindowPlacement, WINDOWPLACEMENT{}, SettingType::Binary);
+		SETTING(AlwaysOnTop, 0, SettingType::Bool);
+		SETTING(DarkMode, 1, SettingType::Bool);
+		SETTING(ThemeAsSystem, 0, SettingType::Bool);
+		SETTING(HexIds, 0, SettingType::Bool);
+		SETTING(RelocatedColor, s_RelocatedColor, SettingType::Binary);
+	END_SETTINGS;
+
+	DEF_SETTING(AlwaysOnTop, bool);
+	DEF_SETTING(NewObjectsTime, int);
+	DEF_SETTING(OldObjectsTime, int);
+	DEF_SETTING(DarkMode, bool);
+	DEF_SETTING(ThemeAsSystem, bool);
+	DEF_SETTING(HexIds, bool);
 
 	std::vector<ProcessColor>& GetProcessColors();
 	ImVec4 GetRelocatedColor() const;
 
-	bool DarkMode{ true };
-	bool ThemeAsSystem{ false };
-	bool HexIds{ false };
-
 private:
 	std::vector<ProcessColor> m_ProcessColors[2];
-	ImVec4 m_RelocatedColor[2];
+	inline static ImVec4 s_RelocatedColor[2]{
+		ImVec4(.3f, .3f, 0, .8f),
+		ImVec4(.8f, .8f, 0, .8f),
+	};
 };
 

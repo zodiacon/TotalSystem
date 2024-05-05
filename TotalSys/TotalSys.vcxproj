@@ -241,6 +241,7 @@
     <ClInclude Include="Globals.h" />
     <ClInclude Include="HandlesView.h" />
     <ClInclude Include="IconManager.h" />
+    <ClInclude Include="IniFile.h" />
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="ModulesView.h" />
     <ClInclude Include="ObjectHelper.h" />
@@ -250,6 +251,7 @@
     <ClInclude Include="ProcessHelper.h" />
     <ClInclude Include="ProcessInfoEx.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="SettingsBase.h" />
     <ClInclude Include="SortedFilteredVector.h" />
     <ClInclude Include="TotalSysSettings.h" />
     <ClInclude Include="SortHelper.h" />
@@ -265,6 +267,7 @@
     <ClCompile Include="Globals.cpp" />
     <ClCompile Include="HandlesView.cpp" />
     <ClCompile Include="IconManager.cpp" />
+    <ClCompile Include="IniFile.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="ModulesView.cpp" />
     <ClCompile Include="ObjectHelper.cpp" />
@@ -280,6 +283,7 @@
     <ClCompile Include="ProcessesView.cpp" />
     <ClCompile Include="ProcessHelper.cpp" />
     <ClCompile Include="ProcessInfoEx.cpp" />
+    <ClCompile Include="SettingsBase.cpp" />
     <ClCompile Include="SortedFilteredVector.cpp" />
     <ClCompile Include="TotalSys.cpp" />
     <ClCompile Include="TotalSysSettings.cpp" />

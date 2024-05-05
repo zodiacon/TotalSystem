@@ -8,6 +8,7 @@
 
 using namespace ImGui;
 using namespace WinLL;
+using namespace std;
 
 MainWindow::MainWindow(HWND hWnd) : m_hWnd(hWnd) {
 	Globals::SetMainWindow(this);
@@ -61,15 +62,18 @@ void MainWindow::BuildWindow() {
 				ToggleAlwaysOnTop();
 			}
 			auto& settings = Globals::Settings();
+			if (MenuItem("Hex IDs", nullptr, settings.HexIds())) {
+				settings.HexIds(!settings.HexIds());
+			}
 			if (BeginMenu("Theme")) {
-				if (MenuItem("Dark", nullptr, Globals::IsDarkMode() && !settings.ThemeAsSystem)) {
+				if (MenuItem("Dark", nullptr, Globals::IsDarkMode() && !settings.ThemeAsSystem())) {
 					Globals::SetDarkMode(true);
 				}
-				if (MenuItem("Light", nullptr, !Globals::IsDarkMode() && !settings.ThemeAsSystem)) {
+				if (MenuItem("Light", nullptr, !Globals::IsDarkMode() && !settings.ThemeAsSystem())) {
 					Globals::SetDarkMode(false);
 				}
 				Separator();
-				if (MenuItem("As System", nullptr, settings.ThemeAsSystem)) {
+				if (MenuItem("As System", nullptr, settings.ThemeAsSystem())) {
 					RegistryKey key;
 					if (ERROR_SUCCESS == key.Open(HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Themes\Personalize)")) {
 						DWORD value;
@@ -81,8 +85,8 @@ void MainWindow::BuildWindow() {
 				ImGui::EndMenu();
 			}
 			if (BeginMenu("Highlight Duration")) {
-				SliderInt("New Objects", &settings.NewObjectsTime, 1, 9, "%d Seconds");
-				SliderInt("Old Objects", &settings.OldObjectsTime, 1, 9, "%d Seconds");
+				SliderInt("New Objects", settings.NewObjectsTimeAddress(), 1, 9, "%d Seconds");
+				SliderInt("Old Objects", settings.OldObjectsTimeAddress(), 1, 9, "%d Seconds");
 				ImGui::EndMenu();
 			}
 			auto replaced = SecurityHelper::IsExeReplaced(L"taskmgr.exe");
@@ -120,11 +124,36 @@ bool MainWindow::IsAlwaysOnTop() const {
 bool MainWindow::ToggleAlwaysOnTop() {
 	auto onTop = !IsAlwaysOnTop();
 	::SetWindowPos(m_hWnd, onTop ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+	Globals::Settings().AlwaysOnTop(onTop);
+
 	return onTop;
 }
 
 bool MainWindow::SaveSelected() const {
 	return m_DoSave;
+}
+
+bool MainWindow::HandleMessage(UINT msg, WPARAM wp, LPARAM lp) {
+	switch (msg) {
+		case WM_SHOWWINDOW:
+			break;
+	}
+	return false;
+}
+
+void MainWindow::SetTheme() {
+	if (Globals::Settings().ThemeAsSystem()) {
+		RegistryKey key;
+		if (ERROR_SUCCESS == key.Open(HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Themes\Personalize)")) {
+			DWORD value;
+			if (ERROR_SUCCESS == key.QueryDWORDValue(L"AppsUseLightTheme", value)) {
+				Globals::SetAsSystem(value == 0);
+			}
+		}
+	}
+	else {
+		Globals::SetDarkMode(Globals::IsDarkMode());
+	}
 }
 
 

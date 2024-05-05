@@ -15,7 +15,7 @@ struct FormatHelper abstract final {
 	static PCSTR IoPriorityToString(WinLL::IoPriority io);
 	static PCSTR PriorityClassToString(WinLL::PriorityClass pc);
 	static std::string Format(const char* fmt, ...);
-	static std::string GetFolderPath(GUID const& id);
+	static std::wstring GetFolderPath(GUID const& id);
 	static std::string UnicodeToUtf8(PCWSTR text);
 	static std::string DllCharacteristicsToString(uint16_t dc);
 	static std::string HandleAttributesToString(ULONG attributes);

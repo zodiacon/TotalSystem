@@ -67,12 +67,12 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 			if (m_Process && m_Process->Id == 0)
 				Text(" CPU %4u", t->Id);
 			else
-				Text(Globals::Settings().HexIds ? "0x%08X" : "%8u", t->Id);
+				Text(Globals::Settings().HexIds() ? " 0x%08X" : " %8u", t->Id);
 			PopFont();
 			}, 0, 100 },
 		{ "PID", [&](auto& t) {
 			PushFont(Globals::MonoFont());
-			Text(Globals::Settings().HexIds ? "0x%08X" : "%8u", t->ProcessId);
+			Text(Globals::Settings().HexIds() ? " 0x%08X" : " %8u", t->ProcessId);
 			PopFont();
 			}, pid == -1 ? 0 : ImGuiTableColumnFlags_DefaultHide },
 		{ "Process Name", [&](auto& t) {
@@ -157,21 +157,21 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 		{ "TEB", [](auto& t) {
 			if (t->TebBase) {
 				PushFont(Globals::MonoFont());
-				Text("0x%p", t->TebBase);
+				Text(" 0x%p ", t->TebBase);
 				PopFont();
 			}
 			}, ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_NoResize },
 		{ "Stack Base", [](auto& t) {
 			if (t->StackBase) {
 				PushFont(Globals::MonoFont());
-				Text("0x%p", t->StackBase);
+				Text(" 0x%p ", t->StackBase);
 				PopFont();
 			}
 			}, ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_NoResize },
 		{ "Stack Limit", [](auto& t) {
 			if (t->StackLimit) {
 				PushFont(Globals::MonoFont());
-				Text("0x%p", t->StackLimit);
+				Text(" 0x%p ", t->StackLimit);
 				PopFont();
 			}
 			}, ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_NoResize, 120 },
@@ -179,18 +179,18 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 			auto count = t->GetSuspendCount();
 			if (count) {
 				PushFont(Globals::MonoFont());
-				Text("%4d", count);
+				Text("%4d ", count);
 				PopFont();
 			}
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Service", [](auto& t) {
 			PushFont(Globals::VarFont());
-			Text("%ws", t->GetServiceName().c_str());
+			Text(" %ws ", t->GetServiceName().c_str());
 			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Ctx Switch", [](auto& t) {
 			PushFont(Globals::MonoFont());
-			Text("%12ws", FormatHelper::FormatNumber(t->ContextSwitches).c_str());
+			Text("%12ws ", FormatHelper::FormatNumber(t->ContextSwitches).c_str());
 			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide, 100 },
 		{ "Mem Pri", [](auto& t) {
@@ -203,7 +203,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "I/O Pri", [](auto& t) {
 			PushFont(Globals::VarFont());
-			Text("%s", FormatHelper::IoPriorityToString(t->GetIoPriority()));
+			Text(" %s ", FormatHelper::IoPriorityToString(t->GetIoPriority()));
 			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
 		{ "Wait Time", [](auto& t) {
@@ -211,7 +211,6 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 			TextUnformatted(FormatHelper::FormatTimeSpan(t->WaitTime).c_str());
 			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
-
 	};
 
 	PushFont(Globals::VarFont());
@@ -334,6 +333,9 @@ bool ThreadsView::RefreshProcess(std::shared_ptr<ProcessInfoEx>& p, bool now) {
 		for (auto& t : m_Process->GetThreads())
 			m_Threads.push_back(static_pointer_cast<ThreadInfoEx>(t));
 
+		if (m_Specs)
+			m_Specs->SpecsDirty = true;
+
 		m_SelectedThread = nullptr;
 	}
 	else {
@@ -357,12 +359,12 @@ void ThreadsView::CommonRefresh() {
 	auto& pm = *m_ActualProcMgr;
 
 	for (auto t : pm.GetNewThreads()) {
-		t->New(Globals::Settings().NewObjectsTime * 1000);
+		t->New(Globals::Settings().NewObjectsTime() * 1000);
 		if (m_AllThreads || t->ProcessId == m_Process->Id)
 			m_Threads.push_back(t);
 	}
 	for (auto t : pm.GetTerminatedThreads()) {
-		t->Term(Globals::Settings().OldObjectsTime * 1000);
+		t->Term(Globals::Settings().OldObjectsTime() * 1000);
 	}
 	if (m_Specs)
 		m_Specs->SpecsDirty = true;

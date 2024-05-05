@@ -75,11 +75,11 @@ void HandlesView::BuildTable() {
 			PopFont();
 		}, 0, 400.0f },
 
-		{ "Process Id", [](auto& h) {
+		{ "PID", [](auto& h) {
 			PushFont(Globals::MonoFont());
-			Text(Globals::Settings().HexIds ? "0x%08" : "%8u", h->ProcessId);
+			Text(Globals::Settings().HexIds() ? "0x%08" : "%8u", h->ProcessId);
 			PopFont();
-		}, m_Tracker.GetPid() <= 0 ? 0 : ImGuiTableColumnFlags_DefaultHide },
+		}, m_Tracker.GetPid() <= 0 ? 0 : ImGuiTableColumnFlags_DefaultHide, 80 },
 
 		{ "Process Name", [&](auto& h) {
 			PushFont(Globals::VarFont());
@@ -89,13 +89,13 @@ void HandlesView::BuildTable() {
 
 		{ "Access", [](auto& h) {
 			PushFont(Globals::MonoFont());
-			Text("0x%08X", h->GrantedAccess);
+			Text(" 0x%08X ", h->GrantedAccess);
 			PopFont();
 		}, ImGuiTableColumnFlags_NoResize, },
 
 		{ "Address", [](auto& h) {
 			PushFont(Globals::MonoFont());
-			Text("0x%p", h->Object);
+			Text(" 0x%p ", h->Object);
 			PopFont();
 		}, ImGuiTableColumnFlags_NoResize },
 
@@ -109,7 +109,7 @@ void HandlesView::BuildTable() {
 			PushFont(Globals::VarFont());
 			TextUnformatted(AccessMaskDecoder::DecodeAccessMask(GetObjectType(h.get()), h->GrantedAccess).c_str());
 			PopFont();
-		}, 0, 200 },
+		}, 0, 240 },
 
 		{ "Details", [&](auto& h) {
 			auto hDup = WinLLX::ObjectManager::DupHandle(ULongToHandle(h->HandleValue), h->ProcessId);
@@ -214,15 +214,17 @@ bool HandlesView::Refresh(uint32_t pid, bool now) {
 				auto empty = m_Handles.empty();
 				if (empty) {
 					m_Handles = m_Tracker.GetNewHandles();
+					if (m_Specs)
+						m_Specs->SpecsDirty = true;
 				}
 				else {
 					for (auto& hi : m_Tracker.GetNewHandles()) {
 						m_Handles.push_back(hi);
-						hi->New(Globals::Settings().NewObjectsTime * 1000);
+						hi->New(Globals::Settings().NewObjectsTime() * 1000);
 					}
 
 					for (auto& hi : m_Tracker.GetClosedHandles()) {
-						hi->Term(Globals::Settings().OldObjectsTime * 1000);
+						hi->Term(Globals::Settings().OldObjectsTime() * 1000);
 					}
 					if (m_Specs)
 						m_Specs->SpecsDirty = true;

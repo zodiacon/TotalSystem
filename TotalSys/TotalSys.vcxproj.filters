@@ -93,6 +93,12 @@
     <ClInclude Include="ObjectHelper.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="SettingsBase.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="IniFile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TotalSys.cpp">
@@ -160,6 +166,12 @@
     </ClCompile>
     <ClCompile Include="ObjectHelper.cpp">
       <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="SettingsBase.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="IniFile.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

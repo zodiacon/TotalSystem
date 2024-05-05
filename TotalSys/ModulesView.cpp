@@ -150,15 +150,17 @@ bool ModulesView::Refresh(uint32_t pid, bool now) {
 
 		if (empty) {
 			m_Modules = m_Tracker.GetModules();
+			if (m_Specs)
+				m_Specs->SpecsDirty = true;
 		}
 		else {
 			for (auto& mi : m_Tracker.GetNewModules()) {
 				m_Modules.push_back(mi);
-				mi->New(Globals::Settings().NewObjectsTime * 1000);
+				mi->New(Globals::Settings().NewObjectsTime() * 1000);
 			}
 
 			for (auto& mi : m_Tracker.GetUnloadedModules()) {
-				mi->Term(Globals::Settings().OldObjectsTime * 1000);
+				mi->Term(Globals::Settings().OldObjectsTime() * 1000);
 			}
 		}
 

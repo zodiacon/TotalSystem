@@ -10,6 +10,7 @@
 #include "Globals.h"
 #include "FormatHelper.h"
 #include <Knownfolders.h>
+#include "TotalSysSettings.h"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "ntdll.lib")
@@ -20,6 +21,8 @@ static ID3D11DeviceContext* g_pd3dDeviceContext = nullptr;
 static IDXGISwapChain* g_pSwapChain = nullptr;
 static UINT                     g_ResizeWidth = 0, g_ResizeHeight = 0;
 static ID3D11RenderTargetView* g_mainRenderTargetView = nullptr;
+HWND g_hMainWnd;
+MainWindow* g_pMainWindow;
 
 // Forward declarations of helper functions
 bool CreateDeviceD3D(HWND hWnd);
@@ -32,6 +35,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lpCmdLine, _In_ int) {
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
+	::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
 	if (WinLL::SecurityHelper::IsRunningElevated())
 		WinLL::SecurityHelper::EnablePrivilege(SE_DEBUG_NAME);
 
@@ -42,7 +47,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 	ImGui_ImplWin32_EnableDpiAwareness();
 	WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, hInstance, nullptr, nullptr, nullptr, nullptr, L"Total System", nullptr };
 	::RegisterClassExW(&wc);
-	HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Total System", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, wc.hInstance, nullptr);
+	HWND hwnd = g_hMainWnd = ::CreateWindowW(wc.lpszClassName, L"Total System", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, wc.hInstance, nullptr);
 	SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadImage(hInstance, MAKEINTRESOURCE(IDI_PROCMGR), IMAGE_ICON, 32, 32, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE));
 	SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadImage(hInstance, MAKEINTRESOURCE(IDI_PROCMGR), IMAGE_ICON, 16, 16, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE));
 
@@ -53,6 +58,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 		return 1;
 	}
 
+	auto winifile = FormatHelper::GetFolderPath(FOLDERID_Documents) + L"\\ScorpioSoftware";
+	::CreateDirectory(winifile.c_str(), nullptr);
+	winifile += L"\\TotalSystem.ini";
+	Globals::Settings().LoadFromFile(winifile.c_str());
+
 	// Show the window
 	::ShowWindow(hwnd, SW_SHOWDEFAULT);
 	::UpdateWindow(hwnd);
@@ -62,14 +72,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 	ImGui::CreateContext();
 	auto ctx = ImGui::GetCurrentContext();
 	
-	// TODO: custom save/load
-
 	auto& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
-	auto inifile = FormatHelper::GetFolderPath(FOLDERID_Documents) + "\\TotalSystem.ini";
+	auto inifile = FormatHelper::UnicodeToUtf8(winifile.c_str());
 
-	if(::IsDebuggerPresent())
-		::DeleteFileA(inifile.c_str());
+	//if(::IsDebuggerPresent())
+	//	::DeleteFileA(inifile.c_str());
 
 	io.IniFilename = inifile.c_str();
 
@@ -110,6 +118,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 	HandlesView::Init();
 
 	MainWindow mainWindow(hwnd);
+	g_pMainWindow = &mainWindow;
+
+	MainWindow::SetTheme();
 
 	// Main loop
 	bool done = false;
@@ -160,6 +171,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
+
+	Globals::Settings().SaveToFile(winifile.c_str());
 
 	CleanupDeviceD3D();
 	::DestroyWindow(hwnd);
@@ -233,7 +246,10 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
 		return true;
 
-	switch (msg) {
+	if (hWnd == g_hMainWnd && g_pMainWindow->HandleMessage(msg, wParam, lParam))
+		return 0;
+
+	switch (msg) {	
 		case WM_SIZE:
 			if (wParam == SIZE_MINIMIZED)
 				return 0;

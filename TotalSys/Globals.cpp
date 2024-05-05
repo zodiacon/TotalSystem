@@ -19,15 +19,16 @@ ImFont* Globals::VarFont() {
 }
 
 bool Globals::IsDarkMode() {
-	return Settings().DarkMode;
+	return Settings().DarkMode();
 }
 
 void Globals::SetDarkMode(bool dark) {
-	if (Settings().DarkMode = dark)
+	Settings().DarkMode(dark);
+	if(dark)
 		ImGui::StyleColorsDark();
 	else
 		ImGui::StyleColorsLight();
-	Settings().ThemeAsSystem = false;
+	Settings().ThemeAsSystem(false);
 
 }
 
@@ -51,6 +52,6 @@ void Globals::SetMainWindow(MainWindow* win) {
 }
 
 void Globals::SetAsSystem(bool dark) {
-	Settings().DarkMode = dark;
-	Settings().ThemeAsSystem = true;
+	Settings().DarkMode(dark);
+	Settings().ThemeAsSystem(true);
 }

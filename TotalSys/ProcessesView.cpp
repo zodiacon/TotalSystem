@@ -104,11 +104,11 @@ bool ProcessesView::Refresh(bool now) {
 		else {
 			for (auto& pi : pm.GetNewProcesses()) {
 				m_Processes.push_back(pi);
-				pi->New(Globals::Settings().NewObjectsTime * 1000);
+				pi->New(Globals::Settings().NewObjectsTime() * 1000);
 			}
 
 			for (auto& pi : pm.GetTerminatedProcesses()) {
-				pi->Term(Globals::Settings().OldObjectsTime * 1000);
+				pi->Term(Globals::Settings().OldObjectsTime() * 1000);
 			}
 		}
 
@@ -258,7 +258,7 @@ void ProcessesView::BuildTable() {
 			}, ImGuiTableColumnFlags_NoHide | ImGuiTableColumnFlags_NoReorder },
 		{ "PID", [](auto& p) {
 			PushFont(Globals::MonoFont());
-			Text(Globals::Settings().HexIds ? "0x%08X" : "%8u", p->Id);
+			Text(Globals::Settings().HexIds() ? " 0x%08X" : " %8u", p->Id);
 			PopFont();
 			}, 0, 130.0f },
 		{ "User Name", [](auto p) {

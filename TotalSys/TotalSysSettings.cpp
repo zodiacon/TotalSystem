@@ -7,6 +7,8 @@
 using namespace ImGui;
 
 TotalSysSettings::TotalSysSettings() {
+	InitSettings();
+
 	auto& black = StandardColors::Black;
 	auto& white = StandardColors::White;
 
@@ -32,16 +34,12 @@ TotalSysSettings::TotalSysSettings() {
 		ProcessColor("In Job", FormatHelper::ColorWithAlpha(StandardColors::Brown, .7f), black, false),
 		ProcessColor("Suspended", FormatHelper::ColorWithAlpha(StandardColors::Gray, .8f), black, true),
 	};
-
-	m_RelocatedColor[0] = ImVec4(.3f, .3f, 0, .8f);
-	m_RelocatedColor[1] = ImVec4(.8f, .8f, 0, .8f);
-
 }
 
 std::vector<ProcessColor>& TotalSysSettings::GetProcessColors() {
-	return m_ProcessColors[DarkMode ? 0 : 1];
+	return m_ProcessColors[DarkMode() ? 0 : 1];
 }
 
 ImVec4 TotalSysSettings::GetRelocatedColor() const {
-	return m_RelocatedColor[DarkMode ? 0 : 1];
+	return GetAddress<ImVec4>(L"RelocatedColor")[DarkMode() ? 0 : 1];
 }
