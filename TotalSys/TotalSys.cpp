@@ -63,115 +63,117 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 	winifile += L"\\TotalSystem.ini";
 	Globals::Settings().LoadFromFile(winifile.c_str());
 
-	MainWindow mainWindow(hwnd);
-	g_pMainWindow = &mainWindow;
+	{
+		MainWindow mainWindow(hwnd);
+		g_pMainWindow = &mainWindow;
 
-	// Show the window
-	::ShowWindow(hwnd, SW_SHOWDEFAULT);
-	::UpdateWindow(hwnd);
+		// Show the window
+		::ShowWindow(hwnd, SW_SHOWDEFAULT);
+		::UpdateWindow(hwnd);
 
-	// Setup Dear ImGui context
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	auto ctx = ImGui::GetCurrentContext();
-	
-	auto& io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
-	auto inifile = FormatHelper::UnicodeToUtf8(winifile.c_str());
+		// Setup Dear ImGui context
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		auto ctx = ImGui::GetCurrentContext();
 
-	//if(::IsDebuggerPresent())
-	//	::DeleteFile(winifile.c_str());
+		auto& io = ImGui::GetIO();
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
+		auto inifile = FormatHelper::UnicodeToUtf8(winifile.c_str());
 
-	io.IniFilename = inifile.c_str();
+		//if(::IsDebuggerPresent())
+		//	::DeleteFile(winifile.c_str());
 
-	// Setup Dear ImGui style
-	ImGui::StyleColorsDark();
+		io.IniFilename = inifile.c_str();
 
-	ImGuiStyle& style = ImGui::GetStyle();
-	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-		style.WindowRounding = 0.0f;
-		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-	}
+		// Setup Dear ImGui style
+		ImGui::StyleColorsDark();
 
-	// Setup Platform/Renderer backends
-	ImGui_ImplWin32_Init(hwnd);
-	ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
-
-	// Load Fonts
-	// - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-	// - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-	// - If the file cannot be loaded, the function will return a nullptr. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-	// - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-	// - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
-	// - Read 'docs/FONTS.md' for more instructions and details.
-	// - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-	//io.Fonts->AddFontDefault();
-	auto fontsdir = FormatHelper::UnicodeToUtf8(FormatHelper::GetFolderPath(FOLDERID_Fonts).c_str());
-	Globals::SetMonoFont(io.Fonts->AddFontFromFileTTF((fontsdir + "\\consola.ttf").c_str(), 15.0f));
-	Globals::SetVarFont(io.Fonts->AddFontFromFileTTF((fontsdir + "\\Arial.ttf").c_str(), 16.0f));
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-	//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
-	//IM_ASSERT(font != nullptr);
-
-	ImVec4 clear_color = ImVec4(0.1f, 0.12f, 0.11f, 1.00f);
-	const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
-
-	ThreadsView::Init();
-	ModulesView::Init();
-	HandlesView::Init();
-
-	MainWindow::SetTheme();
-
-	// Main loop
-	bool done = false;
-	while (!done) {
-		// Poll and handle messages (inputs, window resize, etc.)
-		// See the WndProc() function below for our to dispatch events to the Win32 backend.
-		MSG msg;
-		while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
-			::TranslateMessage(&msg);
-			::DispatchMessage(&msg);
-			if (msg.message == WM_QUIT)
-				done = true;
-		}
-		if (done)
-			break;
-
-		// Handle window resize (we don't resize directly in the WM_SIZE handler)
-		if (g_ResizeWidth != 0 && g_ResizeHeight != 0) {
-			CleanupRenderTarget();
-			g_pSwapChain->ResizeBuffers(0, g_ResizeWidth, g_ResizeHeight, DXGI_FORMAT_UNKNOWN, 0);
-			g_ResizeWidth = g_ResizeHeight = 0;
-			CreateRenderTarget();
-		}
-
-		// Start the Dear ImGui frame
-		ImGui_ImplDX11_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
-
-		mainWindow.BuildWindow();
-
-		// Rendering
-		ImGui::Render();
-		g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
-		g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
+		ImGuiStyle& style = ImGui::GetStyle();
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
+			style.WindowRounding = 0.0f;
+			style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 		}
 
-		g_pSwapChain->Present(1, 0); // Present with vsync
-		//g_pSwapChain->Present(0, 0); // Present without vsync
-	}
+		// Setup Platform/Renderer backends
+		ImGui_ImplWin32_Init(hwnd);
+		ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
 
-	// Cleanup
-	ImGui_ImplDX11_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
+		// Load Fonts
+		// - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
+		// - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
+		// - If the file cannot be loaded, the function will return a nullptr. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
+		// - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
+		// - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
+		// - Read 'docs/FONTS.md' for more instructions and details.
+		// - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
+		//io.Fonts->AddFontDefault();
+		auto fontsdir = FormatHelper::UnicodeToUtf8(FormatHelper::GetFolderPath(FOLDERID_Fonts).c_str());
+		Globals::SetMonoFont(io.Fonts->AddFontFromFileTTF((fontsdir + "\\consola.ttf").c_str(), 15.0f));
+		Globals::SetVarFont(io.Fonts->AddFontFromFileTTF((fontsdir + "\\Arial.ttf").c_str(), 16.0f));
+		//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
+		//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
+		//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
+		//IM_ASSERT(font != nullptr);
+
+		ImVec4 clear_color = ImVec4(0.1f, 0.12f, 0.11f, 1.00f);
+		const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
+
+		ThreadsView::Init();
+		ModulesView::Init();
+		HandlesView::Init();
+
+		MainWindow::SetTheme();
+
+		// Main loop
+		bool done = false;
+		while (!done) {
+			// Poll and handle messages (inputs, window resize, etc.)
+			// See the WndProc() function below for our to dispatch events to the Win32 backend.
+			MSG msg;
+			while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
+				::TranslateMessage(&msg);
+				::DispatchMessage(&msg);
+				if (msg.message == WM_QUIT)
+					done = true;
+			}
+			if (done)
+				break;
+
+			// Handle window resize (we don't resize directly in the WM_SIZE handler)
+			if (g_ResizeWidth != 0 && g_ResizeHeight != 0) {
+				CleanupRenderTarget();
+				g_pSwapChain->ResizeBuffers(0, g_ResizeWidth, g_ResizeHeight, DXGI_FORMAT_UNKNOWN, 0);
+				g_ResizeWidth = g_ResizeHeight = 0;
+				CreateRenderTarget();
+			}
+
+			// Start the Dear ImGui frame
+			ImGui_ImplDX11_NewFrame();
+			ImGui_ImplWin32_NewFrame();
+			ImGui::NewFrame();
+
+			mainWindow.BuildWindow();
+
+			// Rendering
+			ImGui::Render();
+			g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
+			g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
+			ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+				ImGui::UpdatePlatformWindows();
+				ImGui::RenderPlatformWindowsDefault();
+			}
+
+			g_pSwapChain->Present(1, 0); // Present with vsync
+			//g_pSwapChain->Present(0, 0); // Present without vsync
+		}
+
+		// Cleanup
+		ImGui_ImplDX11_Shutdown();
+		ImGui_ImplWin32_Shutdown();
+		ImGui::DestroyContext();
+	}
 
 	Globals::Settings().SaveToFile(winifile.c_str());
 

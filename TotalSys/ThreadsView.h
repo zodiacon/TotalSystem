@@ -12,6 +12,8 @@ class ThreadInfoEx;
 class ThreadsView : public ViewBase {
 public:
 	explicit ThreadsView(DefaultProcessManager* extarnal = nullptr);
+	~ThreadsView();
+
 	void BuildThreadMenu();
 	void BuildWindow();
 	void BuildTable(std::shared_ptr<ProcessInfoEx> p);

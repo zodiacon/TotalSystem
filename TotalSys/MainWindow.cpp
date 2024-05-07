@@ -134,9 +134,15 @@ bool MainWindow::SaveSelected() const {
 }
 
 bool MainWindow::HandleMessage(UINT msg, WPARAM wp, LPARAM lp) {
+	static bool done = false;
 	switch (msg) {
 		case WM_SHOWWINDOW:
-			Globals::Settings().LoadWindowPosition(m_hWnd, L"MainWindowPlacement");
+			if (!done) {
+				done = true;
+				Globals::Settings().LoadWindowPosition(m_hWnd, L"MainWindowPlacement");
+				if (Globals::Settings().AlwaysOnTop())
+					ToggleAlwaysOnTop();
+			}
 			break;
 
 		case WM_CLOSE:

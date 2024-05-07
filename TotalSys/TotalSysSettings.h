@@ -27,6 +27,9 @@ struct TotalSysSettings : SettingsBase {
 		SETTING(ThemeAsSystem, 0, SettingType::Bool);
 		SETTING(HexIds, 0, SettingType::Bool);
 		SETTING(RelocatedColor, s_RelocatedColor, SettingType::Binary);
+		SETTING(ShowLowerPane, 0, SettingType::Bool);
+		SETTING(ThreadsWindowOpen, 0, SettingType::Bool);
+		SETTING(HandlesWindowOpen, 0, SettingType::Bool);
 	END_SETTINGS;
 
 	DEF_SETTING(AlwaysOnTop, bool);
@@ -35,6 +38,9 @@ struct TotalSysSettings : SettingsBase {
 	DEF_SETTING(DarkMode, bool);
 	DEF_SETTING(ThemeAsSystem, bool);
 	DEF_SETTING(HexIds, bool);
+	DEF_SETTING(ShowLowerPane, bool);
+	DEF_SETTING(ThreadsWindowOpen, bool);
+	DEF_SETTING(HandlesWindowOpen, bool);
 
 	std::vector<ProcessColor>& GetProcessColors();
 	ImVec4 GetRelocatedColor() const;

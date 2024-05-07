@@ -7,14 +7,11 @@
 #include <WinLowLevel.h>
 #include <StandardColors.h>
 #include <ImGuiExt.h>
-#include <Shlwapi.h>
 #include "FormatHelper.h"
-#include "Resource.h"
 #include <ShellApi.h>
 #include "TotalSysSettings.h"
 #include "ProcessHelper.h"
 #include "MainWindow.h"
-
 
 #pragma comment(lib, "Shlwapi.lib")
 #pragma comment(lib, "imagehlp.lib")
@@ -23,16 +20,12 @@ using namespace ImGui;
 using namespace std;
 using namespace WinLL;
 
-extern ID3D11Device* g_pd3dDevice;
-extern ID3D11DeviceContext* g_pd3dDeviceContext;
-
 ProcessesView::ProcessesView() : m_ThreadsView(&m_ProcMgr) {
 	Open(true);
 }
 
 void ProcessesView::BuildWindow() {
 	if (IsOpen()) {
-		thread_local static char buffer[128];
 		PushFont(Globals::VarFont());
 		auto view = GetMainViewport();
 		SetNextWindowSize(view->WorkSize, ImGuiCond_FirstUseEver);
@@ -58,22 +51,23 @@ void ProcessesView::BuildWindow() {
 
 
 void ProcessesView::ShowLowerPane(bool show) {
-	m_ShowLowerPane = show;
+	Globals::Settings().ShowLowerPane(show);
 	m_DoSize = true;
 }
 
 bool ProcessesView::ToggleLowerPane() {
-	m_ShowLowerPane = !m_ShowLowerPane;
+	Globals::Settings().ShowLowerPane(!Globals::Settings().ShowLowerPane());
 	m_DoSize = true;
-	return m_ShowLowerPane;
+	return Globals::Settings().ShowLowerPane();
 }
 
 bool ProcessesView::Refresh(bool now) {
-	if (NeedUpdate() || now) {
+	if (NeedUpdate() || now || m_UpdateNow) {
+		m_UpdateNow = false;
 		auto& pm = m_ProcMgr;
 		auto empty = m_Processes.empty();
 		pm.Update(true);
-		if (m_ShowLowerPane && m_SelectedProcess) {
+		if (Globals::Settings().ShowLowerPane() && m_SelectedProcess) {
 			if (m_ThreadsActive)
 				m_ThreadsView.RefreshProcess(m_SelectedProcess, true);
 			else if (m_ModulesActive)
@@ -100,6 +94,8 @@ bool ProcessesView::Refresh(bool now) {
 
 		if (empty) {
 			m_Processes = pm.GetProcesses();
+			if (m_Specs)
+				m_Specs->SpecsDirty = true;
 		}
 		else {
 			for (auto& pi : pm.GetNewProcesses()) {
@@ -229,6 +225,7 @@ void ProcessesView::BuildTable() {
 			sprintf_s(name, "%ws##%u %u", p->GetImageName().c_str(), p->Id, p->ParentId);
 			if (Selectable(name, m_SelectedProcess == p, ImGuiSelectableFlags_SpanAllColumns)) {
 				m_SelectedProcess = p;
+				m_UpdateNow = true;
 			}
 			PopFont();
 
@@ -493,10 +490,10 @@ void ProcessesView::BuildTable() {
 	};
 
 	auto size = GetWindowSize();
-	if (!m_ShowLowerPane)
+	if (!Globals::Settings().ShowLowerPane())
 		m_DoSize = false;
 
-	if (BeginChild("upper", ImVec2(), m_ShowLowerPane ? ImGuiChildFlags_ResizeY : 0, ImGuiWindowFlags_NoScrollbar)) {
+	if (BeginChild("upper", ImVec2(), Globals::Settings().ShowLowerPane() ? ImGuiChildFlags_ResizeY : 0, ImGuiWindowFlags_NoScrollbar)) {
 		if (m_DoSize) {
 			SetWindowSize(ImVec2(0, size.y / 2), ImGuiCond_Always);
 			m_DoSize = false;
@@ -563,6 +560,7 @@ void ProcessesView::BuildTable() {
 					if (!pressed && j > m_SelectedIndex && IsKeyChordPressed((ImGuiKey)(ImGuiKey_A + toupper(p->GetImageName()[0]) - 'A'))) {
 						m_SelectedIndex = j;
 						m_SelectedProcess = p;
+						m_UpdateNow = true;
 						SetKeyboardFocusHere();
 						pressed = true;
 						OutputDebugString(format(L"Selected index: {}, process: {}\n", m_SelectedIndex, m_SelectedProcess->GetImageName()).c_str());
@@ -614,7 +612,7 @@ void ProcessesView::BuildViewMenu() {
 
 	PushFont(Globals::VarFont());
 	if (BeginMenu("View")) {
-		if (MenuItem("Show Lower Pane", "Ctrl+L", m_ShowLowerPane)) {
+		if (MenuItem("Show Lower Pane", "Ctrl+L", Globals::Settings().ShowLowerPane())) {
 			ToggleLowerPane();
 		}
 		BuildUpdateIntervalMenu();
@@ -664,11 +662,11 @@ void ProcessesView::BuildProcessMenu(ProcessInfoEx& pi) {
 
 void ProcessesView::BuildToolBar() {
 	PushFont(Globals::VarFont());
-	if (ImageButton("LowerPane", Globals::ImageManager().GetImage(m_ShowLowerPane ? IDI_WINDOW : IDI_SPLIT), ImVec2(16, 16))) {
+	if (ImageButton("LowerPane", Globals::ImageManager().GetImage(Globals::Settings().ShowLowerPane() ? IDI_WINDOW : IDI_SPLIT), ImVec2(16, 16))) {
 		ToggleLowerPane();
 	}
 	if (IsItemHovered())
-		SetTooltip(((m_ShowLowerPane ? "Hide" : "Show") + string(" Lower Pane")).c_str());
+		SetTooltip(((Globals::Settings().ShowLowerPane() ? "Hide" : "Show") + string(" Lower Pane")).c_str());
 	SameLine();
 	if (ImageButton("Pause", Globals::ImageManager().GetImage(IsRunning() ? IDI_PAUSE : IDI_RUNNING), ImVec2(16, 16))) {
 		TogglePause();
@@ -729,7 +727,7 @@ void ProcessesView::BuildToolBar() {
 }
 
 void ProcessesView::BuildLowerPane() {
-	if (m_ShowLowerPane) {
+	if (Globals::Settings().ShowLowerPane()) {
 		if (BeginChild("lowerpane", ImVec2(), ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar)) {
 			if (m_SelectedProcess) {
 				PushFont(Globals::VarFont());

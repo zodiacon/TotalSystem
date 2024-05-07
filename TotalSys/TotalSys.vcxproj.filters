@@ -66,9 +66,6 @@
     <ClInclude Include="ViewBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SortedFilteredVector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ProcessHelper.h">
       <Filter>Helpers</Filter>
     </ClInclude>
@@ -98,6 +95,9 @@
     </ClInclude>
     <ClInclude Include="IniFile.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SortedFilteredVector.h">
+      <Filter>Helpers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -140,9 +140,6 @@
     <ClCompile Include="ViewBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SortedFilteredVector.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ProcessHelper.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
@@ -172,6 +169,9 @@
     </ClCompile>
     <ClCompile Include="IniFile.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SortedFilteredVector.cpp">
+      <Filter>Helpers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -271,10 +271,10 @@
       <Filter>Resource Files\Icons</Filter>
     </Image>
     <Image Include="Icons\directory.ico">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Icons</Filter>
     </Image>
     <Image Include="Icons\section.ico">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Icons</Filter>
     </Image>
   </ItemGroup>
 </Project>

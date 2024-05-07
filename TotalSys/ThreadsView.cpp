@@ -18,7 +18,13 @@ ThreadsView::ThreadsView(DefaultProcessManager* external) : m_ActualProcMgr(exte
 	if (external == nullptr) {
 		m_AllThreads = true;
 		m_ActualProcMgr = &m_ProcMgr;
+		Open(Globals::Settings().ThreadsWindowOpen());
 	}
+}
+
+ThreadsView::~ThreadsView() {
+	if (m_AllThreads)
+		Globals::Settings().ThreadsWindowOpen(IsOpen());
 }
 
 void ThreadsView::BuildWindow() {

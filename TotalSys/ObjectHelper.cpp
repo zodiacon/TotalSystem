@@ -6,7 +6,11 @@
 using namespace std;
 using namespace WinLL;
 
-string ObjectHelper::GetObjectDetails(HANDLE h, HandleInfoEx* hi, std::wstring const& type, ProcessManager<>* pm) {
+string ObjectHelper::GetObjectDetails(HandleInfoEx* hi, std::wstring const& type, ProcessManager<>* pm) {
+	auto h = WinLLX::ObjectManager::DupHandle(ULongToHandle(hi->HandleValue), hi->ProcessId);
+	if (!h)
+		return "";
+
 	string details;
 	if (type == L"Mutant") {
 		MUTANT_BASIC_INFORMATION info;
@@ -75,7 +79,7 @@ string ObjectHelper::GetObjectDetails(HANDLE h, HandleInfoEx* hi, std::wstring c
 		else {
 			sprintf_s(buffer, "PID: %u (%ws)", pid, name.c_str());
 		}
-		return buffer;
+		details = buffer;
 	}
 	else if (type == L"Section") {
 		SECTION_BASIC_INFORMATION bi;
@@ -85,6 +89,7 @@ string ObjectHelper::GetObjectDetails(HANDLE h, HandleInfoEx* hi, std::wstring c
 				bi.AllocationAttributes, FormatHelper::SectionAttributesToString(bi.AllocationAttributes));
 		}
 	}
+	::CloseHandle(h);
 	return details;
 }
 

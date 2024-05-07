@@ -6,7 +6,7 @@
 #include "SortedFilteredVector.h"
 #include <ProcessManager.h>
 #include <d3d11Image.h>
-#include <WinLowLevel.h>
+#include <SimpleMessageBox.h>
 
 struct HandleInfoEx : WinLLX::HandleInfo, TransientObject {
 	std::wstring Type;
@@ -17,6 +17,9 @@ struct HandleInfoEx : WinLLX::HandleInfo, TransientObject {
 class HandlesView : public ViewBase {
 public:
 	static void Init();
+	HandlesView();
+	~HandlesView();
+
 	bool Track(uint32_t pid, PCWSTR type = L"");
 	void BuildTable();
 	void BuildWindow();
@@ -28,6 +31,9 @@ public:
 
 private:
 	void DoSort(int col, bool asc);
+	void PromptCloseHandle(HandleInfoEx* hi);
+	void DoCopy(HandleInfoEx* hi, int c);
+	bool DoContextMenu(HandleInfoEx* hi, int c);
 
 	enum class Column {
 		Handle, Type, Name, PID, ProcessName, Access, Address, Attributes, DecodedAccess, Details,
@@ -47,9 +53,11 @@ private:
 	std::function<bool(std::shared_ptr<HandleInfoEx> const&, size_t)> m_Filter{ nullptr };
 	ImGuiTableSortSpecs* m_Specs{ nullptr };
 	WinLL::ProcessManager<> m_ProcMgr;
-	bool m_Updating{ false };
-	bool m_NamedObjects{ true };
-	bool m_UpdateNow{ false };
+	SimpleMessageBox m_ModalBox;
+	int m_HoveredColumn{ -1 };
+	bool m_Updating: 1{ false }, m_AllHandles: 1{ false };
+	bool m_UpdateNow : 1{ false };
+	bool m_NamedObjects { true };
 	inline static std::unordered_map<std::wstring, D3D11Image> s_Icons;
 };
 

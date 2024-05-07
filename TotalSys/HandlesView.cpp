@@ -39,11 +39,20 @@ void HandlesView::Init() {
 		{ L"TpWorkerFactory", IDI_FACTORY },
 	};
 
-	for(auto& icon : icons)
+	for (auto& icon : icons)
 		s_Icons.insert({ icon.type, D3D11Image::FromIcon(
 			(HICON)::LoadImage(::GetModuleHandle(nullptr), MAKEINTRESOURCE(icon.icon), IMAGE_ICON, 16, 16, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE)) });
 
 
+}
+
+HandlesView::HandlesView() {
+	Open(Globals::Settings().HandlesWindowOpen());
+}
+
+HandlesView::~HandlesView() {
+	if (m_AllHandles)
+		Globals::Settings().HandlesWindowOpen(IsOpen());
 }
 
 bool HandlesView::Track(uint32_t pid, PCWSTR type) {
@@ -55,6 +64,11 @@ bool HandlesView::Track(uint32_t pid, PCWSTR type) {
 }
 
 void HandlesView::BuildTable() {
+	auto result = m_ModalBox.ShowModal();
+	if (result == MessageBoxResult::OK) {
+		ObjectHelper::CloseHandle(m_SelectedHandle.get());
+	}
+
 	static const ColumnInfo columns[]{
 		{ "Handle", [&](auto& h) {
 			PushFont(Globals::MonoFont());
@@ -69,6 +83,7 @@ void HandlesView::BuildTable() {
 				m_SelectedHandle = h;
 			}
 			PopFont();
+
 			}, ImGuiTableColumnFlags_NoResize, },
 
 		{ "Type", [&](auto& h) {
@@ -120,18 +135,14 @@ void HandlesView::BuildTable() {
 		}, 0, 240 },
 
 		{ "Details", [&](auto& h) {
-			auto hDup = WinLLX::ObjectManager::DupHandle(ULongToHandle(h->HandleValue), h->ProcessId);
-			if (hDup) {
-				PushFont(Globals::VarFont());
-				TextUnformatted(ObjectHelper::GetObjectDetails(hDup, h.get(), GetObjectType(h.get()), &m_ProcMgr).c_str());
-				PopFont();
-				::CloseHandle(hDup);
-			}
+			PushFont(Globals::VarFont());
+			TextUnformatted(ObjectHelper::GetObjectDetails(h.get(), GetObjectType(h.get()), &m_ProcMgr).c_str());
+			PopFont();
 		}, 0, 250 },
 
 	};
 
-	if (BeginTable("Handles", _countof(columns), ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
+	if (BeginTable(m_AllHandles ? "AllHandles" : "Handles", _countof(columns), ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
 		ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersOuterV)) {
 		TableSetupScrollFreeze(0, 1);
 
@@ -153,6 +164,7 @@ void HandlesView::BuildTable() {
 		ImGuiListClipper clipper;
 		clipper.Begin(count);
 
+		bool open = false;
 		while (clipper.Step()) {
 			for (int j = clipper.DisplayStart; j < clipper.DisplayEnd; j++) {
 				if (j >= m_Handles.size())
@@ -182,8 +194,16 @@ void HandlesView::BuildTable() {
 						columns[c].Callback(h);
 						if (c == 0 && IsItemFocused())
 							m_SelectedHandle = h;
+						if (TableGetColumnFlags(c) & ImGuiTableColumnFlags_IsHovered) {
+							m_HoveredColumn = c;
+						}
+
+						if (m_HoveredColumn == c)
+							DoContextMenu(h.get(), c);
+
 					}
 				}
+
 			}
 		}
 
@@ -195,12 +215,14 @@ void HandlesView::BuildWindow() {
 	if (!IsOpen())
 		return;
 
-	if (m_Tracker.GetPid() == 0)
+	if (m_Tracker.GetPid() == 0) {
+		m_AllHandles = true;
 		SetNextWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
-
+	}
 	PushFont(Globals::VarFont());
 	if (Begin("All Handles", GetOpenAddress())) {
 		Refresh(0);
+		BuildToolBar();
 		BuildTable();
 	}
 	PopFont();
@@ -215,7 +237,7 @@ void HandlesView::BuildToolBar() {
 	}
 	SameLine();  Spacing(); SameLine();
 	if (ButtonEnabled("Close Handle", selected)) {
-		ObjectHelper::CloseHandle(m_SelectedHandle.get());
+		PromptCloseHandle(m_SelectedHandle.get());
 	}
 	PopFont();
 }
@@ -309,5 +331,44 @@ void HandlesView::DoSort(int col, bool asc) {
 		};
 
 	m_Handles.Sort(compare, m_Handles.size() > 100000);
+}
+
+void HandlesView::PromptCloseHandle(HandleInfoEx* hi) {
+	m_ModalBox.Init("Close Handle", format("Close Handle 0x{:X}?", hi->HandleValue), MessageBoxButtons::YesNo);
+}
+
+void HandlesView::DoCopy(HandleInfoEx* hi, int c) {
+	string text;
+	switch (static_cast<Column>(c)) {
+		case Column::Handle: text = format("0x{:X}", hi->HandleValue); break;
+		case Column::Name: text = FormatHelper::UnicodeToUtf8(GetObjectName(hi).c_str()); break;
+		case Column::Type: text = FormatHelper::UnicodeToUtf8(GetObjectType(hi).c_str()); break;
+		case Column::Address: text = format("0x{}", hi->Object); break;
+		case Column::Attributes: text = FormatHelper::HandleAttributesToString(hi->HandleAttributes); break;
+		case Column::PID: text = Globals::Settings().HexIds() ? format("0x{:X}", hi->ProcessId) : format("{}", hi->ProcessId); break;
+		case Column::ProcessName: text = FormatHelper::UnicodeToUtf8(GetProcessName(hi).c_str()); break;
+		case Column::Access: text = format("0x{:X}", hi->GrantedAccess); break;
+		case Column::DecodedAccess: text = AccessMaskDecoder::DecodeAccessMask(GetObjectType(hi), hi->GrantedAccess); break;
+		case Column::Details: text = ObjectHelper::GetObjectDetails(hi, GetObjectType(hi)); break;
+	}
+
+	if (!text.empty())
+		SetClipboardText(text.c_str());
+}
+
+bool HandlesView::DoContextMenu(HandleInfoEx* h, int c) {
+	if (BeginPopupContextItem(format("{}{}", h->HandleValue, h->ProcessId).c_str())) {
+		PushFont(Globals::VarFont());
+		if (MenuItem("Close Handle")) {
+			PromptCloseHandle(h);
+		}
+		if (MenuItem("Copy")) {
+			DoCopy(h, c);
+		}
+		PopFont();
+		EndPopup();
+		return true;
+	}
+	return false;
 }
 
