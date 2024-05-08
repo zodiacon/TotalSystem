@@ -3,7 +3,7 @@
 #include <wil\resource.h>
 #include <TlHelp32.h>
 #include <Psapi.h>
-#include <ImageHlp.h>
+#include <DbgHelp.h>
 #include "FileHelper.h"
 
 namespace WinLLX {
@@ -38,7 +38,8 @@ namespace WinLLX {
 		MapType Type;
 	};
 
-	template<typename TModule> requires std::is_base_of_v<ModuleInfo, TModule>
+	template<typename TModule = ModuleInfo> 
+		requires std::is_base_of_v<ModuleInfo, TModule>
 	class ProcessModuleTracker final {
 	public:
 		explicit ProcessModuleTracker(HANDLE hProcess = nullptr) : m_Handle(hProcess), m_Pid(::GetProcessId(hProcess)) {
@@ -82,6 +83,13 @@ namespace WinLLX {
 
 		uint32_t GetPid() const {
 			return m_Pid;
+		}
+
+		ModuleInfo* GetModuleFromAddress(void* address) {
+			for (auto& mod : m_Modules)
+				if (mod->Base <= address && address < (PBYTE)mod->Base + mod->ModuleSize)
+					return mod.get();
+			return nullptr;
 		}
 
 	private:

@@ -4,6 +4,7 @@
 #include <D3D11Image.h>
 #include "TransientObject.h"
 #include <WinLowLevel.h>
+#include "ProcessSymbols.h"
 
 enum class ProcessAttributes {
 	NotComputed = -1,
@@ -39,6 +40,7 @@ public:
 	[[nodiscard]] int GetMemoryPriority() const;
 	[[nodiscard]] WinLL::IoPriority GetIoPriority() const;
 	[[nodiscard]] WinLL::VirtualizationState GetVirtualizationState() const;
+	[[nodiscard]] ProcessSymbols const& GetSymbols() const;
 
 private:
 	[[nodiscard]] bool AreAllThreadsSuspended() const;
@@ -51,9 +53,10 @@ private:
 	mutable ProcessAttributes m_Attributes = ProcessAttributes::NotComputed;
 	mutable std::wstring m_UserName, m_Description, m_Company;
 	mutable PVOID m_Peb{ nullptr };
+	WinLL::Process m_Process;
 	mutable int m_Bitness{ 0 };
 	mutable	bool m_Suspended : 1 { false };
 	mutable bool m_CompanyChecked{ false }, m_DescChecked{ false };
-	WinLL::Process m_Process;
+	ProcessSymbols m_Symbols;
 };
 

@@ -9,6 +9,7 @@
 #include "ObjectHelper.h"
 #include "resource.h"
 #include <ImGuiExt.h>
+#include "IconHelper.h"
 
 using namespace ImGui;
 using namespace std;
@@ -36,14 +37,12 @@ void HandlesView::Init() {
 		{ L"File", IDI_FILE },
 		{ L"ALPC Port", IDI_PLUG },
 		{ L"Desktop", IDI_DESKTOP },
+		{ L"WindowStation", IDI_WINSTATION },
 		{ L"TpWorkerFactory", IDI_FACTORY },
 	};
 
 	for (auto& icon : icons)
-		s_Icons.insert({ icon.type, D3D11Image::FromIcon(
-			(HICON)::LoadImage(::GetModuleHandle(nullptr), MAKEINTRESOURCE(icon.icon), IMAGE_ICON, 16, 16, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE)) });
-
-
+		s_Icons.insert({ icon.type, D3D11Image::FromIcon(IconHelper::LoadIconFromResource(icon.icon, 16)) });
 }
 
 HandlesView::HandlesView() {

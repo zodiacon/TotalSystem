@@ -80,9 +80,9 @@ AccessMode DiaSymbol::Access() const {
 }
 
 DiaSymbol DiaSymbol::ClassParent() const {
-	CComPtr<IDiaSymbol> sym;
-	m_spSym->get_classParent(&sym);
-	return DiaSymbol(sym);
+	wil::com_ptr<IDiaSymbol> sym;
+	m_spSym->get_classParent(sym.addressof());
+	return DiaSymbol(sym.get());
 }
 
 std::wstring DiaSymbol::LibraryName() const {
@@ -91,21 +91,21 @@ std::wstring DiaSymbol::LibraryName() const {
 }
 
 DiaSymbol DiaSymbol::LexicalParent() const {
-	CComPtr<IDiaSymbol> sym;
-	m_spSym->get_lexicalParent(&sym);
-	return DiaSymbol(sym);
+	wil::com_ptr<IDiaSymbol> sym;
+	m_spSym->get_lexicalParent(sym.addressof());
+	return DiaSymbol(sym.get());
 }
 
 DiaSymbol DiaSymbol::Type() const {
-	CComPtr<IDiaSymbol> sym;
-	m_spSym->get_type(&sym);
-	return DiaSymbol(sym);
+	wil::com_ptr<IDiaSymbol> sym;
+	m_spSym->get_type(sym.addressof());
+	return DiaSymbol(sym.get());
 }
 
 DiaSymbol DiaSymbol::ArrayIndexType() const {
-	CComPtr<IDiaSymbol> sym;
-	m_spSym->get_arrayIndexType(&sym);
-	return DiaSymbol(sym);
+	wil::com_ptr<IDiaSymbol> sym;
+	m_spSym->get_arrayIndexType(sym.addressof());
+	return DiaSymbol(sym.get());
 }
 
 LocationKind DiaSymbol::Location() const {
@@ -178,8 +178,9 @@ uint32_t DiaSymbol::OffsetInUdt() const {
 }
 
 GUID DiaSymbol::Guid() const {
-	GUID guid;
-	return S_OK == m_spSym->get_guid(&guid) ? guid : GUID_NULL;
+	GUID guid{};
+	m_spSym->get_guid(&guid);
+	return guid;
 }
 
 bool DiaSymbol::IsConst() const {
@@ -234,9 +235,9 @@ std::wstring DiaSymbol::TypeName() const {
 }
 
 DiaSymbol DiaSymbol::ObjectPointerType() const {
-	CComPtr<IDiaSymbol> spType;
-	m_spSym->get_objectPointerType(&spType);
-	return DiaSymbol(spType);
+	wil::com_ptr<IDiaSymbol> spType;
+	m_spSym->get_objectPointerType(spType.addressof());
+	return DiaSymbol(spType.get());
 }
 
 uint32_t DiaSymbol::ClassParentId() const {
@@ -252,18 +253,18 @@ int32_t DiaSymbol::GetFieldOffset(std::wstring_view name, CompareOptions options
 
 std::vector<DiaSymbol> DiaSymbol::FindChildren(PCWSTR name, SymbolTag tag, CompareOptions options) const {
 	std::vector<DiaSymbol> symbols;
-	CComPtr<IDiaEnumSymbols> spEnum;
+	wil::com_ptr<IDiaEnumSymbols> spEnum;
 	if (SUCCEEDED(m_spSym->findChildren((enum SymTagEnum)tag, name, (DWORD)options, &spEnum))) {
 		LONG count = 0;
 		spEnum->get_Count(&count);
 		ULONG ret;
 		for (LONG i = 0; i < count; i++) {
-			CComPtr<IDiaSymbol> sym;
+			wil::com_ptr<IDiaSymbol> sym;
 			spEnum->Next(1, &sym, &ret);
-			ATLASSERT(sym);
+			ATLASSERT(sym.get());
 			if (sym == nullptr)
 				break;
-			symbols.push_back(DiaSymbol(sym));
+			symbols.push_back(DiaSymbol(sym.get()));
 		}
 	}
 	return symbols;

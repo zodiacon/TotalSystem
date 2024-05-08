@@ -15,7 +15,7 @@ bool DiaSession::OpenPdb(PCWSTR path) {
 }
 
 void DiaSession::Close() {
-	m_spSession.Release();
+	m_spSession.reset();
 }
 
 DiaSession::operator bool() const {
@@ -39,7 +39,7 @@ DiaSymbol DiaSession::GlobalScope() const {
 std::vector<DiaSymbol> DiaSession::FindChildren(DiaSymbol const& parent, PCWSTR name, SymbolTag tag, CompareOptions options) const {
 	std::vector<DiaSymbol> symbols;
 	CComPtr<IDiaEnumSymbols> spEnum;
-	if (SUCCEEDED(m_spSession->findChildren(parent.m_spSym, (enum SymTagEnum)tag, name, (DWORD)options, &spEnum))) {
+	if (S_OK == m_spSession->findChildren(parent.m_spSym.get(), (enum SymTagEnum)tag, name, (DWORD)options, &spEnum)) {
 		LONG count = 0;
 		spEnum->get_Count(&count);
 		ULONG ret;
@@ -105,4 +105,13 @@ bool DiaSession::OpenCommon(PCWSTR path, bool image) {
 	m_spSession = spSession;
 	m_spSource = spSource;
 	return true;
+}
+
+DiaSymbol DiaSession::GetSymbolByVA(ULONGLONG va, SymbolTag tag, long* disp) const {
+	CComPtr<IDiaSymbol> spSym;
+	if (disp)
+		m_spSession->findSymbolByVAEx(va, static_cast<enum SymTagEnum>(tag), &spSym, disp);
+	else
+		m_spSession->findSymbolByVA(va, static_cast<enum SymTagEnum>(tag), &spSym);
+	return DiaSymbol(spSym);
 }

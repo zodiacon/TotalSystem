@@ -30,6 +30,7 @@ struct TotalSysSettings : SettingsBase {
 		SETTING(ShowLowerPane, 0, SettingType::Bool);
 		SETTING(ThreadsWindowOpen, 0, SettingType::Bool);
 		SETTING(HandlesWindowOpen, 0, SettingType::Bool);
+		SETTING(ResolveSymbols, 0, SettingType::Bool);
 	END_SETTINGS;
 
 	DEF_SETTING(AlwaysOnTop, bool);
@@ -41,6 +42,7 @@ struct TotalSysSettings : SettingsBase {
 	DEF_SETTING(ShowLowerPane, bool);
 	DEF_SETTING(ThreadsWindowOpen, bool);
 	DEF_SETTING(HandlesWindowOpen, bool);
+	DEF_SETTING(ResolveSymbols, bool);
 
 	std::vector<ProcessColor>& GetProcessColors();
 	ImVec4 GetRelocatedColor() const;

@@ -5,6 +5,7 @@
 #include "FormatHelper.h"
 #include "SortHelper.h"
 #include "resource.h"
+#include "IconHelper.h"
 
 using namespace ImGui;
 using namespace WinLLX;
@@ -179,8 +180,7 @@ void ModulesView::Init() {
 
 	int i = 0;
 	for (auto icon : icons) {
-		s_Icons[i++] = D3D11Image::FromIcon(
-			(HICON)::LoadImage(::GetModuleHandle(nullptr), MAKEINTRESOURCE(icon), IMAGE_ICON, 16, 16, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE));
+		s_Icons[i++] = D3D11Image::FromIcon(IconHelper::LoadIconFromResource(icon, 16));
 	}
 }
 

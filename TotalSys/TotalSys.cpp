@@ -51,6 +51,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 	SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadImage(hInstance, MAKEINTRESOURCE(IDI_PROCMGR), IMAGE_ICON, 32, 32, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE));
 	SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadImage(hInstance, MAKEINTRESOURCE(IDI_PROCMGR), IMAGE_ICON, 16, 16, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE));
 
+	auto hDone = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	::TrySubmitThreadpoolCallback([](auto, auto p) {
+		::CoInitialize(nullptr);
+		ProcessSymbols::Init();
+		::SetEvent((HANDLE)p);
+		}, hDone, nullptr);
+
 	// Initialize Direct3D
 	if (!CreateDeviceD3D(hwnd)) {
 		CleanupDeviceD3D();
@@ -121,6 +128,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 		ThreadsView::Init();
 		ModulesView::Init();
 		HandlesView::Init();
+
+		::WaitForSingleObject(hDone, INFINITE);
+		::CloseHandle(hDone);
 
 		MainWindow::SetTheme();
 

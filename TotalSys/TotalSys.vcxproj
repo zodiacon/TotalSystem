@@ -240,6 +240,7 @@
     <ClInclude Include="FormatHelper.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="HandlesView.h" />
+    <ClInclude Include="IconHelper.h" />
     <ClInclude Include="IconManager.h" />
     <ClInclude Include="IniFile.h" />
     <ClInclude Include="MainWindow.h" />
@@ -250,6 +251,7 @@
     <ClInclude Include="ProcessesView.h" />
     <ClInclude Include="ProcessHelper.h" />
     <ClInclude Include="ProcessInfoEx.h" />
+    <ClInclude Include="ProcessSymbols.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SettingsBase.h" />
     <ClInclude Include="SortedFilteredVector.h" />
@@ -266,6 +268,7 @@
     <ClCompile Include="FormatHelper.cpp" />
     <ClCompile Include="Globals.cpp" />
     <ClCompile Include="HandlesView.cpp" />
+    <ClCompile Include="IconHelper.cpp" />
     <ClCompile Include="IconManager.cpp" />
     <ClCompile Include="IniFile.cpp" />
     <ClCompile Include="MainWindow.cpp" />
@@ -283,6 +286,7 @@
     <ClCompile Include="ProcessesView.cpp" />
     <ClCompile Include="ProcessHelper.cpp" />
     <ClCompile Include="ProcessInfoEx.cpp" />
+    <ClCompile Include="ProcessSymbols.cpp" />
     <ClCompile Include="SettingsBase.cpp" />
     <ClCompile Include="SortedFilteredVector.cpp" />
     <ClCompile Include="TotalSys.cpp" />
@@ -328,6 +332,7 @@
     <Image Include="Icons\types.ico" />
     <Image Include="Icons\Waiting.ico" />
     <Image Include="Icons\Window.ico" />
+    <Image Include="Icons\windowstation.ico" />
     <Image Include="Icons\window_split.ico" />
     <Image Include="ProcMgr.ico" />
   </ItemGroup>

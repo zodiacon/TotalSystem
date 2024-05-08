@@ -65,6 +65,9 @@ void MainWindow::BuildWindow() {
 			if (MenuItem("Hex IDs", nullptr, settings.HexIds())) {
 				settings.HexIds(!settings.HexIds());
 			}
+			if (MenuItem("Resolve Symbols", nullptr, settings.ResolveSymbols())) {
+				settings.ResolveSymbols(!settings.ResolveSymbols());
+			}
 			if (BeginMenu("Theme")) {
 				if (MenuItem("Dark", nullptr, Globals::IsDarkMode() && !settings.ThemeAsSystem())) {
 					Globals::SetDarkMode(true);

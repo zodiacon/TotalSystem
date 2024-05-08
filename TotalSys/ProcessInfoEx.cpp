@@ -13,6 +13,8 @@ using namespace WinLL;
 
 ProcessInfoEx::ProcessInfoEx(uint32_t pid) : ProcessInfo(pid) {
 	m_Process.Open(pid, ProcessAccessMask::QueryLimitedInformation);
+	if (m_Process)
+		m_Symbols.Load(m_Process.Handle());
 }
 
 std::pair<const ImVec4, const ImVec4> ProcessInfoEx::Colors(DefaultProcessManager& pm) const {
@@ -87,6 +89,8 @@ bool ProcessInfoEx::SuspendResume() {
 	m_Suspended = !m_Suspended;
 	return m_Suspended ? p.Suspend() : p.Resume();
 }
+
+
 
 const std::wstring& ProcessInfoEx::GetExecutablePath() const {
 	if (m_ExecutablePath.empty() && Id > 4 && m_Process) {
@@ -237,4 +241,8 @@ VirtualizationState ProcessInfoEx::GetVirtualizationState() const {
 	}
 
 	return token.GetVirtualizationState();
+}
+
+ProcessSymbols const& ProcessInfoEx::GetSymbols() const {
+	return m_Symbols;
 }

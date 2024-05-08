@@ -9,6 +9,8 @@
 #include "FormatHelper.h"
 #include <ImGuiExt.h>
 #include "ProcessHelper.h"
+#include "IconHelper.h"
+#include <DbgHelp.h>
 
 using namespace ImGui;
 using namespace std;
@@ -146,20 +148,38 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 			TextUnformatted(FormatHelper::FormatTimeSpan(t->UserTime).c_str());
 			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_NoResize },
-		{ "Start Address", [](auto& t) {
+		{ "Start Address", [&](auto& t) {
 			if (t->StartAddress) {
-				PushFont(Globals::MonoFont());
-				Text("0x%p", t->StartAddress);
-				PopFont();
+				string name;
+				if (Globals::Settings().ResolveSymbols())
+					name = ThreadInfoEx::GetStartAddressSymbol(m_Process, t);
+				if (name.empty()) {
+					PushFont(Globals::MonoFont());
+					Text("0x%p", t->StartAddress);
 				}
-			}, ImGuiTableColumnFlags_NoResize },
-		{ "Win32 Start Address", [](auto& t) {
-			if (t->Win32StartAddress) {
-				PushFont(Globals::MonoFont());
-				Text("0x%p", t->Win32StartAddress);
+				else {
+					PushFont(Globals::VarFont());
+					TextUnformatted(name.c_str());
+				}
 				PopFont();
 			}
-			}, ImGuiTableColumnFlags_NoResize },
+			}, ImGuiTableColumnFlags_DefaultHide },
+		{ "Win32 Start Address", [&](auto& t) {
+			if (t->Win32StartAddress) {
+				string name;
+				if (Globals::Settings().ResolveSymbols())
+					name = ThreadInfoEx::GetWin32StartAddressSymbol(m_Process, t);
+				if (name.empty()) {
+					PushFont(Globals::MonoFont());
+					Text("0x%p", t->Win32StartAddress);
+				}
+				else {
+					PushFont(Globals::VarFont());
+					TextUnformatted(name.c_str());
+				}
+				PopFont();
+			}
+			}, 0 },
 		{ "TEB", [](auto& t) {
 			if (t->TebBase) {
 				PushFont(Globals::MonoFont());
@@ -452,8 +472,7 @@ bool ThreadsView::Init() {
 	int i = 0;
 	for (auto icon : icons) {
 		if (icon)
-			s_StateIcons[i++] = D3D11Image::FromIcon(
-				(HICON)::LoadImage(::GetModuleHandle(nullptr), MAKEINTRESOURCE(icon), IMAGE_ICON, 16, 16, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE));
+			s_StateIcons[i++] = D3D11Image::FromIcon(IconHelper::LoadIconFromResource(icon, 16));
 	}
 	return true;
 }

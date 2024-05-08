@@ -72,9 +72,6 @@
     <ClInclude Include="TransientObject.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="IconManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ModulesView.h">
       <Filter>Processes</Filter>
     </ClInclude>
@@ -98,6 +95,15 @@
     </ClInclude>
     <ClInclude Include="SortedFilteredVector.h">
       <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="IconHelper.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="IconManager.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcessSymbols.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -143,9 +149,6 @@
     <ClCompile Include="ProcessHelper.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
-    <ClCompile Include="IconManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ModulesView.cpp">
       <Filter>Processes</Filter>
     </ClCompile>
@@ -167,11 +170,20 @@
     <ClCompile Include="SettingsBase.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
-    <ClCompile Include="IniFile.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SortedFilteredVector.cpp">
       <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="IconHelper.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="IniFile.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="IconManager.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessSymbols.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -274,6 +286,9 @@
       <Filter>Resource Files\Icons</Filter>
     </Image>
     <Image Include="Icons\section.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="Icons\windowstation.ico">
       <Filter>Resource Files\Icons</Filter>
     </Image>
   </ItemGroup>
