@@ -82,4 +82,13 @@ namespace WinLL {
 	bool Thread::Terminate(uint32_t exitCode) {
 		return ::TerminateThread(Handle(), exitCode);
 	}
+
+	uint32_t Thread::GetId() const {
+		return ::GetThreadId(Handle());
+	}
+
+	uint32_t Thread::GetProcessId() const {
+		return ::GetProcessIdOfThread(Handle());
+	}
+
 }

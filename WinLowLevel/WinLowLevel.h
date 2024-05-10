@@ -617,6 +617,7 @@ namespace WinLL {
 		bool Open(uint32_t id, ThreadAccessMask access = ThreadAccessMask::QueryLimitedInformation);
 
 		[[nodiscard]] uint32_t GetId() const;
+		[[nodiscard]] uint32_t GetProcessId() const;
 		[[nodiscard]] ThreadPriority GetPriority() const;
 		[[nodiscard]] CpuNumber GetIdealProcessor() const;
 		[[nodiscard]] int GetMemoryPriority() const;
@@ -677,6 +678,20 @@ namespace WinLL {
 		LSTATUS DeleteSubKey(_In_z_ LPCTSTR lpszSubKey) noexcept;
 		LSTATUS DeleteValue(_In_z_ LPCTSTR lpszValue) noexcept;
 
+	};
+
+	class ThreadPool final {
+	public:
+		bool Create();
+		~ThreadPool();
+		void Close();
+		void SetMaxThreads(uint32_t maxThreads);
+
+		operator PTP_POOL() const;
+		operator bool() const;
+
+	private:
+		PTP_POOL m_Tp{ nullptr };
 	};
 
 }

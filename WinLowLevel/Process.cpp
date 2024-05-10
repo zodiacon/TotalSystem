@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "WinLowLevel.h"
 #include <Psapi.h>
+#include <assert.h>
 
 namespace WinLL {
 	using namespace std;

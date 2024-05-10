@@ -1,11 +1,13 @@
 #pragma once
 
 #include "ProcessesView.h"
+#include "Window.h"
 
-class MainWindow {
+
+class MainWindow : public Window {
 public:
 	explicit MainWindow(HWND hWnd);
-	void BuildWindow();
+	void Build() override;
 	bool IsAlwaysOnTop() const;
 	bool ToggleAlwaysOnTop();
 	bool SaveSelected() const;
@@ -19,6 +21,7 @@ private:
 	ThreadsView m_ThreadsView;
 	HandlesView m_HandlesView;
 	DWORD64 m_LastCount{ 0 };
+	std::vector<std::unique_ptr<Window>> m_Windows;
 	bool m_DoSave{ false };
 };
 

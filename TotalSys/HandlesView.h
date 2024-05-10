@@ -34,6 +34,7 @@ private:
 	void PromptCloseHandle(HandleInfoEx* hi);
 	void DoCopy(HandleInfoEx* hi, int c);
 	bool DoContextMenu(HandleInfoEx* hi, int c);
+	bool Filter(std::shared_ptr<HandleInfoEx> const& h) const;
 
 	enum class Column {
 		Handle, Type, Name, PID, ProcessName, Access, Address, Attributes, DecodedAccess, Details,
@@ -50,13 +51,13 @@ private:
 	WinLLX::ProcessHandleTracker<HandleInfoEx> m_Tracker;
 	std::shared_ptr<HandleInfoEx> m_SelectedHandle;
 	SortedFilteredVector<std::shared_ptr<HandleInfoEx>> m_Handles;
-	std::function<bool(std::shared_ptr<HandleInfoEx> const&, size_t)> m_Filter{ nullptr };
 	ImGuiTableSortSpecs* m_Specs{ nullptr };
 	WinLL::ProcessManager<> m_ProcMgr;
 	SimpleMessageBox m_ModalBox;
+	char m_FilterText[32]{};
 	int m_HoveredColumn{ -1 };
 	bool m_Updating: 1{ false }, m_AllHandles: 1{ false };
-	bool m_UpdateNow : 1{ false };
+	bool m_UpdateNow : 1{ false }, m_FilterChanged : 1 { false };;
 	bool m_NamedObjects { true };
 	inline static std::unordered_map<std::wstring, D3D11Image> s_Icons;
 };

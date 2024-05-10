@@ -262,6 +262,7 @@
     <ClInclude Include="TransientObject.h" />
     <ClInclude Include="UI.h" />
     <ClInclude Include="ViewBase.h" />
+    <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AccessMaskDecoder.cpp" />
@@ -297,6 +298,7 @@
     <ClCompile Include="TransientObject.cpp" />
     <ClCompile Include="UI.cpp" />
     <ClCompile Include="ViewBase.cpp" />
+    <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TotalSys.rc" />

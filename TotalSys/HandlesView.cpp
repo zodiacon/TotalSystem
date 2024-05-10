@@ -153,6 +153,15 @@ void HandlesView::BuildTable() {
 		TableHeadersRow();
 		PopFont();
 
+		if (m_FilterChanged) {
+			m_FilterChanged = false;
+			_strlwr_s(m_FilterText);
+			if (m_FilterText[0] || m_NamedObjects)
+				m_Handles.Filter([&](auto& h, auto) { return Filter(h); });
+			else
+				m_Handles.Filter(nullptr);
+		}
+
 		auto specs = m_Specs = TableGetSortSpecs();
 		if (specs->SpecsDirty) {
 			specs->SpecsDirty = false;
@@ -231,7 +240,16 @@ void HandlesView::BuildWindow() {
 void HandlesView::BuildToolBar() {
 	bool selected = m_SelectedHandle != nullptr;
 	PushFont(Globals::VarFont());
+	if (!m_AllHandles) {
+		SetNextItemWidth(100);
+		if (InputTextWithHint("##Filter", "Filter", m_FilterText, _countof(m_FilterText),
+			ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll)) {
+			m_FilterChanged = true;
+		}
+		SameLine();
+	}
 	if (Checkbox("Named Objects", &m_NamedObjects)) {
+		m_FilterChanged = true;
 		m_UpdateNow = true;
 	}
 	SameLine();  Spacing(); SameLine();
@@ -257,8 +275,7 @@ bool HandlesView::Refresh(uint32_t pid, bool now) {
 				auto empty = m_Handles.empty();
 				if (empty) {
 					m_Handles = m_Tracker.GetNewHandles();
-					if (m_Specs)
-						m_Specs->SpecsDirty = true;
+					m_FilterChanged = true;
 				}
 				else {
 					for (auto& hi : m_Tracker.GetNewHandles()) {
@@ -269,19 +286,10 @@ bool HandlesView::Refresh(uint32_t pid, bool now) {
 					for (auto& hi : m_Tracker.GetClosedHandles()) {
 						hi->Term(Globals::Settings().OldObjectsTime() * 1000);
 					}
-					if (m_Specs)
-						m_Specs->SpecsDirty = true;
 				}
+				if (m_Specs)
+					m_Specs->SpecsDirty = true;
 				m_Updating = false;
-				if (m_NamedObjects) {
-					m_Filter = [this](auto& h, auto) {
-						return !GetObjectName(h.get()).empty();
-						};
-					m_Handles.Filter(m_Filter);
-				}
-				else {
-					m_Handles.Filter(nullptr);
-				}
 			});
 		return true;
 	}
@@ -367,6 +375,28 @@ bool HandlesView::DoContextMenu(HandleInfoEx* h, int c) {
 		PopFont();
 		EndPopup();
 		return true;
+	}
+	return false;
+}
+
+bool HandlesView::Filter(std::shared_ptr<HandleInfoEx> const& h) const {
+	if (m_NamedObjects && GetObjectName(h.get()).empty())
+		return false;
+
+	if (m_FilterText[0] == 0)
+		return true;
+
+	auto type = FormatHelper::UnicodeToUtf8(GetObjectType(h.get()).c_str());
+	if (!type.empty()) {
+		_strlwr_s(type.data(), type.length() + 1);
+		if (type.find(m_FilterText) != string::npos)
+			return true;
+	}
+	auto name = FormatHelper::UnicodeToUtf8(GetObjectName(h.get()).c_str());
+	if (!name.empty()) {
+		_strlwr_s(name.data(), name.length() + 1);
+		if (name.find(m_FilterText) != string::npos)
+			return true;
 	}
 	return false;
 }

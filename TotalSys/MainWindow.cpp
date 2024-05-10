@@ -19,7 +19,7 @@ MainWindow::MainWindow(HWND hWnd) : m_hWnd(hWnd) {
 	}
 }
 
-void MainWindow::BuildWindow() {
+void MainWindow::Build() {
 	auto viewport = GetMainViewport();
 	DockSpaceOverViewport(viewport, ImGuiDockNodeFlags_None);
 
@@ -118,6 +118,9 @@ void MainWindow::BuildWindow() {
 	m_ProcessesView.BuildWindow();
 	m_ThreadsView.BuildWindow();
 	m_HandlesView.BuildWindow();
+
+	for (auto& win : m_Windows)
+		win->Build();
 }
 
 bool MainWindow::IsAlwaysOnTop() const {

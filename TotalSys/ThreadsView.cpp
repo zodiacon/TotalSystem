@@ -295,6 +295,7 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 void ThreadsView::BuildToolBar() {
 	auto selected = m_SelectedThread != nullptr;
 	if (ButtonEnabled("Stack", selected)) {
+		m_Process->GetSymbols().EnumThreadStack(m_Process->Id, m_SelectedThread->Id);
 	}
 	SameLine();
 	if (ButtonEnabled("Suspend", selected)) {

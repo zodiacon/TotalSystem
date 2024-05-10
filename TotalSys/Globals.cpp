@@ -55,3 +55,4 @@ void Globals::SetAsSystem(bool dark) {
 	Settings().DarkMode(dark);
 	Settings().ThemeAsSystem(true);
 }
+
