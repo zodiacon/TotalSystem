@@ -1,17 +1,15 @@
 #pragma once
 
 #include <ProcessManager.h>
+#include "Window.h"
 
 class ProcessInfoEx;
 class ThreadInfoEx;
 
 using DefaultProcessManager = WinLL::ProcessManager<ProcessInfoEx, ThreadInfoEx>;
 
-class ViewBase abstract {
+class ViewBase abstract : public Window {
 public:
-	bool IsOpen() const;
-	void Open(bool open = true);
-	bool* GetOpenAddress();
 	bool IsRunning() const;
 	virtual void TogglePause();
 	int GetUpdateInterval() const;
@@ -24,7 +22,6 @@ public:
 private:
 	int m_UpdateInterval{ 1000 }, m_OldInterval{ 0 };
 	DWORD64 m_Tick{ 0 };
-	bool m_Open{ false };
 	bool m_Paused : 1 { false };
 };
 

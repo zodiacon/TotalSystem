@@ -10,7 +10,8 @@
 #include <ImGuiExt.h>
 #include "ProcessHelper.h"
 #include "IconHelper.h"
-#include <DbgHelp.h>
+#include "ThreadStackWindow.h"
+#include "MainWindow.h"
 
 using namespace ImGui;
 using namespace std;
@@ -29,7 +30,7 @@ ThreadsView::~ThreadsView() {
 		Globals::Settings().ThreadsWindowOpen(IsOpen());
 }
 
-void ThreadsView::BuildWindow() {
+void ThreadsView::Build() {
 	if (!IsOpen())
 		return;
 
@@ -152,8 +153,8 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 			if (t->StartAddress) {
 				string name;
 				if (Globals::Settings().ResolveSymbols())
-					name = ThreadInfoEx::GetStartAddressSymbol(m_Process, t);
-				if (name.empty()) {
+					name = m_Process->GetAddressSymbol((uint64_t)t->StartAddress);
+				if (name.empty() || name[0] == '0') {
 					PushFont(Globals::MonoFont());
 					Text("0x%p", t->StartAddress);
 				}
@@ -168,8 +169,8 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 			if (t->Win32StartAddress) {
 				string name;
 				if (Globals::Settings().ResolveSymbols())
-					name = ThreadInfoEx::GetWin32StartAddressSymbol(m_Process, t);
-				if (name.empty()) {
+					name = m_Process->GetAddressSymbol((uint64_t)t->Win32StartAddress);
+				if (name.empty() || name[0] == '0') {
 					PushFont(Globals::MonoFont());
 					Text("0x%p", t->Win32StartAddress);
 				}
@@ -295,7 +296,13 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 void ThreadsView::BuildToolBar() {
 	auto selected = m_SelectedThread != nullptr;
 	if (ButtonEnabled("Stack", selected)) {
-		m_Process->GetSymbols().EnumThreadStack(m_Process->Id, m_SelectedThread->Id);
+		auto frames = m_Process->GetSymbols().EnumThreadStack(m_Process->Id, m_SelectedThread->Id);
+		if (!frames.empty()) {
+			auto win = make_unique<ThreadStackWindow>(m_Process, m_SelectedThread, frames);
+			win->Open();
+			Globals::RootWindow().AddWindow(move(win));
+		}
+
 	}
 	SameLine();
 	if (ButtonEnabled("Suspend", selected)) {

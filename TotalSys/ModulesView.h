@@ -16,6 +16,7 @@ public:
 	void BuildTable();
 	bool Refresh(uint32_t pid, bool now = false);
 	static void Init();
+	void Build() override;
 
 private:
 	void DoSort(int col, bool asc);

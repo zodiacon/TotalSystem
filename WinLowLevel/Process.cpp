@@ -145,7 +145,7 @@ namespace WinLL {
 		if (!::EnumProcessModulesEx(hProcess.get(), hModule, sizeof(hModule), &needed, wow64 ? LIST_MODULES_32BIT : LIST_MODULES_ALL))
 			return false;
 
-		int count = min(_countof(hModule), needed / sizeof(HMODULE));
+		auto count = (int)min(_countof(hModule), needed / sizeof(HMODULE));
 
 		for (int i = 0; i < count; i++) {
 			if (::GetModuleFileNameEx(hProcess.get(), hModule[i], filename, MAX_PATH) == 0)

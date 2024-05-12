@@ -5,6 +5,7 @@
 #include "TransientObject.h"
 #include <WinLowLevel.h>
 #include "ProcessSymbols.h"
+#include <mutex>
 
 enum class ProcessAttributes {
 	NotComputed = -1,
@@ -41,6 +42,8 @@ public:
 	[[nodiscard]] WinLL::IoPriority GetIoPriority() const;
 	[[nodiscard]] WinLL::VirtualizationState GetVirtualizationState() const;
 	[[nodiscard]] ProcessSymbols const& GetSymbols() const;
+	std::string GetAddressSymbol(uint64_t address) const;
+	[[nodiscard]] std::string GetModuleName(uint64_t baseAddress) const;
 
 private:
 	[[nodiscard]] bool AreAllThreadsSuspended() const;
@@ -58,5 +61,7 @@ private:
 	mutable	bool m_Suspended : 1 { false };
 	mutable bool m_CompanyChecked{ false }, m_DescChecked{ false };
 	ProcessSymbols m_Symbols;
+	mutable std::unordered_map<uint64_t, std::string> m_Addresses;
+	mutable std::mutex s_Lock;
 };
 

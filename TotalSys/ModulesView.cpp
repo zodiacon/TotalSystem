@@ -184,6 +184,9 @@ void ModulesView::Init() {
 	}
 }
 
+void ModulesView::Build() {
+}
+
 void ModulesView::DoSort(int col, bool asc) {
 	m_Modules.Sort([&](auto& m1, auto& m2) {
 		switch (static_cast<Column>(col)) {

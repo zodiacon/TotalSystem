@@ -26,7 +26,7 @@ struct Setting {
 	}
 	template<typename T>
 	Setting(std::wstring name, const T& value, SettingType type) : Name(std::move(name)), Type(type) {
-		Buffer = std::make_unique<uint8_t[]>(Size = max(sizeof(int), sizeof(T)));
+		Buffer = std::make_unique<uint8_t[]>(Size = (uint32_t)std::max(sizeof(int), sizeof(T)));
 		::memset(Buffer.get(), 0, Size);
 		::memcpy(Buffer.get(), &value, Size);
 	}
@@ -52,7 +52,7 @@ struct Setting {
 	template<typename T>
 	void Set(const T& value) {
 		int size;
-		Buffer = std::make_unique<uint8_t[]>(size = max(sizeof(int), sizeof(T)));
+		Buffer = std::make_unique<uint8_t[]>(size = (uint32_t)std::max(sizeof(int), sizeof(T)));
 		memset(Buffer.get(), 0, size);
 		memcpy(Buffer.get(), &value, sizeof(T));
 	}

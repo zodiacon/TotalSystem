@@ -102,7 +102,7 @@ void MainWindow::Build() {
 		}
 		if (BeginMenu("Help")) {
 			if (MenuItem("About Total System...")) {			
-				about.Init("About Total System", "Version 0.1.5 (C)2024 Pavel Yosifovich");
+				about.Init("About Total System", "Version 0.2 (C)2024 Pavel Yosifovich");
 				about.SetFont(Globals::VarFont());
 			}
 			ImGui::EndMenu();
@@ -115,12 +115,18 @@ void MainWindow::Build() {
 
 	SetNextWindowPos(viewport->WorkPos, ImGuiCond_FirstUseEver);
 	SetNextWindowSize(viewport->WorkSize, ImGuiCond_FirstUseEver);
-	m_ProcessesView.BuildWindow();
-	m_ThreadsView.BuildWindow();
-	m_HandlesView.BuildWindow();
+	m_ProcessesView.Build();
+	m_ThreadsView.Build();
+	m_HandlesView.Build();
 
-	for (auto& win : m_Windows)
+	for (size_t i = 0; i < m_Windows.size(); i++) {
+		auto& win = m_Windows[i];
 		win->Build();
+		if (!win->IsOpen()) {
+			m_Windows.erase(m_Windows.begin() + i);
+			i--;
+		}
+	}
 }
 
 bool MainWindow::IsAlwaysOnTop() const {
@@ -156,6 +162,11 @@ bool MainWindow::HandleMessage(UINT msg, WPARAM wp, LPARAM lp) {
 			break;
 	}
 	return false;
+}
+
+bool MainWindow::AddWindow(std::unique_ptr<Window> win) {
+	m_Windows.push_back(move(win));
+	return true;
 }
 
 void MainWindow::SetTheme() {

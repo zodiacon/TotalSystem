@@ -12,6 +12,7 @@ public:
 	bool ToggleAlwaysOnTop();
 	bool SaveSelected() const;
 	bool HandleMessage(UINT msg, WPARAM wp, LPARAM lp);
+	bool AddWindow(std::unique_ptr<Window> win);
 
 	static void SetTheme();
 

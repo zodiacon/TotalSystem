@@ -213,7 +213,9 @@ namespace WinLLX {
 				mi->Name = ::wcsrchr(name, L'\\') + 1;
 				BYTE buffer[1 << 12];
 				if (::ReadProcessMemory(m_Handle.get(), mbi.BaseAddress, buffer, sizeof(buffer), nullptr)) {
-					auto nt = ::ImageNtHeader(buffer);
+					static const auto pImageNtHeader = (decltype(::ImageNtHeader)*)::GetProcAddress(::GetModuleHandle(L"Dbghelp"), "ImageNtHeader");
+
+					auto nt = pImageNtHeader(buffer);
 					if (nt) {
 						auto machine = nt->FileHeader.Machine;
 						if (machine == IMAGE_FILE_MACHINE_ARM || machine == IMAGE_FILE_MACHINE_I386) {

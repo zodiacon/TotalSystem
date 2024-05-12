@@ -21,19 +21,19 @@ public:
 	~HandlesView();
 
 	bool Track(uint32_t pid, PCWSTR type = L"");
-	void BuildTable();
-	void BuildWindow();
-	void BuildToolBar();
-	bool Refresh(uint32_t pid, bool now = false);
-	std::wstring const& GetObjectName(HandleInfoEx* hi) const;
-	std::wstring const& GetObjectType(HandleInfoEx* hi) const;
-	std::wstring const& GetProcessName(HandleInfoEx* hi) const;
+	void BuildTable() noexcept;
+	void Build() override;
+	void BuildToolBar() noexcept;
+	bool Refresh(uint32_t pid, bool now = false) noexcept;
+	std::wstring const& GetObjectName(HandleInfoEx* hi) const noexcept;
+	std::wstring const& GetObjectType(HandleInfoEx* hi) const noexcept;
+	std::wstring const& GetProcessName(HandleInfoEx* hi) const noexcept;
 
 private:
-	void DoSort(int col, bool asc);
-	void PromptCloseHandle(HandleInfoEx* hi);
-	void DoCopy(HandleInfoEx* hi, int c);
-	bool DoContextMenu(HandleInfoEx* hi, int c);
+	void DoSort(int col, bool asc) noexcept;
+	void PromptCloseHandle(HandleInfoEx* hi) const;
+	void DoCopy(HandleInfoEx* hi, int c) const noexcept;
+	bool DoContextMenu(HandleInfoEx* hi, int c) const noexcept;
 	bool Filter(std::shared_ptr<HandleInfoEx> const& h) const;
 
 	enum class Column {
@@ -53,7 +53,7 @@ private:
 	SortedFilteredVector<std::shared_ptr<HandleInfoEx>> m_Handles;
 	ImGuiTableSortSpecs* m_Specs{ nullptr };
 	WinLL::ProcessManager<> m_ProcMgr;
-	SimpleMessageBox m_ModalBox;
+	mutable SimpleMessageBox m_ModalBox;
 	char m_FilterText[32]{};
 	int m_HoveredColumn{ -1 };
 	bool m_Updating: 1{ false }, m_AllHandles: 1{ false };

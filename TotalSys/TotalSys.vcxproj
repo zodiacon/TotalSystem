@@ -255,6 +255,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SettingsBase.h" />
     <ClInclude Include="SortedFilteredVector.h" />
+    <ClInclude Include="ThreadStackWindow.h" />
     <ClInclude Include="TotalSysSettings.h" />
     <ClInclude Include="SortHelper.h" />
     <ClInclude Include="ThreadInfoEx.h" />
@@ -290,6 +291,7 @@
     <ClCompile Include="ProcessSymbols.cpp" />
     <ClCompile Include="SettingsBase.cpp" />
     <ClCompile Include="SortedFilteredVector.cpp" />
+    <ClCompile Include="ThreadStackWindow.cpp" />
     <ClCompile Include="TotalSys.cpp" />
     <ClCompile Include="TotalSysSettings.cpp" />
     <ClCompile Include="SortHelper.cpp" />

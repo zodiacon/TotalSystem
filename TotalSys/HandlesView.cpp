@@ -62,7 +62,7 @@ bool HandlesView::Track(uint32_t pid, PCWSTR type) {
 	return tracking;
 }
 
-void HandlesView::BuildTable() {
+void HandlesView::BuildTable() noexcept {
 	auto result = m_ModalBox.ShowModal();
 	if (result == MessageBoxResult::OK) {
 		ObjectHelper::CloseHandle(m_SelectedHandle.get());
@@ -219,7 +219,7 @@ void HandlesView::BuildTable() {
 	}
 }
 
-void HandlesView::BuildWindow() {
+void HandlesView::Build() {
 	if (!IsOpen())
 		return;
 
@@ -237,7 +237,7 @@ void HandlesView::BuildWindow() {
 	End();
 }
 
-void HandlesView::BuildToolBar() {
+void HandlesView::BuildToolBar() noexcept {
 	bool selected = m_SelectedHandle != nullptr;
 	PushFont(Globals::VarFont());
 	if (!m_AllHandles) {
@@ -259,7 +259,7 @@ void HandlesView::BuildToolBar() {
 	PopFont();
 }
 
-bool HandlesView::Refresh(uint32_t pid, bool now) {
+bool HandlesView::Refresh(uint32_t pid, bool now) noexcept {
 	if (!m_Updating && (NeedUpdate() || now || m_UpdateNow)) {
 		m_UpdateNow = false;
 		if (pid == 0)
@@ -296,7 +296,7 @@ bool HandlesView::Refresh(uint32_t pid, bool now) {
 	return false;
 }
 
-std::wstring const& HandlesView::GetObjectName(HandleInfoEx* hi) const {
+std::wstring const& HandlesView::GetObjectName(HandleInfoEx* hi) const noexcept {
 	if (!hi->NameChecked) {
 		hi->Name = WinLLX::ObjectManager::GetObjectName((HANDLE)(ULONG_PTR)hi->HandleValue, hi->ProcessId, hi->ObjectTypeIndex);
 		hi->NameChecked = true;
@@ -304,13 +304,13 @@ std::wstring const& HandlesView::GetObjectName(HandleInfoEx* hi) const {
 	return hi->Name;
 }
 
-std::wstring const& HandlesView::GetObjectType(HandleInfoEx* hi) const {
+std::wstring const& HandlesView::GetObjectType(HandleInfoEx* hi) const noexcept {
 	if (hi->Type.empty())
 		hi->Type = WinLLX::ObjectManager::GetType(hi->ObjectTypeIndex)->TypeName;
 	return hi->Type;
 }
 
-std::wstring const& HandlesView::GetProcessName(HandleInfoEx* hi) const {
+std::wstring const& HandlesView::GetProcessName(HandleInfoEx* hi) const noexcept {
 	if (!hi->ProcessNameChecked) {
 		hi->ProcessNameChecked = true;
 		auto p = m_ProcMgr.GetProcessById(hi->ProcessId);
@@ -320,7 +320,7 @@ std::wstring const& HandlesView::GetProcessName(HandleInfoEx* hi) const {
 	return hi->ProcessName;
 }
 
-void HandlesView::DoSort(int col, bool asc) {
+void HandlesView::DoSort(int col, bool asc) noexcept {
 	auto compare = [&](auto const& h1, auto const& h2) {
 		switch (static_cast<Column>(col)) {
 			case Column::Address: return SortHelper::Sort(h1->Object, h2->Object, asc);
@@ -340,11 +340,11 @@ void HandlesView::DoSort(int col, bool asc) {
 	m_Handles.Sort(compare, m_Handles.size() > 100000);
 }
 
-void HandlesView::PromptCloseHandle(HandleInfoEx* hi) {
+void HandlesView::PromptCloseHandle(HandleInfoEx* hi) const {
 	m_ModalBox.Init("Close Handle", format("Close Handle 0x{:X}?", hi->HandleValue), MessageBoxButtons::YesNo);
 }
 
-void HandlesView::DoCopy(HandleInfoEx* hi, int c) {
+void HandlesView::DoCopy(HandleInfoEx* hi, int c) const noexcept {
 	string text;
 	switch (static_cast<Column>(c)) {
 		case Column::Handle: text = format("0x{:X}", hi->HandleValue); break;
@@ -363,7 +363,7 @@ void HandlesView::DoCopy(HandleInfoEx* hi, int c) {
 		SetClipboardText(text.c_str());
 }
 
-bool HandlesView::DoContextMenu(HandleInfoEx* h, int c) {
+bool HandlesView::DoContextMenu(HandleInfoEx* h, int c) const noexcept {
 	if (BeginPopupContextItem(format("{}{}", h->HandleValue, h->ProcessId).c_str())) {
 		PushFont(Globals::VarFont());
 		if (MenuItem("Close Handle")) {

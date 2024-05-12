@@ -65,7 +65,7 @@ bool UI::Init() {
     if (s_TpEnviron.Version == 0) {
         if (!s_ThreadPool.Create())
             return false;
-        s_ThreadPool.SetMaxThreads(::GetActiveProcessorCount(ALL_PROCESSOR_GROUPS) * 2);
+        s_ThreadPool.SetMaxThreads(std::min(::GetActiveProcessorCount(ALL_PROCESSOR_GROUPS) * 3, (DWORD)64));
         InitializeThreadpoolEnvironment(&s_TpEnviron);
         ::SetThreadpoolCallbackPool(&s_TpEnviron, s_ThreadPool);
     }

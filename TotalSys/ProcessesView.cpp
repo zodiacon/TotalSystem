@@ -14,7 +14,6 @@
 #include "MainWindow.h"
 
 #pragma comment(lib, "Shlwapi.lib")
-#pragma comment(lib, "imagehlp.lib")
 
 using namespace ImGui;
 using namespace std;
@@ -24,7 +23,7 @@ ProcessesView::ProcessesView() : m_ThreadsView(&m_ProcMgr) {
 	Open(true);
 }
 
-void ProcessesView::BuildWindow() {
+void ProcessesView::Build() noexcept {
 	if (IsOpen()) {
 		PushFont(Globals::VarFont());
 		auto view = GetMainViewport();
@@ -50,18 +49,18 @@ void ProcessesView::BuildWindow() {
 }
 
 
-void ProcessesView::ShowLowerPane(bool show) {
+void ProcessesView::ShowLowerPane(bool show) noexcept {
 	Globals::Settings().ShowLowerPane(show);
 	m_DoSize = true;
 }
 
-bool ProcessesView::ToggleLowerPane() {
+bool ProcessesView::ToggleLowerPane() noexcept {
 	Globals::Settings().ShowLowerPane(!Globals::Settings().ShowLowerPane());
 	m_DoSize = true;
 	return Globals::Settings().ShowLowerPane();
 }
 
-bool ProcessesView::Refresh(bool now) {
+bool ProcessesView::Refresh(bool now) noexcept {
 	if (NeedUpdate() || now || m_UpdateNow) {
 		m_UpdateNow = false;
 		auto& pm = m_ProcMgr;
@@ -146,7 +145,7 @@ bool ProcessesView::Refresh(bool now) {
 	return false;
 }
 
-void ProcessesView::DoSort(int col, bool asc) {
+void ProcessesView::DoSort(int col, bool asc) noexcept {
 	m_Processes.Sort([&](const auto& p1, const auto& p2) {
 		switch (static_cast<Column>(col)) {
 			case Column::ProcessName: return SortHelper::Sort(p1->GetImageName(), p2->GetImageName(), asc);
@@ -195,7 +194,7 @@ void ProcessesView::DoSort(int col, bool asc) {
 }
 
 
-bool ProcessesView::KillProcess(uint32_t id) {
+bool ProcessesView::KillProcess(uint32_t id) noexcept {
 	Process process;
 	if (!process.Open(id, ProcessAccessMask::Terminate))
 		return false;
@@ -203,7 +202,7 @@ bool ProcessesView::KillProcess(uint32_t id) {
 	return process.Terminate();
 }
 
-void ProcessesView::TryKillProcess(ProcessInfo& pi) {
+void ProcessesView::TryKillProcess(ProcessInfo& pi) noexcept {
 	if (m_KillDlg.IsEmpty()) {
 		m_PidsToKill.clear();
 		char text[128];
@@ -213,7 +212,7 @@ void ProcessesView::TryKillProcess(ProcessInfo& pi) {
 	}
 }
 
-void ProcessesView::BuildTable() {
+void ProcessesView::BuildTable() noexcept {
 	auto orgBackColor = GetStyle().Colors[ImGuiCol_TableRowBg];
 	auto& pm = m_ProcMgr;
 
@@ -605,7 +604,7 @@ void ProcessesView::BuildTable() {
 	BuildLowerPane();
 }
 
-void ProcessesView::BuildViewMenu() {
+void ProcessesView::BuildViewMenu() noexcept {
 	if (IsKeyChordPressed(ImGuiKey_L | ImGuiMod_Ctrl)) {
 		ToggleLowerPane();
 	}
@@ -624,7 +623,7 @@ void ProcessesView::BuildViewMenu() {
 	PopFont();
 }
 
-void ProcessesView::BuildProcessMenu(ProcessInfoEx& pi) {
+void ProcessesView::BuildProcessMenu(ProcessInfoEx& pi) noexcept {
 	PushFont(Globals::VarFont());
 	if (pi.Id > 4) {
 		if (MenuItem("Kill", "Delete")) {
@@ -660,7 +659,7 @@ void ProcessesView::BuildProcessMenu(ProcessInfoEx& pi) {
 	PopFont();
 }
 
-void ProcessesView::BuildToolBar() {
+void ProcessesView::BuildToolBar() noexcept {
 	PushFont(Globals::VarFont());
 	if (ImageButton("LowerPane", Globals::ImageManager().GetImage(Globals::Settings().ShowLowerPane() ? IDI_WINDOW : IDI_SPLIT), ImVec2(16, 16))) {
 		ToggleLowerPane();
@@ -726,7 +725,7 @@ void ProcessesView::BuildToolBar() {
 	PopFont();
 }
 
-void ProcessesView::BuildLowerPane() {
+void ProcessesView::BuildLowerPane() noexcept {
 	if (Globals::Settings().ShowLowerPane()) {
 		if (BeginChild("lowerpane", ImVec2(), ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar)) {
 			if (m_SelectedProcess) {

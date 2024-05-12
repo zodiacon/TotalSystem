@@ -5,6 +5,7 @@
 #include "ProcessColor.h"
 #include "TotalSysSettings.h"
 #include <ShellScalingApi.h>
+#include "UI.h"
 
 #pragma comment(lib, "Version.lib")
 
@@ -118,7 +119,7 @@ IntegrityLevel ProcessInfoEx::GetIntegrityLevel() const {
 	if (Id <= 4)
 		return IntegrityLevel::System;
 
-	if(m_Process) {
+	if (m_Process) {
 		return m_Process.GetIntegrityLevel();
 	}
 	return IntegrityLevel::Error;
@@ -178,13 +179,13 @@ bool ProcessInfoEx::AreAllThreadsSuspended() const {
 		if (t->State != ThreadState::Waiting)
 			return false;
 
-		if (t->WaitReason == WaitReason::Suspended || t->WaitReason == WaitReason::WrSuspended)
+		if(static_pointer_cast<ThreadInfoEx>(t)->IsSuspended())
 			++suspended;
 	}
 	//
 	// heuristic that should be good enough for immersive processes
 	//
-	return suspended >= GetThreads().size() / 2;
+	return suspended == GetThreads().size();
 }
 
 wstring ProcessInfoEx::GetVersionObject(const wstring& name) const {
@@ -209,7 +210,7 @@ int ProcessInfoEx::GetBitness() const {
 		static SYSTEM_INFO si = { 0 };
 		if (si.dwNumberOfProcessors == 0)
 			::GetNativeSystemInfo(&si);
-		if(m_Process) {
+		if (m_Process) {
 			if (m_Process.IsWow64Process())
 				m_Bitness = 32;
 			else
@@ -223,13 +224,13 @@ int ProcessInfoEx::GetBitness() const {
 }
 
 int ProcessInfoEx::GetMemoryPriority() const {
-	if(m_Process)
+	if (m_Process)
 		return m_Process.GetMemoryPriority();
 	return -1;
 }
 
 WinLL::IoPriority ProcessInfoEx::GetIoPriority() const {
-	if(m_Process)
+	if (m_Process)
 		return m_Process.GetIoPriority();
 	return IoPriority::Unknown;
 }
@@ -245,4 +246,48 @@ VirtualizationState ProcessInfoEx::GetVirtualizationState() const {
 
 ProcessSymbols const& ProcessInfoEx::GetSymbols() const {
 	return m_Symbols;
+}
+
+std::string ProcessInfoEx::GetAddressSymbol(uint64_t address) const {
+	if (!m_Addresses.contains(address)) {
+		m_Addresses.insert({ address, format("0x{:X}", address) });
+
+		UI::SubmitWorkWithResult([=]() -> string* {
+			auto& symbols = GetSymbols();
+			uint64_t disp, modBase;
+			const SYMBOL_INFO* sym;
+			{
+				lock_guard locker(s_Lock);
+				sym = symbols.GetSymbolFromAddress(address, &disp, &modBase);
+			}
+			if (sym) {
+				auto result = new string();
+				if (disp == 0)
+					*result = sym->Name;
+				else
+					*result = std::format("{}+0x{:X}", sym->Name, disp);
+				*result = GetModuleName(modBase) + "!" + *result;
+				return result;
+			}
+			return nullptr;
+			}, [=](auto result) {
+				if (result) {
+					auto name = (string*)result;
+					m_Addresses[address] = move(*name);
+					delete name;
+				}
+				else {
+					m_Addresses.erase(address);
+				}
+				});
+	}
+	return m_Addresses.at(address);
+}
+
+std::string ProcessInfoEx::GetModuleName(uint64_t baseAddress) const {
+	auto& symbols = GetSymbols();
+	auto name = symbols.GetModuleName(baseAddress);
+	char text[256];
+	sprintf_s(text, "%ws", name.c_str());
+	return text;
 }

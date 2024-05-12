@@ -3,18 +3,6 @@
 
 using namespace ImGui;
 
-bool ViewBase::IsOpen() const {
-	return m_Open;
-}
-
-void ViewBase::Open(bool open) {
-	m_Open = open;
-}
-
-bool* ViewBase::GetOpenAddress() {
-	return &m_Open;
-}
-
 bool ViewBase::IsRunning() const {
 	return m_UpdateInterval > 0;
 }

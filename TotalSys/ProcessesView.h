@@ -13,10 +13,10 @@ struct ImGuiTableSortSpecsColumn;
 class ProcessesView : public ViewBase {
 public:
 	ProcessesView();
-	void BuildWindow();
-	void ShowLowerPane(bool show);
-	bool ToggleLowerPane();
-	bool Refresh(bool now = false);
+	void Build() noexcept override;
+	void ShowLowerPane(bool show) noexcept;
+	bool ToggleLowerPane() noexcept;
+	bool Refresh(bool now = false) noexcept;
 
 private:
 	enum class Column {
@@ -37,15 +37,15 @@ private:
 		float Width{ 0.0f };
 	};
 
-	void DoSort(int col, bool asc);
-	bool KillProcess(uint32_t id);
-	void TryKillProcess(WinLL::ProcessInfo& pi);
+	void DoSort(int col, bool asc) noexcept;
+	bool KillProcess(uint32_t id) noexcept;
+	void TryKillProcess(WinLL::ProcessInfo& pi) noexcept;
 
-	void BuildTable();
-	void BuildViewMenu();
-	void BuildProcessMenu(ProcessInfoEx& pi);
-	void BuildToolBar();
-	void BuildLowerPane();
+	void BuildTable() noexcept;
+	void BuildViewMenu() noexcept;
+	void BuildProcessMenu(ProcessInfoEx& pi) noexcept;
+	void BuildToolBar() noexcept;
+	void BuildLowerPane() noexcept;
 
 	bool BuildPriorityClassMenu(WinLL::ProcessInfo& pi);
 	bool GotoFileLocation(WinLL::ProcessInfo const& pi);

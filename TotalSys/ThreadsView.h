@@ -15,7 +15,7 @@ public:
 	~ThreadsView();
 
 	void BuildThreadMenu();
-	void BuildWindow();
+	void Build() override;
 	void BuildTable(std::shared_ptr<ProcessInfoEx> p);
 	void BuildToolBar();
 	void Clear();
