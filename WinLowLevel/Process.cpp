@@ -82,6 +82,14 @@ namespace WinLL {
 		return ::SetPriorityClass(Handle(), static_cast<DWORD>(pc));
 	}
 
+	bool Process::SetBackgroundMode(bool back) {
+		ULONG memPri = back ? 1 : 5, ioPri = back ? 0 : 2;
+		auto status = NtSetInformationProcess(Handle(), ProcessPagePriority, &memPri, sizeof(memPri));
+		status |= NtSetInformationProcess(Handle(), ProcessIoPriority, &ioPri, sizeof(ioPri));
+		status |= !::SetPriorityClass(Handle(), back ? IDLE_PRIORITY_CLASS : NORMAL_PRIORITY_CLASS);
+		return NT_SUCCESS(status);
+	}
+
 	bool Process::Terminate(int32_t exitCode) {
 		return NT_SUCCESS(NtTerminateProcess(m_hObject.get(), exitCode));
 	}

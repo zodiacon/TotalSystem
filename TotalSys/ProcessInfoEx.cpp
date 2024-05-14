@@ -207,7 +207,7 @@ wstring ProcessInfoEx::GetVersionObject(const wstring& name) const {
 
 int ProcessInfoEx::GetBitness() const {
 	if (m_Bitness == 0) {
-		static SYSTEM_INFO si = { 0 };
+		static SYSTEM_INFO si {};
 		if (si.dwNumberOfProcessors == 0)
 			::GetNativeSystemInfo(&si);
 		if (m_Process) {
@@ -299,4 +299,8 @@ std::wstring const& ProcessInfoEx::GetCommandLine() const {
 			m_CommandLine = L"<N/A>";
 	}
 	return m_CommandLine;
+}
+
+PriorityClass ProcessInfoEx::GetPriorityClass() const {
+	return m_Process.GetPriorityClass();
 }

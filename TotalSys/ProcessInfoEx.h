@@ -45,6 +45,7 @@ public:
 	std::string GetAddressSymbol(uint64_t address) const;
 	[[nodiscard]] std::string GetModuleName(uint64_t baseAddress) const;
 	[[nodiscard]] std::wstring const& GetCommandLine() const;
+	[[nodiscard]] WinLL::PriorityClass GetPriorityClass() const;
 
 private:
 	[[nodiscard]] bool AreAllThreadsSuspended() const;

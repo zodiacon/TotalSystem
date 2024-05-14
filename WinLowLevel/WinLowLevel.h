@@ -545,6 +545,7 @@ namespace WinLL {
 		bool Resume();
 		bool SetPriorityClass(PriorityClass pc);
 		bool Terminate(int32_t exitCode = 0);
+		bool SetBackgroundMode(bool back);
 
 		[[nodiscard]] bool IsImmersive() const noexcept;
 		[[nodiscard]] bool IsProtected() const;
