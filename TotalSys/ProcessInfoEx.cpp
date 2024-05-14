@@ -291,3 +291,12 @@ std::string ProcessInfoEx::GetModuleName(uint64_t baseAddress) const {
 	sprintf_s(text, "%ws", name.c_str());
 	return text;
 }
+
+std::wstring const& ProcessInfoEx::GetCommandLine() const {
+	if (m_CommandLine.empty()) {
+		m_CommandLine = m_Process.GetCommandLine();
+		if (m_CommandLine.empty())
+			m_CommandLine = L"<N/A>";
+	}
+	return m_CommandLine;
+}

@@ -126,11 +126,14 @@ std::vector<STACKFRAME64> ProcessSymbols::EnumThreadStack(uint32_t pid, uint32_t
 		return ::ReadProcessMemory(hProcess, (void*)address, buffer, size, (SIZE_T*)bytes);
 		};
 
-	while (s_StackWalk(IMAGE_FILE_MACHINE_AMD64, p.Handle(), t.Handle(), &frame, &ctx, read,
-		s_SymFunctionTableAccess64, s_SymGetModuleBase64, nullptr)) {
-		if (frame.AddrPC.Offset == 0)
-			break;
-		frames.push_back(frame);
+	{
+		lock_guard locker(s_Lock);
+		while (s_StackWalk(IMAGE_FILE_MACHINE_AMD64, p.Handle(), t.Handle(), &frame, &ctx, read,
+			s_SymFunctionTableAccess64, s_SymGetModuleBase64, nullptr)) {
+			if (frame.AddrPC.Offset == 0)
+				break;
+			frames.push_back(frame);
+		}
 	}
 	t.Resume();
 	return frames;
@@ -138,7 +141,7 @@ std::vector<STACKFRAME64> ProcessSymbols::EnumThreadStack(uint32_t pid, uint32_t
 
 bool ProcessSymbols::LoadModules() const {
 	if (!m_ModulesEnumerated) {
-		lock_guard locker(m_ModulesLock);
+		lock_guard locker(s_Lock);
 		if (!m_ModulesEnumerated) {
 			WinLLX::ProcessModuleTracker<> tracker;
 			if (!tracker.TrackProcess(::GetProcessId(m_hProcess)))

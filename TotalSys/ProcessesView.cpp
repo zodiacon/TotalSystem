@@ -219,7 +219,7 @@ void ProcessesView::BuildTable() noexcept {
 	static const ColumnInfo columns[] = {
 		{ "Name", [this](auto& p) {
 			Image(p->Icon(), ImVec2(16, 16)); SameLine();
-			char name[64];
+			char name[128];
 			PushFont(Globals::VarFont());
 			sprintf_s(name, "%ws##%u %u", p->GetImageName().c_str(), p->Id, p->ParentId);
 			if (Selectable(name, m_SelectedProcess == p, ImGuiSelectableFlags_SpanAllColumns)) {
@@ -485,6 +485,11 @@ void ProcessesView::BuildTable() noexcept {
 			Text("%17ws", FormatHelper::FormatNumber(p->OtherTransferCount).c_str());
 			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide, 130, },
+		{ "Command line", [](auto& p) {
+			PushFont(Globals::VarFont());
+			Text("%ws", p->GetCommandLine().c_str());
+			PopFont();
+			}, ImGuiTableColumnFlags_DefaultHide, 150, },
 
 	};
 

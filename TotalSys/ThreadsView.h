@@ -32,7 +32,7 @@ private:
 	enum class Column {
 		State, Id, ProcessId, ProcessName, WaitReason, CPU, BasePriority, Priority, CPUTime, 
 		CreateTime, KernelTime, UserTime, StartAddress, Win32StartAddress, Teb, StackBase, StackLimit,
-		SuspendCount, Service, ContextSwitches, MemoryPriority, IOPriority, WaitTime,
+		SuspendCount, Service, ContextSwitches, MemoryPriority, IOPriority, WaitTime, Desc,
 	};
 
 	struct ColumnInfo {

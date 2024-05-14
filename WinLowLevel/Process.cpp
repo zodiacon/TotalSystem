@@ -208,5 +208,4 @@ namespace WinLL {
 		::NtQueryInformationProcess(Handle(), ProcessIoPriority, &priority, sizeof(priority), &len);
 		return priority;
 	}
-
 }

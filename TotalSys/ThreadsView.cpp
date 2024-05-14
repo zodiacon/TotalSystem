@@ -238,6 +238,14 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 			TextUnformatted(FormatHelper::FormatTimeSpan(t->WaitTime).c_str());
 			PopFont();
 			}, ImGuiTableColumnFlags_DefaultHide },
+		{ "Description", [](auto& t) {
+			auto desc = t->GetDescription();
+			if (!desc.empty()) {
+				PushFont(Globals::VarFont());
+				Text("%ws", desc.c_str());
+				PopFont();
+			}
+			} },
 	};
 
 	PushFont(Globals::VarFont());
@@ -513,6 +521,7 @@ void ThreadsView::DoSort(int column, bool asc) {
 			case Column::MemoryPriority: return SortHelper::Sort(t1->GetMemoryPriority(), t2->GetMemoryPriority(), asc);
 			case Column::IOPriority: return SortHelper::Sort(t1->GetIoPriority(), t2->GetIoPriority(), asc);
 			case Column::Service: return SortHelper::Sort(t1->GetServiceName(), t2->GetServiceName(), asc);
+			case Column::Desc: return SortHelper::Sort(t1->GetDescription(), t2->GetDescription(), asc);
 			//case Column::ComFlags: return SortHelper::SortNumbers(GetThreadInfoEx(t1.get()).GetComFlags(), GetThreadInfoEx(t2.get()).GetComFlags(), asc);
 			//case Column::ComApartment: return SortHelper::SortStrings(
 			//	FormatHelper::ComApartmentToString(GetThreadInfoEx(t1.get()).GetComFlags()),

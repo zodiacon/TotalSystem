@@ -625,6 +625,8 @@ namespace WinLL {
 		[[nodiscard]] size_t GetSubProcessTag() const;
 		[[nodiscard]] std::wstring GetServiceNameByTag(uint32_t pid);
 		[[nodiscard]] int GetSuspendCount() const;
+		[[nodiscard]] std::wstring GetDescription() const;
+		bool SetDescription(std::wstring const& desc);
 
 		bool Suspend();
 		bool Resume();

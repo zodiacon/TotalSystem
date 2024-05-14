@@ -91,4 +91,13 @@ namespace WinLL {
 		return ::GetProcessIdOfThread(Handle());
 	}
 
+	wstring Thread::GetDescription() const {
+		BYTE buffer[256];
+		if (NT_SUCCESS(NtQueryInformationThread(Handle(), ThreadNameInformation, buffer, sizeof(buffer), nullptr))) {
+			auto name = (PUNICODE_STRING)buffer;
+			return wstring(name->Buffer, name->Length / sizeof(WCHAR));
+		}
+		return L"";
+	}
+
 }

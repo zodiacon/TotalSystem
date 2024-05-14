@@ -56,3 +56,13 @@ bool ThreadInfoEx::IsSuspended() const {
 	Thread t;
 	return t.Open(Id) && t.GetSuspendCount() > 0;
 }
+
+std::wstring const& ThreadInfoEx::GetDescription() const {
+	if (::GetTickCount64() > m_TargetDesc) {
+		m_TargetDesc = ::GetTickCount64() + 1000;
+		Thread t;
+		if (t.Open(Id))
+			m_Desc = t.GetDescription();
+	}
+	return m_Desc;
+}

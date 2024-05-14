@@ -11,6 +11,7 @@ public:
 	ThreadStackWindow(std::shared_ptr<ProcessInfoEx> p, std::shared_ptr<WinLL::ThreadInfo> t, std::vector<STACKFRAME64> const& frames);
 
 	void Build() override;
+	void BuildToolBar();
 
 private:
 	struct StackFrame {

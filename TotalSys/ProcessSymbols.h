@@ -30,7 +30,7 @@ private:
 	mutable std::atomic<bool> m_ModulesEnumerated{ false };
 	mutable std::unordered_map<uint64_t, std::shared_ptr<WinLLX::ModuleInfo>> m_Modules;
 	inline static HMODULE s_hDbgHelp;
-	mutable std::mutex m_ModulesLock;
+	inline static std::mutex s_Lock;
 	inline static decltype(::SymLoadModuleExW)* s_SymLoadModulesEx;
 	inline static decltype(::StackWalk64)* s_StackWalk;
 	inline static decltype(::SymInitialize)* s_SymInitialize;

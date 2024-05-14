@@ -24,13 +24,13 @@ void ThreadStackWindow::Build() {
 		SetNextWindowSizeConstraints(ImVec2(400, 300), ImVec2(FLT_MAX, FLT_MAX));
 		SetNextWindowSize(ImVec2(640, 350), ImGuiCond_FirstUseEver);
 		if (Begin(m_Title.c_str(), GetOpenAddress(), ImGuiWindowFlags_NoSavedSettings)) {
+			BuildToolBar();
 			if (BeginTable("##stack", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit)) {
-				PushFont(Globals::MonoFont());
 				TableSetupScrollFreeze(0, 1);
 
 				TableSetupColumn("#");
 				TableSetupColumn("Address", ImGuiTableColumnFlags_NoResize);
-				TableSetupColumn("Symbol", ImGuiTableColumnFlags_None, 230);
+				TableSetupColumn("Symbol", ImGuiTableColumnFlags_None, 250);
 				TableHeadersRow();
 
 				ImGuiListClipper clipper;
@@ -43,28 +43,43 @@ void ThreadStackWindow::Build() {
 						TableNextRow();
 
 						if (TableSetColumnIndex(0)) {
+							PushFont(Globals::MonoFont());
 							if (Selectable(format("{:3} ", (int)m_Frames.size() - j).c_str(), m_SelectedIndex == j, ImGuiSelectableFlags_SpanAllColumns)) {
 								m_SelectedIndex = j;
 							}
+							PopFont();
 						}
 						if (TableSetColumnIndex(1)) {
+							PushFont(Globals::MonoFont());
 							TextUnformatted(format("0x{:016X}", frame.Address).c_str());
+							PopFont();
 						}
 						if (TableSetColumnIndex(2)) {
 							auto name = m_Process->GetAddressSymbol(frame.Address);
 							if (name[0] == '0')
 								name.clear();
-							TextUnformatted(name.c_str());
+							if (!name.empty()) {
+								PushFont(Globals::VarFont());
+								TextUnformatted(name.c_str());
+								PopFont();
+							}
 						}
 					}
 				}
 
-				PopFont();
 				EndTable();
 			}
 		}
 		End();
 		PopFont();
+	}
+}
+
+void ThreadStackWindow::BuildToolBar() {
+	if (Button("Refresh")) {
+	}
+	SameLine();
+	if (Button("Copy")) {
 	}
 }
 

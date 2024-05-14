@@ -44,6 +44,7 @@ public:
 	[[nodiscard]] ProcessSymbols const& GetSymbols() const;
 	std::string GetAddressSymbol(uint64_t address) const;
 	[[nodiscard]] std::string GetModuleName(uint64_t baseAddress) const;
+	[[nodiscard]] std::wstring const& GetCommandLine() const;
 
 private:
 	[[nodiscard]] bool AreAllThreadsSuspended() const;
@@ -63,5 +64,6 @@ private:
 	ProcessSymbols m_Symbols;
 	mutable std::unordered_map<uint64_t, std::string> m_Addresses;
 	mutable std::mutex s_Lock;
+	mutable std::wstring m_CommandLine;
 };
 

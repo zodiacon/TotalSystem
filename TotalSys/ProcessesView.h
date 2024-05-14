@@ -27,7 +27,7 @@ private:
 		Platform, Description, Company, JobId, MemoryPriority, IoPriority, Virtualization,
 		ReadOperationsCount, WriteOperationsCount, OtherOperationsCount,
 		ReadOperationsBytes, WriteOperationsBytes, OtherOperationsBytes,
-		GdiObjects, PeakGdiObjects, UserObjects, PeakUserObjects,
+		GdiObjects, PeakGdiObjects, UserObjects, PeakUserObjects, CommandLine,
 	};
 
 	struct ColumnInfo {
