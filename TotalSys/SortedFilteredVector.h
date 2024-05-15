@@ -148,6 +148,9 @@ public:
 	}
 
 	void Filter(std::function<bool(const T&, size_t)> predicate, bool append = false) {
+		if (predicate == nullptr && m_Filter == nullptr)
+			return;
+
 		m_Filter = predicate;
 		if (!append) {
 			m_Indices.clear();

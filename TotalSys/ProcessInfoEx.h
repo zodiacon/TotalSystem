@@ -25,7 +25,7 @@ class ProcessInfoEx : public WinLL::ProcessInfo, public TransientObject {
 public:
 	explicit ProcessInfoEx(uint32_t pid);
 	std::pair<const ImVec4, const ImVec4> Colors(DefaultProcessManager& pm) const;
-	ProcessAttributes Attributes(DefaultProcessManager& pm) const;
+	ProcessAttributes Attributes(DefaultProcessManager const& pm) const;
 	bool SuspendResume();
 
 	[[nodiscard]] bool IsSuspended() const;

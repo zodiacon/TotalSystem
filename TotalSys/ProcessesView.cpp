@@ -32,6 +32,7 @@ void ProcessesView::InitColumns() {
 		if (Selectable(format("{}##{} {}", GetColumnText(Column::ProcessName, p.get()), p->Id, p->ParentId).c_str(),
 			m_SelectedProcess == p, ImGuiSelectableFlags_SpanAllColumns)) {
 			m_SelectedProcess = p;
+			m_SelectedIndex = m_CurrentIndex;
 			m_UpdateNow = true;
 		}
 		PopFont();
@@ -227,9 +228,11 @@ void ProcessesView::InitColumns() {
 		}, ImGuiTableColumnFlags_DefaultHide },
 	{ "Protection", [](auto& p) {
 		auto protection = p->GetProtection();
-		PushFont(Globals::VarFont());
-		TextUnformatted(FormatHelper::ProtectionToString(protection).c_str());
-		PopFont();
+		if (protection.Level) {
+			PushFont(Globals::VarFont());
+			TextUnformatted(FormatHelper::ProtectionToString(protection).c_str());
+			PopFont();
+		}
 		}, ImGuiTableColumnFlags_DefaultHide },
 	{ "Platform", [](auto& p) {
 		PushFont(Globals::VarFont());
@@ -253,7 +256,7 @@ void ProcessesView::InitColumns() {
 			PopFont();
 		}
 		}, ImGuiTableColumnFlags_DefaultHide, 60, },
-	{ "Memory Pri", [](auto& p) {
+	{ "Mem Pri", [](auto& p) {
 		auto priority = p->GetMemoryPriority();
 		if (priority >= 0) {
 			PushFont(Globals::MonoFont());
@@ -394,6 +397,8 @@ bool ProcessesView::Refresh(bool now) noexcept {
 			for (auto& pi : pm.GetTerminatedProcesses()) {
 				pi->Term(Globals::Settings().OldObjectsTime() * 1000);
 			}
+			if (!pm.GetNewProcesses().empty() || !pm.GetTerminatedProcesses().empty())
+				m_FilterChanged = true;
 		}
 
 		if (m_FilterChanged) {
@@ -442,7 +447,8 @@ std::string ProcessesView::GetColumnText(Column col, ProcessInfoEx* p) const {
 		case Column::UserName: sprintf_s(output, "%ws", p->GetUserName(true).c_str()); return output;
 		case Column::Session: return format("{}", p->SessionId);
 		case Column::CPU: return format("{:7.2f}  ", p->CPU / 10000.0f);
-		case Column::ParentPid: 
+		case Column::ParentPid:
+		{
 			auto text = Globals::Settings().HexIds() ? format("0x{:X}", p->ParentId) : format("{}", p->ParentId);
 			if (p->ParentId) {
 				auto parent = m_ProcMgr.GetProcessById(p->ParentId);
@@ -452,6 +458,49 @@ std::string ProcessesView::GetColumnText(Column col, ProcessInfoEx* p) const {
 				}
 			}
 			return text;
+		}
+		case Column::Threads: return FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->ThreadCount).c_str());
+		case Column::Handles: return FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->HandleCount).c_str());
+		case Column::PeakThreads: return FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->PeakThreads).c_str());
+		case Column::BasePriority: return format("{}", p->BasePriority);
+		case Column::Commit: FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->PrivatePageCount >> 10).c_str());
+		case Column::PriorityClass: return FormatHelper::PriorityClassToString(p->GetPriorityClass());
+		case Column::CreateTime: return FormatHelper::FormatDateTime(p->CreateTime);
+		case Column::KernelTime: return FormatHelper::FormatTimeSpan(p->KernelTime);
+		case Column::UserTime: return FormatHelper::FormatTimeSpan(p->UserTime);
+		case Column::CPUTime: return FormatHelper::FormatTimeSpan(p->UserTime + p->KernelTime);
+		case Column::VirtualSize: FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->VirtualSize >> 10).c_str());
+		case Column::WorkingSet: FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->WorkingSetSize >> 10).c_str());
+		case Column::PeakWS: FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->PeakWorkingSetSize >> 10).c_str());
+		case Column::Attributes: return ProcessAttributesToString(p->Attributes(m_ProcMgr));
+		case Column::PagedPool: FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->PagedPoolUsage >> 10).c_str());
+		case Column::NonPagedPool: FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->NonPagedPoolUsage >> 10).c_str());
+		case Column::PeakPagedPool: FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->PeakPagedPoolUsage >> 10).c_str());
+		case Column::PeakNonPagedPool: FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->PeakNonPagedPoolUsage >> 10).c_str());
+		case Column::Integrity: return FormatHelper::IntegrityToString(p->GetIntegrityLevel());
+		case Column::PEB:
+		{
+			auto peb = p->GetPeb();
+			if (peb)
+				return format("0x{}", peb);
+			break;
+		}
+		case Column::JobId: return format("{}", p->JobObjectId);
+		case Column::MemoryPriority: return format("{}", p->GetMemoryPriority());
+		case Column::IoPriority: return FormatHelper::IoPriorityToString(p->GetIoPriority());
+		case Column::Virtualization: return FormatHelper::VirtualizationStateToString(p->GetVirtualizationState());
+		case Column::ReadOperationsBytes: return FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->ReadTransferCount).c_str());
+		case Column::WriteOperationsBytes: return FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->WriteTransferCount).c_str());
+		case Column::OtherOperationsBytes: return FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->OtherTransferCount).c_str());
+		case Column::ReadOperationsCount: return FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->ReadOperationCount).c_str());
+		case Column::WriteOperationsCount: return FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->WriteOperationCount).c_str());
+		case Column::OtherOperationsCount: return FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->OtherOperationCount).c_str());
+		case Column::Company: return FormatHelper::UnicodeToUtf8(p->GetCompanyName().c_str());
+		case Column::Description: return FormatHelper::UnicodeToUtf8(p->GetDescription().c_str());
+		case Column::Platform: return format("{}-Bit", p->GetBitness());
+		case Column::Protection: return FormatHelper::ProtectionToString(p->GetProtection());
+		case Column::CommandLine: return FormatHelper::UnicodeToUtf8(p->GetCommandLine().c_str());
+		case Column::ExePath: return FormatHelper::UnicodeToUtf8(p->GetExecutablePath().c_str());
 	}
 	return "";
 }
@@ -579,12 +628,19 @@ void ProcessesView::BuildTable() noexcept {
 			auto count = static_cast<int>(m_Processes.size());
 			ImGuiListClipper clipper;
 			clipper.Begin(count);
-			clipper.IncludeItemByIndex(m_SelectedIndex);
+			float itemHeight = 0;
 			bool pressed = false;
 			while (clipper.Step()) {
+				if (itemHeight <= 0)
+					itemHeight = clipper.ItemsHeight;
+
 				for (int j = clipper.DisplayStart; j < clipper.DisplayEnd; j++) {
+					m_CurrentIndex = j;
 					auto& p = m_Processes[j];
 					TableNextRow();
+
+					if (m_SelectedProcess == p)
+						SetKeyboardFocusHere();
 
 					auto popCount = 0;
 					auto colors = p->Colors(m_ProcMgr);
@@ -594,25 +650,26 @@ void ProcessesView::BuildTable() noexcept {
 						popCount = 1;
 					}
 
-					if (!pressed && j > m_SelectedIndex && IsKeyChordPressed((ImGuiKey)(ImGuiKey_A + toupper(p->GetImageName()[0]) - 'A'))) {
-						m_SelectedIndex = j;
-						m_SelectedProcess = p;
-						m_UpdateNow = true;
-						SetKeyboardFocusHere();
-						pressed = true;
-						OutputDebugString(format(L"Selected index: {}, process: {}\n", m_SelectedIndex, m_SelectedProcess->GetImageName()).c_str());
-					}
-
 					int count = (int)m_Columns.size();
 					for (c = 0; c < count; c++) {
 						if (TableSetColumnIndex(c)) {
 							m_Columns[c].StateFlags = TableGetColumnFlags(c);
 							m_Columns[c].Callback(p);
-							if (!pressed && c == 0 && IsItemFocused()) {
-								m_SelectedProcess = p;
-								m_SelectedIndex = j;
+						}
+
+						if (!pressed && IsItemFocused()) {
+							if (IsKeyPressed(ImGuiKey_DownArrow)) {
+								m_SelectedIndex = j + 1;
+								m_SelectedProcess = m_Processes[m_SelectedIndex];
+								pressed = true;
+							}
+							if (IsKeyPressed(ImGuiKey_UpArrow) && j > 0) {
+								m_SelectedIndex = j - 1;
+								m_SelectedProcess = m_Processes[m_SelectedIndex];
+								pressed = true;
 							}
 						}
+
 					}
 
 					PopStyleColor(popCount);
@@ -620,15 +677,19 @@ void ProcessesView::BuildTable() noexcept {
 				}
 			}
 
-			//for (size_t i = m_SelectedIndex + 1; i < m_Processes.size(); i++) {
-			//	auto& p = m_Processes[i];
-			//	if (IsKeyChordPressed((ImGuiKey)(ImGuiKey_A + toupper(p->GetImageName()[0]) - 'A'))) {
-			//		m_SelectedProcess = p;
-			//		m_SelectedIndex = (int)i;
-			//		break;
-			//	}
-			//}
-
+			if (!pressed && !m_FilterFocused) {
+				for (size_t i = m_SelectedIndex + 1; i < m_Processes.size(); i++) {
+					auto& p = m_Processes[i];
+					if (IsKeyChordPressed((ImGuiKey)(ImGuiKey_A + toupper(p->GetImageName()[0]) - 'A'))) {
+						m_SelectedProcess = p;
+						m_SelectedIndex = (int)i;						
+						if (m_SelectedIndex > 4) 
+							SetScrollY((m_SelectedIndex - 4) * itemHeight);
+						OutputDebugString(format(L"Selected index: {}, process: {}\n", m_SelectedIndex, m_SelectedProcess->GetImageName()).c_str());
+						break;
+					}
+				}
+			}
 			EndTable();
 
 
@@ -723,6 +784,7 @@ void ProcessesView::BuildToolBar() noexcept {
 		ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll)) {
 		m_FilterChanged = true;
 	}
+	m_FilterFocused = IsItemFocused();
 	if (IsItemHovered())
 		SetTooltip("Filter by name/ID");
 

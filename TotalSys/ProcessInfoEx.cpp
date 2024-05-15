@@ -55,7 +55,7 @@ std::pair<const ImVec4, const ImVec4> ProcessInfoEx::Colors(DefaultProcessManage
 	return { ImVec4(-1, 0, 0, 0), ImVec4() };
 }
 
-ProcessAttributes ProcessInfoEx::Attributes(DefaultProcessManager& pm) const {
+ProcessAttributes ProcessInfoEx::Attributes(DefaultProcessManager const& pm) const {
 	if (m_Attributes == ProcessAttributes::NotComputed) {
 		m_Attributes = ProcessAttributes::None;
 		auto parent = pm.GetProcessById(ParentId);
