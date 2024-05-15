@@ -639,9 +639,6 @@ void ProcessesView::BuildTable() noexcept {
 					auto& p = m_Processes[j];
 					TableNextRow();
 
-					if (m_SelectedProcess == p)
-						SetKeyboardFocusHere();
-
 					auto popCount = 0;
 					auto colors = p->Colors(m_ProcMgr);
 					if (colors.first.x >= 0) {
