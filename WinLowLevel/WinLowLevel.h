@@ -12,6 +12,10 @@
 #undef GetCommandLine
 #endif
 
+#ifdef GetCurrentDirectory
+#undef GetCurrentDirectory
+#endif
+
 #include <wil\resource.h>
 #include <span>
 
@@ -540,6 +544,7 @@ namespace WinLL {
 		[[nodiscard]] ProcessProtection GetProtection() const;
 		[[nodiscard]] int GetMemoryPriority() const;
 		[[nodiscard]] IoPriority GetIoPriority() const;
+		[[nodiscard]] std::wstring GetCurrentDirectory() const;
 
 		bool Suspend();
 		bool Resume();
@@ -555,6 +560,7 @@ namespace WinLL {
 		[[nodiscard]] bool IsManaged() const;
 
 	private:
+		static bool GetProcessPeb(HANDLE hProcess, PPEB peb);
 		bool GetExtendedInfo(PROCESS_EXTENDED_BASIC_INFORMATION* info) const;
 	};
 

@@ -32,6 +32,7 @@ private:
 	};
 
 	struct ColumnInfo {
+		Column Type;
 		PCSTR Header;
 		std::function<void(std::shared_ptr<ProcessInfoEx>& pi)> Callback{ };
 		ImGuiTableColumnFlags Flags{ ImGuiTableColumnFlags_None };

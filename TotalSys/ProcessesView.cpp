@@ -26,7 +26,7 @@ ProcessesView::ProcessesView() : m_ThreadsView(&m_ProcMgr) {
 
 void ProcessesView::InitColumns() {
 	static const ColumnInfo columns[]{
-	{ "Name", [this](auto& p) {
+	{ Column::ProcessName, "Name", [this](auto& p) {
 		Image(p->Icon(), ImVec2(16, 16)); SameLine();
 		PushFont(Globals::VarFont());
 		if (Selectable(format("{}##{} {}", GetColumnText(Column::ProcessName, p.get()), p->Id, p->ParentId).c_str(),
@@ -60,12 +60,12 @@ void ProcessesView::InitColumns() {
 			}
 		}
 		}, ImGuiTableColumnFlags_NoHide | ImGuiTableColumnFlags_NoReorder },
-	{ "PID", [&](auto& p) {
+	{ Column::Pid, "PID", [&](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%9s", GetColumnText(Column::Pid, p.get()).c_str());
 		PopFont();
 		}, 0, 120.0f },
-	{ "User Name", [&](auto p) {
+	{ Column::UserName, "User Name", [&](auto p) {
 		PushFont(Globals::VarFont());
 		auto username = GetColumnText(Column::UserName, p.get());
 		if (username.empty())
@@ -74,12 +74,12 @@ void ProcessesView::InitColumns() {
 			TextUnformatted(username.c_str());
 		PopFont();
 		}, 0, 110.0f },
-	{ "Session", [](auto p) {
+	{ Column::Session, "Session", [](auto p) {
 		PushFont(Globals::MonoFont());
 		Text("%4u", p->SessionId);
 		PopFont();
 		}, ImGuiTableColumnFlags_NoResize, 50.0f },
-	{ "CPU %", [&](auto p) {
+	{ Column::CPU, "CPU %", [&](auto p) {
 		if (p->CPU > 0 && !p->IsTerminated()) {
 			auto orgBackColor = GetStyle().Colors[ImGuiCol_TableRowBg];
 
@@ -104,7 +104,7 @@ void ProcessesView::InitColumns() {
 			PopFont();
 		}
 	}, 0, 70 },
-	{ "Parent", [&](auto p) {
+	{ Column::ParentPid, "Parent", [&](auto p) {
 		if (p->ParentId > 0) {
 			PushFont(Globals::MonoFont());
 			Text("%7s", (Globals::Settings().HexIds() ? format("0x{:X}", p->ParentId) : format("{}", p->ParentId)).c_str());
@@ -118,107 +118,107 @@ void ProcessesView::InitColumns() {
 			}
 		}
 	}, 0, 140.0f },
-	{ "Create Time", [](auto& p) {
+	{ Column::CreateTime, "Create Time", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text(FormatHelper::FormatDateTime(p->CreateTime).c_str());
 		PopFont();
 		},ImGuiTableColumnFlags_NoResize },
-	{ "Private Bytes", [](auto& p) {
+	{ Column::Commit, "Private Bytes", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%12ws K", FormatHelper::FormatNumber(p->PrivatePageCount >> 10).c_str());
 		PopFont();
 		}, },
-	{ "Pri", [](auto& p) {
+	{ Column::BasePriority, "Pri", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%4d", p->BasePriority);
 		PopFont();
 		}, },
-	{ "Pri Class", [](auto& p) {
+	{ Column::PriorityClass, "Pri Class", [](auto& p) {
 		PushFont(Globals::VarFont());
 		TextUnformatted(FormatHelper::PriorityClassToString(p->GetPriorityClass()));
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide },
-	{ "Threads", [](auto& p) {
+	{ Column::Threads, "Threads", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%6ws", FormatHelper::FormatNumber(p->ThreadCount).c_str());
 		PopFont();
 		}, },
-	{ "Handles", [](auto& p) {
+	{ Column::Handles, "Handles", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%8ws", FormatHelper::FormatNumber(p->HandleCount).c_str());
 		PopFont();
 		}, },
-	{ "Working Set", [](auto& p) {
+	{ Column::WorkingSet, "Working Set", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%12ws K", FormatHelper::FormatNumber(p->WorkingSetSize >> 10).c_str());
 		PopFont();
 		}, },
-	{ "Executable Path", [](auto& p) {
+	{ Column::ExePath, "Executable Path", [](auto& p) {
 		PushFont(Globals::VarFont());
 		Text("%ws", p->GetExecutablePath().c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide, 150.0f },
-	{ "CPU Time", [](auto& p) {
+	{ Column::CPUTime, "CPU Time", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		TextUnformatted(FormatHelper::FormatTimeSpan(p->UserTime + p->KernelTime).c_str());
 		PopFont();
 		}, },
-	{ "Peak Thr", [](auto& p) {
+	{ Column::PeakThreads, "Peak Thr", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%7ws", FormatHelper::FormatNumber(p->PeakThreads).c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide },
-	{ "Virtual Size", [](auto& p) {
+	{ Column::VirtualSize, "Virtual Size", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%14ws K", FormatHelper::FormatNumber(p->VirtualSize >> 10).c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide },
-	{ "Peak WS", [](auto& p) {
+	{ Column::PeakWS, "Peak WS", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%12ws K", FormatHelper::FormatNumber(p->PeakWorkingSetSize >> 10).c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide },
-	{ "Attributes", [this](auto& p) {
+	{ Column::Attributes, "Attributes", [this](auto& p) {
 		PushFont(Globals::MonoFont());
 		TextUnformatted(ProcessAttributesToString(p->Attributes(m_ProcMgr)).c_str());
 		PopFont();
 		}, },
-	{ "Paged Pool", [](auto& p) {
+	{ Column::PagedPool, "Paged Pool", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%9ws K", FormatHelper::FormatNumber(p->PagedPoolUsage >> 10).c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide },
-	{ "NP Pool", [](auto& p) {
+	{ Column::NonPagedPool, "NP Pool", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%9ws K", FormatHelper::FormatNumber(p->NonPagedPoolUsage >> 10).c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide },
-	{ "kernel Time", [](auto& p) {
+	{ Column::KernelTime, "kernel Time", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		TextUnformatted(FormatHelper::FormatTimeSpan(p->KernelTime).c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide },
-	{ "User Time", [](auto& p) {
+	{ Column::UserTime, "User Time", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		TextUnformatted(FormatHelper::FormatTimeSpan(p->UserTime).c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide },
-	{ "Peak Paged", [](auto& p) {
+	{ Column::PeakPagedPool, "Peak Paged", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%9ws K", FormatHelper::FormatNumber(p->PeakPagedPoolUsage >> 10).c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide },
-	{ "Peak Non-Paged", [](auto& p) {
+	{ Column::PeakNonPagedPool, "Peak Non-Paged", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%9ws K", FormatHelper::FormatNumber(p->PeakNonPagedPoolUsage >> 10).c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide },
-	{ "Integrity", [](auto& p) {
+	{ Column::Integrity, "Integrity", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		TextUnformatted(FormatHelper::IntegrityToString(p->GetIntegrityLevel()));
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide },
-	{ "PEB", [](auto& p) {
+	{ Column::PEB, "PEB", [](auto& p) {
 		auto peb = p->GetPeb();
 		if (peb) {
 			PushFont(Globals::MonoFont());
@@ -226,7 +226,7 @@ void ProcessesView::InitColumns() {
 			PopFont();
 		}
 		}, ImGuiTableColumnFlags_DefaultHide },
-	{ "Protection", [](auto& p) {
+	{ Column::Protection, "Protection", [](auto& p) {
 		auto protection = p->GetProtection();
 		if (protection.Level) {
 			PushFont(Globals::VarFont());
@@ -234,29 +234,29 @@ void ProcessesView::InitColumns() {
 			PopFont();
 		}
 		}, ImGuiTableColumnFlags_DefaultHide },
-	{ "Platform", [](auto& p) {
+	{ Column::Platform, "Platform", [](auto& p) {
 		PushFont(Globals::VarFont());
-		Text("%d-Bit", p->GetBitness());
+		Text(" %d-Bit", p->GetBitness());
 		PopFont();
-		}, 0 },
-	{ "Description", [](auto& p) {
+		}, ImGuiTableColumnFlags_NoResize },
+	{ Column::Description, "Description", [](auto& p) {
 		PushFont(Globals::VarFont());
 		Text("%ws", p->GetDescription().c_str());
 		PopFont();
 		}, 0, 150, },
-	{ "Company Name", [](auto& p) {
+	{ Column::Company, "Company Name", [](auto& p) {
 		PushFont(Globals::VarFont());
 		Text("%ws", p->GetCompanyName().c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide, 150, },
-	{ "Job ID", [](auto& p) {
+	{ Column::JobId, "Job ID", [](auto& p) {
 		if (p->JobObjectId) {
 			PushFont(Globals::MonoFont());
 			Text("%4u", p->JobObjectId);
 			PopFont();
 		}
 		}, ImGuiTableColumnFlags_DefaultHide, 60, },
-	{ "Mem Pri", [](auto& p) {
+	{ Column::MemoryPriority, "Mem Pri", [](auto& p) {
 		auto priority = p->GetMemoryPriority();
 		if (priority >= 0) {
 			PushFont(Globals::MonoFont());
@@ -264,47 +264,47 @@ void ProcessesView::InitColumns() {
 			PopFont();
 		}
 		}, ImGuiTableColumnFlags_DefaultHide, 60, },
-	{ "I/O Pri", [](auto& p) {
+	{ Column::IoPriority, "I/O Pri", [](auto& p) {
 		PushFont(Globals::VarFont());
 		TextUnformatted(FormatHelper::IoPriorityToString(p->GetIoPriority()));
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide, 70, },
-	{ "Virtualization", [](auto& p) {
+	{ Column::Virtualization, "Virtualization", [](auto& p) {
 		PushFont(Globals::VarFont());
 		TextUnformatted(FormatHelper::VirtualizationStateToString(p->GetVirtualizationState()));
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide, 70, },
-	{ "Read Op Count", [](auto& p) {
+	{ Column::ReadOperationsBytes, "Read Op Count", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%12ws", FormatHelper::FormatNumber(p->ReadOperationCount).c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide, 100, },
-	{ "Write Op Count", [](auto& p) {
+	{ Column::WriteOperationsCount, "Write Op Count", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%12ws", FormatHelper::FormatNumber(p->WriteOperationCount).c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide, 100, },
-	{ "Other Op Count", [](auto& p) {
+	{ Column::OtherOperationsCount, "Other Op Count", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%12ws", FormatHelper::FormatNumber(p->OtherOperationCount).c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide, 100, },
-	{ "Read Bytes", [](auto& p) {
+	{ Column::ReadOperationsBytes, "Read Bytes", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%17ws", FormatHelper::FormatNumber(p->ReadTransferCount).c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide, 130, },
-	{ "Write Bytes", [](auto& p) {
+	{ Column::WriteOperationsBytes, "Write Bytes", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%17ws", FormatHelper::FormatNumber(p->WriteTransferCount).c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide, 130, },
-	{ "Other Bytes", [](auto& p) {
+	{ Column::OtherOperationsBytes, "Other Bytes", [](auto& p) {
 		PushFont(Globals::MonoFont());
 		Text("%17ws", FormatHelper::FormatNumber(p->OtherTransferCount).c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide, 130, },
-	{ "Command line", [](auto& p) {
+	{ Column::CommandLine, "Command line", [](auto& p) {
 		PushFont(Globals::VarFont());
 		Text("%ws", p->GetCommandLine().c_str());
 		PopFont();
@@ -446,7 +446,7 @@ std::string ProcessesView::GetColumnText(Column col, ProcessInfoEx* p) const {
 		case Column::Pid: return Globals::Settings().HexIds() ? format("0x{:X}", p->Id) : format("{}", p->Id);
 		case Column::UserName: sprintf_s(output, "%ws", p->GetUserName(true).c_str()); return output;
 		case Column::Session: return format("{}", p->SessionId);
-		case Column::CPU: return format("{:7.2f}  ", p->CPU / 10000.0f);
+		case Column::CPU: return format("{:.2f}  ", p->CPU / 10000.0f);
 		case Column::ParentPid:
 		{
 			auto text = Globals::Settings().HexIds() ? format("0x{:X}", p->ParentId) : format("{}", p->ParentId);
@@ -630,6 +630,7 @@ void ProcessesView::BuildTable() noexcept {
 			clipper.Begin(count);
 			float itemHeight = 0;
 			bool pressed = false;
+			int focused = 0;
 			while (clipper.Step()) {
 				if (itemHeight <= 0)
 					itemHeight = clipper.ItemsHeight;
@@ -649,11 +650,13 @@ void ProcessesView::BuildTable() noexcept {
 
 					int count = (int)m_Columns.size();
 					for (c = 0; c < count; c++) {
+						m_Columns[c].StateFlags = TableGetColumnFlags(c);
 						if (TableSetColumnIndex(c)) {
-							m_Columns[c].StateFlags = TableGetColumnFlags(c);
 							m_Columns[c].Callback(p);
 						}
 
+						if (IsItemFocused())
+							focused++;
 						if (!pressed && IsItemFocused()) {
 							if (IsKeyPressed(ImGuiKey_DownArrow)) {
 								m_SelectedIndex = j + 1;
@@ -674,15 +677,15 @@ void ProcessesView::BuildTable() noexcept {
 				}
 			}
 
-			if (!pressed && !m_FilterFocused) {
-				for (size_t i = m_SelectedIndex + 1; i < m_Processes.size(); i++) {
-					auto& p = m_Processes[i];
+			if (!pressed && focused > 0 && !m_FilterFocused) {
+				auto size = (int)m_Processes.size();
+				for (int i = m_SelectedIndex + 1; i < size + m_SelectedIndex; i++) {
+					auto& p = m_Processes[i % size];
 					if (IsKeyChordPressed((ImGuiKey)(ImGuiKey_A + toupper(p->GetImageName()[0]) - 'A'))) {
 						m_SelectedProcess = p;
-						m_SelectedIndex = (int)i;						
-						if (m_SelectedIndex > 4) 
+						m_SelectedIndex = i % size;
+						if (m_SelectedIndex > 4)
 							SetScrollY((m_SelectedIndex - 4) * itemHeight);
-						OutputDebugString(format(L"Selected index: {}, process: {}\n", m_SelectedIndex, m_SelectedProcess->GetImageName()).c_str());
 						break;
 					}
 				}
@@ -699,7 +702,9 @@ void ProcessesView::BuildTable() noexcept {
 	}
 	EndChild();
 
-	BuildLowerPane();
+	if (Globals::Settings().ShowLowerPane()) {
+		BuildLowerPane();
+	}
 }
 
 void ProcessesView::BuildViewMenu() noexcept {
@@ -797,8 +802,12 @@ void ProcessesView::BuildToolBar() noexcept {
 		m_ThreadsView.SetUpdateInterval(GetUpdateInterval());
 
 	SameLine();
-	if (ButtonEnabled("Copy", m_SelectedProcess != nullptr)) {
-		// copy entire row
+	if (ButtonEnabled("Copy", m_SelectedProcess != nullptr) || IsKeyChordPressed(ImGuiKey_C | ImGuiMod_Ctrl)) {
+		std::string text;
+		for (auto& c : m_Columns)
+			if (c.StateFlags & ImGuiTableColumnFlags_IsEnabled)
+				text += GetColumnText(c.Type, m_SelectedProcess.get()) + ",";
+		SetClipboardText(text.substr(0, text.length() - 1).c_str());
 
 	}
 	SameLine();
@@ -831,50 +840,76 @@ void ProcessesView::BuildToolBar() noexcept {
 }
 
 void ProcessesView::BuildLowerPane() noexcept {
-	if (Globals::Settings().ShowLowerPane()) {
-		if (BeginChild("lowerpane", ImVec2(), ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar)) {
-			if (m_SelectedProcess) {
-				PushFont(Globals::VarFont());
-				if (BeginTabBar("lowertabs", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_Reorderable)) {
-					SameLine(500);
-					Text("PID: %u (%ws)", m_SelectedProcess->Id, m_SelectedProcess->GetImageName().c_str()); SameLine();
-				}
-				if (m_ThreadsActive = BeginTabItem("Threads", nullptr, ImGuiTabItemFlags_None)) {
-					m_ThreadsView.BuildToolBar();
-					m_ThreadsView.BuildTable(m_SelectedProcess);
-					EndTabItem();
-				}
-				if (m_ModulesActive = BeginTabItem("Modules", nullptr, ImGuiTabItemFlags_None)) {
-					m_ModulesView.Track(m_SelectedProcess->Id);
-					m_ModulesView.BuildTable();
-					EndTabItem();
-				}
-				if (m_HandlesActive = BeginTabItem("Handles", nullptr, ImGuiTabItemFlags_None)) {
-					m_HandlesView.Track(m_SelectedProcess->Id);
-					m_HandlesView.BuildToolBar();
-					m_HandlesView.BuildTable();
-					EndTabItem();
-				}
-				if ((m_SelectedProcess->Attributes(m_ProcMgr) & ProcessAttributes::InJob) == ProcessAttributes::InJob) {
-					if (BeginTabItem("Job", nullptr, ImGuiTabItemFlags_None)) {
-						EndTabItem();
-					}
-				}
-				if (BeginTabItem("Token")) {
-					EndTabItem();
-				}
-				if (BeginTabItem("Memory", nullptr, ImGuiTabItemFlags_None)) {
-					EndTabItem();
-				}
-				if (BeginTabItem("Environment", nullptr, ImGuiTabItemFlags_None)) {
-					EndTabItem();
-				}
-				EndTabBar();
-				PopFont();
+	if (BeginChild("lowerpane", ImVec2(), ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar)) {
+		if (m_SelectedProcess) {
+			PushFont(Globals::VarFont());
+			if (BeginTabBar("lowertabs", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_Reorderable)) {
+				SameLine(550);
+				Text("PID: %u (%ws)", m_SelectedProcess->Id, m_SelectedProcess->GetImageName().c_str()); SameLine();
 			}
+			if (BeginTabItem("General")) {
+				Image(m_SelectedProcess->Icon(), ImVec2(32, 32)); SameLine();
+				float align = 110;
+				auto name = GetColumnText(Column::ProcessName, m_SelectedProcess.get());
+				InputTextReadonly("Image", name);
+				auto pid = GetColumnText(Column::Pid, m_SelectedProcess.get());
+				SameLine(0, 40); InputTextReadonly("PID", pid);
+				auto parent = GetColumnText(Column::ParentPid, m_SelectedProcess.get());
+				SameLine(0, 40); InputTextReadonly("Parent", parent);
+				SameLine(0, 40); if (Button("Kill", ImVec2(50, 0))) {
+					TryKillProcess(*m_SelectedProcess);
+				}
+				SameLine(); if (Button(m_SelectedProcess->IsSuspended() ? "Resume###SR" : "Suspend###SR")) {
+					m_SelectedProcess->SuspendResume();
+				}
+				Spacing();
+				auto path = FormatHelper::UnicodeToUtf8(m_SelectedProcess->GetExecutablePath().c_str());
+				InputTextReadonly("Path", path);
+				auto cmdline = FormatHelper::UnicodeToUtf8(m_SelectedProcess->GetCommandLine().c_str());
+				InputTextReadonly("Command Line", cmdline);
+				auto dir = FormatHelper::UnicodeToUtf8(m_SelectedProcess->GetCurrentDirectory().c_str());
+				InputTextReadonly("Current Directory", dir);
+				auto user = GetColumnText(Column::UserName, m_SelectedProcess.get());
+				InputTextReadonly("User", user);
+				Text("Created: %s", GetColumnText(Column::CreateTime, m_SelectedProcess.get()).c_str());
+				SameLine(0, 30); Text("CPU Time: %s", GetColumnText(Column::CPUTime, m_SelectedProcess.get()).c_str());
+				EndTabItem();
+			}
+			if (m_ThreadsActive = BeginTabItem("Threads", nullptr, ImGuiTabItemFlags_None)) {
+				m_ThreadsView.BuildToolBar();
+				m_ThreadsView.BuildTable(m_SelectedProcess);
+				EndTabItem();
+			}
+			if (m_ModulesActive = BeginTabItem("Modules", nullptr, ImGuiTabItemFlags_None)) {
+				m_ModulesView.Track(m_SelectedProcess->Id);
+				m_ModulesView.BuildTable();
+				EndTabItem();
+			}
+			if (m_HandlesActive = BeginTabItem("Handles", nullptr, ImGuiTabItemFlags_None)) {
+				m_HandlesView.Track(m_SelectedProcess->Id);
+				m_HandlesView.BuildToolBar();
+				m_HandlesView.BuildTable();
+				EndTabItem();
+			}
+			if ((m_SelectedProcess->Attributes(m_ProcMgr) & ProcessAttributes::InJob) == ProcessAttributes::InJob) {
+				if (BeginTabItem("Job", nullptr, ImGuiTabItemFlags_None)) {
+					EndTabItem();
+				}
+			}
+			if (BeginTabItem("Token")) {
+				EndTabItem();
+			}
+			if (BeginTabItem("Memory", nullptr, ImGuiTabItemFlags_None)) {
+				EndTabItem();
+			}
+			if (BeginTabItem("Environment", nullptr, ImGuiTabItemFlags_None)) {
+				EndTabItem();
+			}
+			EndTabBar();
+			PopFont();
 		}
-		EndChild();
 	}
+	EndChild();
 }
 
 bool ProcessesView::BuildPriorityClassMenu(ProcessInfo& pi) {

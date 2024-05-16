@@ -137,7 +137,7 @@ void HandlesView::BuildTable() noexcept {
 			PushFont(Globals::VarFont());
 			TextUnformatted(ObjectHelper::GetObjectDetails(h.get(), GetObjectType(h.get()), &m_ProcMgr).c_str());
 			PopFont();
-		}, 0, 250 },
+		}, ImGuiTableColumnFlags_NoSort, 250 },
 
 	};
 
@@ -261,7 +261,6 @@ void HandlesView::BuildToolBar() noexcept {
 
 bool HandlesView::Refresh(uint32_t pid, bool now) noexcept {
 	if (!m_Updating && (NeedUpdate() || now || m_UpdateNow)) {
-		m_FilterChanged = true;
 		m_UpdateNow = false;
 		if (pid == 0)
 			m_ProcMgr.Update();

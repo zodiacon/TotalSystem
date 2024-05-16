@@ -46,6 +46,7 @@ public:
 	[[nodiscard]] std::string GetModuleName(uint64_t baseAddress) const;
 	[[nodiscard]] std::wstring const& GetCommandLine() const;
 	[[nodiscard]] WinLL::PriorityClass GetPriorityClass() const;
+	[[nodiscard]] std::wstring GetCurrentDirectory() const;
 
 private:
 	[[nodiscard]] bool AreAllThreadsSuspended() const;
@@ -58,7 +59,7 @@ private:
 	mutable ProcessAttributes m_Attributes = ProcessAttributes::NotComputed;
 	mutable std::wstring m_UserName, m_Description, m_Company;
 	mutable PVOID m_Peb{ nullptr };
-	WinLL::Process m_Process;
+	mutable WinLL::Process m_Process;
 	mutable int m_Bitness{ 0 };
 	mutable	bool m_Suspended : 1 { false };
 	mutable bool m_CompanyChecked{ false }, m_DescChecked{ false };

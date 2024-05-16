@@ -216,4 +216,30 @@ namespace WinLL {
 		::NtQueryInformationProcess(Handle(), ProcessIoPriority, &priority, sizeof(priority), &len);
 		return priority;
 	}
+
+	bool Process::GetProcessPeb(HANDLE hProcess, PPEB peb) {
+		PROCESS_BASIC_INFORMATION info;
+		if (!NT_SUCCESS(NtQueryInformationProcess(hProcess, ProcessBasicInformation, &info, sizeof(info), nullptr)))
+			return false;
+
+		return ::ReadProcessMemory(hProcess, info.PebBaseAddress, peb, sizeof(*peb), nullptr);
+	}
+
+	std::wstring Process::GetCurrentDirectory() const {
+		std::wstring path;
+		PEB peb;
+		if(!GetProcessPeb(Handle(), &peb))
+			return path;
+
+		RTL_USER_PROCESS_PARAMETERS processParams;
+		if (!::ReadProcessMemory(Handle(), peb.ProcessParameters, &processParams, sizeof(processParams), nullptr))
+			return path;
+
+		path.resize(processParams.CurrentDirectory.DosPath.Length / sizeof(WCHAR) + 1);
+		if (!::ReadProcessMemory(Handle(), processParams.CurrentDirectory.DosPath.Buffer, path.data(), processParams.CurrentDirectory.DosPath.Length, nullptr))
+			return L"";
+
+		return path;
+	}
+
 }

@@ -304,3 +304,20 @@ std::wstring const& ProcessInfoEx::GetCommandLine() const {
 PriorityClass ProcessInfoEx::GetPriorityClass() const {
 	return m_Process.GetPriorityClass();
 }
+
+std::wstring ProcessInfoEx::GetCurrentDirectory() const {
+	if (!m_Process)
+		return L"";
+
+	auto dir = m_Process.GetCurrentDirectory();
+	if (::GetLastError() == ERROR_ACCESS_DENIED) {
+		Process p;
+		if (!p.Open(Id, ProcessAccessMask::VmRead | ProcessAccessMask::QueryLimitedInformation))
+			return L"";
+
+		dir = p.GetCurrentDirectory();
+		m_Process.Attach(p.Detach());
+	}
+
+	return dir;
+}
