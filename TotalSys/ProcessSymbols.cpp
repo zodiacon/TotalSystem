@@ -5,8 +5,11 @@
 #include "FormatHelper.h"
 #include <KnownFolders.h>
 #include <assert.h>
+#include <utility>
+#include "DriverHelper.h"
 
 using namespace WinLL;
+using namespace std;
 
 bool ProcessSymbols::Load(HANDLE hProcess) {
 	assert(hProcess);
@@ -32,7 +35,7 @@ ProcessSymbols::operator bool() const {
 bool ProcessSymbols::Init() {
 	if (s_hDbgHelp) {
 		::FreeLibrary(s_hDbgHelp);
-		s_SymLoadModulesEx = nullptr;
+		s_SymLoadModuleEx = nullptr;
 	}
 
 	//
@@ -48,7 +51,7 @@ bool ProcessSymbols::Init() {
 	if (!s_hDbgHelp)
 		s_hDbgHelp = ::LoadLibraryW(L"Dbghelp.Dll");
 	if (s_hDbgHelp) {
-		s_SymLoadModulesEx = (decltype(s_SymLoadModulesEx))::GetProcAddress(s_hDbgHelp, "SymLoadModuleExW");
+		s_SymLoadModuleEx = (decltype(s_SymLoadModuleEx))::GetProcAddress(s_hDbgHelp, "SymLoadModuleExW");
 		s_StackWalk = (decltype(s_StackWalk))::GetProcAddress(s_hDbgHelp, "StackWalk64");
 		assert(s_StackWalk);
 		s_SymInitialize = (decltype(s_SymInitialize))::GetProcAddress(s_hDbgHelp, "SymInitialize");
@@ -59,7 +62,7 @@ bool ProcessSymbols::Init() {
 		s_SymSetOptions = (decltype(s_SymSetOptions))::GetProcAddress(s_hDbgHelp, "SymSetOptions");
 		s_SymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_UNDNAME);
 	}
-	return s_SymLoadModulesEx != nullptr;
+	return s_SymLoadModuleEx != nullptr;
 }
 
 ProcessSymbols::~ProcessSymbols() {
@@ -94,11 +97,17 @@ std::wstring const& ProcessSymbols::GetModuleName(uint64_t baseAddress) const {
 
 std::vector<STACKFRAME64> ProcessSymbols::EnumThreadStack(uint32_t pid, uint32_t tid) const {
 	Thread t;
-	if (!t.Open(tid, ThreadAccessMask::GetContext | ThreadAccessMask::QueryInformation | ThreadAccessMask::SuspendResume))
+	auto access = ThreadAccessMask::GetContext | ThreadAccessMask::QueryInformation | ThreadAccessMask::SuspendResume;
+	if (!t.Open(tid, access)) {
+		t.Attach(DriverHelper::OpenThread(tid, access));
+	}
+	if(!t)
 		return {};
 
 	Process p;
 	if (!p.Open(pid, ProcessAccessMask::VmRead | ProcessAccessMask::QueryInformation))
+		p.Attach(DriverHelper::OpenProcess(pid, ProcessAccessMask::VmRead | ProcessAccessMask::QueryInformation));
+	if(!p)
 		return {};
 
 	assert(t.GetProcessId() == pid);
@@ -128,7 +137,7 @@ std::vector<STACKFRAME64> ProcessSymbols::EnumThreadStack(uint32_t pid, uint32_t
 
 	{
 		lock_guard locker(s_Lock);
-		while (s_StackWalk(IMAGE_FILE_MACHINE_AMD64, p.Handle(), t.Handle(), &frame, &ctx, read,
+		while (s_StackWalk(IMAGE_FILE_MACHINE_AMD64, p.Handle(), t.Handle(), &frame, &ctx, nullptr,
 			s_SymFunctionTableAccess64, s_SymGetModuleBase64, nullptr)) {
 			if (frame.AddrPC.Offset == 0)
 				break;
@@ -143,19 +152,46 @@ bool ProcessSymbols::LoadModules() const {
 	if (!m_ModulesEnumerated) {
 		lock_guard locker(s_Lock);
 		if (!m_ModulesEnumerated) {
+			LoadKernelModules();
 			WinLLX::ProcessModuleTracker<> tracker;
 			if (!tracker.TrackProcess(::GetProcessId(m_hProcess)))
-				return false;
+				return true;
 
 			m_ModulesEnumerated = true;
 			tracker.Update();
 			for (auto& m : tracker.GetModules()) {
 				if (!m->Path.empty() && m->Type == WinLLX::MapType::Image) {
-					s_SymLoadModulesEx(m_hProcess, nullptr, m->Path.c_str(), m->Name.c_str(), (DWORD64)m->Base, m->ModuleSize, nullptr, 0);
+					s_SymLoadModuleEx(m_hProcess, nullptr, m->Path.c_str(), m->Name.c_str(), (DWORD64)m->Base, m->ModuleSize, nullptr, 0);
 					m_Modules.insert({ (uint64_t)m->Base, m });
 				}
 			}
 		}
 	}
 	return true;
+}
+
+bool ProcessSymbols::LoadKernelModules() const {
+	auto size = 1 << 20;
+	auto buffer = std::make_unique<BYTE[]>(size);
+	if (0 != ::NtQuerySystemInformation(SystemModuleInformation, buffer.get(), size, nullptr))
+		return false;
+
+	auto p = (RTL_PROCESS_MODULES*)buffer.get();
+	WCHAR name[32];
+	auto dir = SystemInformation::GetSystemDir();
+	auto count = p->NumberOfModules;
+	DWORD64 address = 0;
+	for (ULONG i = 0; i < min(count, ULONG(3)); i++) {
+		auto& module = p->Modules[i];
+		auto m = make_shared<WinLLX::ModuleInfo>();
+		m->Base = module.ImageBase;
+		m->ModuleSize = module.ImageSize;
+		::GetDeviceDriverBaseName(m->Base, name, _countof(name));
+		m->Path = dir + L"\\" + name;
+		if(address = s_SymLoadModuleEx(m_hProcess, nullptr, m->Path.c_str(), m->Name.c_str(), (DWORD64)m->Base, m->ModuleSize, nullptr, 0)) {
+			assert(address == (DWORD64)m->Base);
+			m_Modules.insert({ address, move(m) });
+		}
+	}
+	return false;
 }

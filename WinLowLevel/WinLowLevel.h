@@ -545,6 +545,8 @@ namespace WinLL {
 		[[nodiscard]] int GetMemoryPriority() const;
 		[[nodiscard]] IoPriority GetIoPriority() const;
 		[[nodiscard]] std::wstring GetCurrentDirectory() const;
+		uint64_t GetCycleCount() const;
+		[[nodiscard]] std::vector<std::pair<std::wstring, std::wstring>> GetEnvironment() const;
 
 		bool Suspend();
 		bool Resume();

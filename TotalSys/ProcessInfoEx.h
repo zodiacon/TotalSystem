@@ -28,6 +28,8 @@ public:
 	ProcessAttributes Attributes(DefaultProcessManager const& pm) const;
 	bool SuspendResume();
 
+	WinLL::Process& GetProcess();
+	WinLL::Process const& GetProcess() const;
 	[[nodiscard]] bool IsSuspended() const;
 	[[nodiscard]] const std::wstring& GetExecutablePath() const;
 	[[nodiscard]] ID3D11ShaderResourceView* Icon() const;

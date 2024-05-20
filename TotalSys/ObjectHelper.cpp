@@ -2,12 +2,14 @@
 #include "ObjectHelper.h"
 #include "HandlesView.h"
 #include "FormatHelper.h"
+#include <ObjectManager.h>
+#include "DriverHelper.h"
 
 using namespace std;
 using namespace WinLL;
 
 string ObjectHelper::GetObjectDetails(HandleInfoEx* hi, std::wstring const& type, ProcessManager<>* pm) {
-	auto h = WinLLX::ObjectManager::DupHandle(ULongToHandle(hi->HandleValue), hi->ProcessId);
+	auto h = DupHandle(ULongToHandle(hi->HandleValue), hi->ProcessId);
 	if (!h)
 		return "";
 
@@ -94,10 +96,18 @@ string ObjectHelper::GetObjectDetails(HandleInfoEx* hi, std::wstring const& type
 }
 
 bool ObjectHelper::CloseHandle(HandleInfoEx* hi) {
-	auto hDup = WinLLX::ObjectManager::DupHandle(ULongToHandle(hi->HandleValue), hi->ProcessId, 0, DUPLICATE_CLOSE_SOURCE);
+	auto hDup = DupHandle(ULongToHandle(hi->HandleValue), hi->ProcessId, 0, DUPLICATE_CLOSE_SOURCE);
 	if (hDup) {
 		::CloseHandle(hDup);
 		return true;
 	}
 	return false;
 }
+
+HANDLE ObjectHelper::DupHandle(HANDLE h, DWORD pid, ACCESS_MASK access, DWORD flags) {
+	auto hDup = WinLLX::ObjectManager::DupHandle(h, pid, access, flags);
+	if (!hDup)
+		hDup = DriverHelper::DupHandle(h, pid, access, flags);
+	return hDup;
+}
+

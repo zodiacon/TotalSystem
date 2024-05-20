@@ -111,6 +111,9 @@
     <ClInclude Include="ThreadStackWindow.h">
       <Filter>Threads</Filter>
     </ClInclude>
+    <ClInclude Include="DriverHelper.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TotalSys.cpp">
@@ -196,6 +199,9 @@
     </ClCompile>
     <ClCompile Include="ThreadStackWindow.cpp">
       <Filter>Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="DriverHelper.cpp">
+      <Filter>Helpers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

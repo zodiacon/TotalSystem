@@ -242,4 +242,47 @@ namespace WinLL {
 		return path;
 	}
 
+	uint64_t Process::GetCycleCount() const {
+		PROCESS_CYCLE_TIME_INFORMATION info;
+		return NT_SUCCESS(NtQueryInformationProcess(Handle(), ProcessCycleTime, &info, sizeof(info), nullptr)) ? info.AccumulatedCycles : 0;
+	}
+
+	vector<pair<wstring, wstring>> Process::GetEnvironment() const {
+		vector<pair<wstring, wstring>> env;
+
+		PEB peb;
+		if (!GetProcessPeb(Handle(), &peb))
+			return env;
+
+		RTL_USER_PROCESS_PARAMETERS processParams;
+		if (!::ReadProcessMemory(Handle(), peb.ProcessParameters, &processParams, sizeof(processParams), nullptr))
+			return env;
+
+		BYTE buffer[1 << 16];
+		int size = sizeof(buffer);
+		for (;;) {
+			if (::ReadProcessMemory(Handle(), processParams.Environment, buffer, size, nullptr))
+				break;
+			size -= 1 << 12;
+		}
+
+		env.reserve(64);
+
+		for (auto p = (PWSTR)buffer; *p; ) {
+			std::pair<std::wstring, std::wstring> var;
+			auto equal = wcschr(p, L'=');
+			assert(equal);
+			if (!equal)
+				break;
+			*equal = L'\0';
+			var.first = p;
+			p += ::wcslen(p) + 1;
+			var.second = p;
+			p += ::wcslen(p) + 1;
+			env.push_back(std::move(var));
+		}
+
+		return env;
+	}
+
 }

@@ -16,6 +16,7 @@ struct TotalSysSettings : SettingsBase {
 		Secure,
 		InJob,
 		Suspended,
+		_ProcessColorCount
 	};
 
 	BEGIN_SETTINGS(TotalSysSettings)
@@ -31,6 +32,8 @@ struct TotalSysSettings : SettingsBase {
 		SETTING(ThreadsWindowOpen, 0, SettingType::Bool);
 		SETTING(HandlesWindowOpen, 0, SettingType::Bool);
 		SETTING(ResolveSymbols, 0, SettingType::Bool);
+		SETTING(ProcessColorsDark, m_ProcessColors[0], SettingType::Binary);
+		SETTING(ProcessColorsLight, m_ProcessColors[1], SettingType::Binary);
 	END_SETTINGS;
 
 	DEF_SETTING(AlwaysOnTop, bool);
@@ -44,12 +47,13 @@ struct TotalSysSettings : SettingsBase {
 	DEF_SETTING(HandlesWindowOpen, bool);
 	DEF_SETTING(ResolveSymbols, bool);
 
-	std::vector<ProcessColor>& GetProcessColors();
+	ProcessColor* GetProcessColors();
 	ImVec4 GetRelocatedColor() const;
+	static const char* GetColorIndexName(int n);
 
 private:
-	std::vector<ProcessColor> m_ProcessColors[2];
-	inline static ImVec4 s_RelocatedColor[2]{
+	std::array<ProcessColor, _ProcessColorCount> m_ProcessColors[2];
+	inline static std::array<ImVec4, 2> s_RelocatedColor {
 		ImVec4(.3f, .3f, 0, .8f),
 		ImVec4(.8f, .8f, 0, .8f),
 	};

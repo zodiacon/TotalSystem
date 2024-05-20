@@ -20,7 +20,7 @@ ProcessInfoEx::ProcessInfoEx(uint32_t pid) : ProcessInfo(pid) {
 
 std::pair<const ImVec4, const ImVec4> ProcessInfoEx::Colors(DefaultProcessManager& pm) const {
 	using namespace ImGui;
-	auto& colors = Globals::Settings().GetProcessColors();
+	auto colors = Globals::Settings().GetProcessColors();
 
 	if (colors[TotalSysSettings::DeletedObjects].Enabled && IsTerminated())
 		return { colors[TotalSysSettings::DeletedObjects].Color, colors[TotalSysSettings::DeletedObjects].TextColor };
@@ -89,6 +89,14 @@ bool ProcessInfoEx::SuspendResume() {
 
 	m_Suspended = !m_Suspended;
 	return m_Suspended ? p.Suspend() : p.Resume();
+}
+
+WinLL::Process& ProcessInfoEx::GetProcess() {
+	return m_Process;
+}
+
+WinLL::Process const& ProcessInfoEx::GetProcess() const {
+	return m_Process;
 }
 
 

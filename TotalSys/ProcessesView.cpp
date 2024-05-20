@@ -309,7 +309,14 @@ void ProcessesView::InitColumns() {
 		Text("%ws", p->GetCommandLine().c_str());
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide, 150, },
-
+	{ Column::CycleCount, "Cycles", [](auto& p) {
+		auto cycles = p->GetProcess().GetCycleCount();
+		if(cycles) {
+			PushFont(Globals::MonoFont());
+			Text("%17ws", FormatHelper::FormatNumber(cycles).c_str());
+			PopFont();
+		}
+		}, ImGuiTableColumnFlags_DefaultHide, 130 },
 	};
 
 	m_Columns.insert(m_Columns.end(), begin(columns), end(columns));
@@ -501,6 +508,7 @@ std::string ProcessesView::GetColumnText(Column col, ProcessInfoEx* p) const {
 		case Column::Protection: return FormatHelper::ProtectionToString(p->GetProtection());
 		case Column::CommandLine: return FormatHelper::UnicodeToUtf8(p->GetCommandLine().c_str());
 		case Column::ExePath: return FormatHelper::UnicodeToUtf8(p->GetExecutablePath().c_str());
+		case Column::CycleCount: return FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->GetProcess().GetCycleCount()).c_str());
 	}
 	return "";
 }
@@ -548,6 +556,7 @@ void ProcessesView::DoSort(int col, bool asc) noexcept {
 			case Column::ReadOperationsCount: return SortHelper::Sort(p1->ReadOperationCount, p2->ReadOperationCount, asc);
 			case Column::WriteOperationsCount: return SortHelper::Sort(p1->WriteOperationCount, p2->WriteOperationCount, asc);
 			case Column::OtherOperationsCount: return SortHelper::Sort(p1->OtherOperationCount, p2->OtherOperationCount, asc);
+			case Column::CycleCount: return SortHelper::Sort(p1->GetProcess().GetCycleCount() , p2->GetProcess().GetCycleCount(), asc);
 		}
 		return false;
 		});
@@ -817,20 +826,22 @@ void ProcessesView::BuildToolBar() noexcept {
 		OpenPopup("colors");
 
 	if (BeginPopup("colors", ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) {
-		auto& colors = Globals::Settings().GetProcessColors();
+		auto colors = Globals::Settings().GetProcessColors();
 
-		for (auto& c : colors) {
-			Checkbox(c.Name.c_str(), &c.Enabled);
+		for (int i = 0; i < TotalSysSettings::_ProcessColorCount; i++) {
+			auto name = TotalSysSettings::GetColorIndexName(i);
+			auto& c = colors[i];
+			Checkbox(name, &c.Enabled);
 			SameLine(150);
-			ColorEdit4(format("Background##{}", c.Name).c_str(), (float*)&c.Color, ImGuiColorEditFlags_NoInputs);
+			ColorEdit4(format("Background##{}", name).c_str(), (float*)&c.Color, ImGuiColorEditFlags_NoInputs);
 			SameLine();
-			if (Button(format("Reset##{}", c.Name).c_str()))
+			if (Button(format("Reset##{}", name).c_str()))
 				c.Color = c.DefaultColor;
 
 			SameLine();
-			ColorEdit4(format("Text##{}", c.Name).c_str(), (float*)&c.TextColor, ImGuiColorEditFlags_NoInputs);
+			ColorEdit4(format("Text##{}", name).c_str(), (float*)&c.TextColor, ImGuiColorEditFlags_NoInputs);
 			SameLine();
-			if (Button(format("Reset##Text{}", c.Name).c_str()))
+			if (Button(format("Reset##Text{}", name).c_str()))
 				c.TextColor = c.DefaultTextColor;
 		}
 
@@ -856,15 +867,22 @@ void ProcessesView::BuildLowerPane() noexcept {
 				SameLine(0, 40); InputTextReadonly("PID", pid);
 				auto parent = GetColumnText(Column::ParentPid, m_SelectedProcess.get());
 				SameLine(0, 40); InputTextReadonly("Parent", parent);
-				SameLine(0, 40); if (Button("Kill", ImVec2(50, 0))) {
+				SameLine(0, 40); 
+				if (Button("Kill", ImVec2(50, 0))) {
 					TryKillProcess(*m_SelectedProcess);
 				}
-				SameLine(); if (Button(m_SelectedProcess->IsSuspended() ? "Resume###SR" : "Suspend###SR")) {
+				SameLine(0, 10); if (Button(m_SelectedProcess->IsSuspended() ? "Resume###SR" : "Suspend###SR")) {
 					m_SelectedProcess->SuspendResume();
 				}
 				Spacing();
 				auto path = FormatHelper::UnicodeToUtf8(m_SelectedProcess->GetExecutablePath().c_str());
 				InputTextReadonly("Path", path);
+				if (!path.empty()) {
+					SameLine(0, 10);
+					if (Button("Explore")) {
+						GotoFileLocation(*m_SelectedProcess);
+					}
+				}
 				auto cmdline = FormatHelper::UnicodeToUtf8(m_SelectedProcess->GetCommandLine().c_str());
 				InputTextReadonly("Command Line", cmdline);
 				auto dir = FormatHelper::UnicodeToUtf8(m_SelectedProcess->GetCurrentDirectory().c_str());
@@ -873,6 +891,7 @@ void ProcessesView::BuildLowerPane() noexcept {
 				InputTextReadonly("User", user);
 				Text("Created: %s", GetColumnText(Column::CreateTime, m_SelectedProcess.get()).c_str());
 				SameLine(0, 30); Text("CPU Time: %s", GetColumnText(Column::CPUTime, m_SelectedProcess.get()).c_str());
+				SameLine(0, 30); Text("Cycles: %s", GetColumnText(Column::CycleCount, m_SelectedProcess.get()).c_str());
 				EndTabItem();
 			}
 			if (m_ThreadsActive = BeginTabItem("Threads", nullptr, ImGuiTabItemFlags_None)) {
@@ -948,21 +967,13 @@ bool ProcessesView::BuildPriorityClassMenu(ProcessInfo& pi) {
 	return enabled;
 }
 
-bool ProcessesView::GotoFileLocation(ProcessInfo const& pi) {
+bool ProcessesView::GotoFileLocation(ProcessInfoEx const& pi) {
 	wstring path;
 	if (pi.Id <= 4) {
 		path = SystemInformation::GetSystemDir() + L"\\ntoskrnl.exe";
 	}
 	if (path.empty()) {
-		Process process;
-		if (process.Open(pi.Id, ProcessAccessMask::QueryLimitedInformation)) {
-			auto path = process.GetFullImageName();
-			auto bs = path.rfind(L'\\');
-			if (bs == std::wstring::npos)
-				return false;
-
-			auto folder = path.substr(0, bs);
-		}
+		path = pi.GetExecutablePath();
 	}
 	if (path.empty())
 		return false;

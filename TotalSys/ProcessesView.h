@@ -27,7 +27,7 @@ private:
 		Platform, Description, Company, JobId, MemoryPriority, IoPriority, Virtualization,
 		ReadOperationsCount, WriteOperationsCount, OtherOperationsCount,
 		ReadOperationsBytes, WriteOperationsBytes, OtherOperationsBytes,
-		GdiObjects, PeakGdiObjects, UserObjects, PeakUserObjects, CommandLine,
+		GdiObjects, PeakGdiObjects, UserObjects, PeakUserObjects, CommandLine, CycleCount,
 		ColumnCount
 	};
 
@@ -53,7 +53,7 @@ private:
 	void BuildLowerPane() noexcept;
 
 	bool BuildPriorityClassMenu(WinLL::ProcessInfo& pi);
-	bool GotoFileLocation(WinLL::ProcessInfo const& pi);
+	bool GotoFileLocation(ProcessInfoEx const& pi);
 
 	static std::string ProcessAttributesToString(ProcessAttributes attributes);
 

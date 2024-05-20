@@ -12,6 +12,7 @@
 #include "IconHelper.h"
 #include "ThreadStackWindow.h"
 #include "MainWindow.h"
+#include "UI.h"
 
 using namespace ImGui;
 using namespace std;
@@ -304,13 +305,22 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 void ThreadsView::BuildToolBar() {
 	auto selected = m_SelectedThread != nullptr;
 	if (ButtonEnabled("Stack", selected)) {
-		auto frames = m_Process->GetSymbols().EnumThreadStack(m_Process->Id, m_SelectedThread->Id);
-		if (!frames.empty()) {
-			auto win = make_unique<ThreadStackWindow>(m_Process, m_SelectedThread, frames);
-			win->Open();
-			Globals::RootWindow().AddWindow(move(win));
-		}
-
+		if (m_Process == nullptr)
+			m_Process = m_ProcMgr.GetProcessById(m_SelectedThread->ProcessId);
+		assert(m_Process);
+		UI::SubmitWorkWithResult([=]() -> void* {
+			auto frames = m_Process->GetSymbols().EnumThreadStack(m_Process->Id, m_SelectedThread->Id);
+			if (!frames.empty()) {
+				auto win = new ThreadStackWindow(m_Process, m_SelectedThread, frames);
+				win->Open();
+				return win;
+			}
+			return nullptr;
+			},
+			[=](auto result) {
+				if (result)
+					Globals::RootWindow().AddWindow(unique_ptr<ThreadStackWindow>((ThreadStackWindow*)result));
+			});
 	}
 	SameLine();
 	if (ButtonEnabled("Suspend", selected)) {

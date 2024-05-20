@@ -32,9 +32,9 @@ bool SettingsBase::LoadFromKey(PCWSTR registryPath) {
 		if (error != ERROR_SUCCESS)
 			continue;
 
-		auto it = m_settings.find(name);
-		if (it == m_settings.end())
-			m_settings.insert({ name, Setting(name, value.get(), lvalue, (SettingType)type) });
+		auto it = m_Settings.find(name);
+		if (it == m_Settings.end())
+			m_Settings.insert({ name, Setting(name, value.get(), lvalue, (SettingType)type) });
 		else
 			it->second.Set(value.get(), lvalue);
 	}
@@ -54,7 +54,7 @@ bool SettingsBase::SaveToKey(PCWSTR registryPath) const {
 	if (!key)
 		return false;
 
-	for (auto& [name, setting] : m_settings) {
+	for (auto& [name, setting] : m_Settings) {
 		key.SetValue(name.c_str(), (DWORD)setting.Type, setting.Buffer.get(), setting.Size);
 	}
 	return true;
@@ -75,7 +75,7 @@ bool SettingsBase::LoadFromFile(PCWSTR path) {
 		return false;
 
 	PCWSTR section = L"General";
-	for (auto& [name, setting] : m_settings) {
+	for (auto& [name, setting] : m_Settings) {
 		switch (setting.Type) {
 			case SettingType::String:
 				setting.SetString(file.ReadString(section, name.c_str()).c_str());
@@ -110,7 +110,7 @@ bool SettingsBase::SaveToFile(PCWSTR path) const {
 	IniFile file(path);
 
 	PCWSTR section = L"General";
-	for (auto& [name, setting] : m_settings) {
+	for (auto& [name, setting] : m_Settings) {
 		switch (setting.Type) {
 			case SettingType::String:
 				file.WriteString(section, name.c_str(), (PCWSTR)setting.Buffer.get());
@@ -161,18 +161,18 @@ void SettingsBase::Set(PCWSTR name, int value) {
 
 void SettingsBase::Set(PCWSTR name, std::vector<std::wstring> const& values) {
 	Setting s(name, values);
-	m_settings.erase(name);
-	m_settings.insert({ name, std::move(s) });
+	m_Settings.erase(name);
+	m_Settings.insert({ name, std::move(s) });
 }
 
 void SettingsBase::SetString(PCWSTR name, PCWSTR value) {
-	auto it = m_settings.find(name);
-	if (it != m_settings.end()) {
+	auto it = m_Settings.find(name);
+	if (it != m_Settings.end()) {
 		it->second.SetString(value);
 	}
 	else {
 		Setting s(name, value);
-		m_settings.insert({ name, std::move(s) });
+		m_Settings.insert({ name, std::move(s) });
 	}
 }
 
@@ -196,8 +196,8 @@ bool SettingsBase::LoadWindowPosition(HWND hWnd, PCWSTR name) const {
 }
 
 std::wstring SettingsBase::GetString(PCWSTR name) const {
-	auto it = m_settings.find(name);
-	if (it == m_settings.end())
+	auto it = m_Settings.find(name);
+	if (it == m_Settings.end())
 		return L"";
 	return (PCWSTR)it->second.Buffer.get();
 }
@@ -210,4 +210,18 @@ void Setting::SetString(PCWSTR value) {
 	Buffer = std::make_unique<uint8_t[]>(Size = (1 + (int)::wcslen(value)) * sizeof(wchar_t));
 	::memcpy(Buffer.get(), value, Size);
 	Type = SettingType::String;
+}
+
+std::vector<std::wstring> SettingsBase::GetMultiString(PCWSTR name) const {
+	auto it = m_Settings.find(name);
+	if (it == m_Settings.end())
+		return {};
+
+	auto p = it->second.Buffer.get();
+	std::vector<std::wstring> values;
+	while (*p) {
+		values.push_back(std::wstring((PCWSTR)p));
+		p += (wcslen((PCWSTR)p) + 1) * sizeof(WCHAR);
+	}
+	return values;
 }

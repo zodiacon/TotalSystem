@@ -99,6 +99,15 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <VcpkgUseStatic>true</VcpkgUseStatic>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <VcpkgUseStatic>true</VcpkgUseStatic>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='ReleaseSigned|x64'">
+    <VcpkgUseStatic>true</VcpkgUseStatic>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -237,6 +246,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AccessMaskDecoder.h" />
+    <ClInclude Include="DriverHelper.h" />
     <ClInclude Include="FormatHelper.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="HandlesView.h" />
@@ -267,6 +277,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AccessMaskDecoder.cpp" />
+    <ClCompile Include="DriverHelper.cpp" />
     <ClCompile Include="FormatHelper.cpp" />
     <ClCompile Include="Globals.cpp" />
     <ClCompile Include="HandlesView.cpp" />
