@@ -101,21 +101,29 @@ std::vector<STACKFRAME64> ProcessSymbols::EnumThreadStack(uint32_t pid, uint32_t
 	if (!t.Open(tid, access)) {
 		t.Attach(DriverHelper::OpenThread(tid, access));
 	}
-	if(!t)
+	if (!t)
 		return {};
 
-	Process p;
-	if (!p.Open(pid, ProcessAccessMask::VmRead | ProcessAccessMask::QueryInformation))
-		p.Attach(DriverHelper::OpenProcess(pid, ProcessAccessMask::VmRead | ProcessAccessMask::QueryInformation));
-	if(!p)
+	if (!m_hProcess)
 		return {};
 
 	assert(t.GetProcessId() == pid);
 	LoadModules();
 	vector<STACKFRAME64> frames;
 	frames.reserve(16);
-	CONTEXT ctx;
+	CONTEXT ctx{};
 	ctx.ContextFlags = CONTEXT_FULL;
+
+	auto read = [](auto hProcess, auto address, auto buffer, auto size, auto bytes) {
+		SIZE_T read;
+		if (::ReadProcessMemory(hProcess, (void*)address, buffer, size, &read)) {
+			if (bytes)
+				*bytes = (ULONG)read;
+			return TRUE;
+		}
+		return FALSE;
+
+		};
 
 	t.Suspend();
 	if (!::GetThreadContext(t.Handle(), &ctx)) {
@@ -130,17 +138,25 @@ std::vector<STACKFRAME64> ProcessSymbols::EnumThreadStack(uint32_t pid, uint32_t
 	frame.AddrStack.Mode = AddrModeFlat;
 	frame.AddrFrame.Offset = (DWORD64)ctx.Rbp;
 	frame.AddrFrame.Mode = AddrModeFlat;
+	frame.AddrBStore.Offset = (DWORD64)ctx.Rbp;
+	frame.AddrBStore.Mode = AddrModeFlat;
 
-	auto read = [](auto hProcess, auto address, auto buffer, auto size, auto bytes) {
-		return ::ReadProcessMemory(hProcess, (void*)address, buffer, size, (SIZE_T*)bytes);
-		};
-
+	BOOL isWow = FALSE;
+	::IsWow64Process(m_hProcess, &isWow);
 	{
 		lock_guard locker(s_Lock);
-		while (s_StackWalk(IMAGE_FILE_MACHINE_AMD64, p.Handle(), t.Handle(), &frame, &ctx, nullptr,
-			s_SymFunctionTableAccess64, s_SymGetModuleBase64, nullptr)) {
+		for(;;) {
+			
+			if (!s_StackWalk(isWow ? IMAGE_FILE_MACHINE_I386 : IMAGE_FILE_MACHINE_AMD64,
+				m_hProcess, t.Handle(), &frame, &ctx, read,
+				s_SymFunctionTableAccess64, s_SymGetModuleBase64, nullptr))
+				break;
+
 			if (frame.AddrPC.Offset == 0)
 				break;
+
+			uint64_t disp;
+			auto sym = GetSymbolFromAddress(frame.AddrPC.Offset, &disp, nullptr);
 			frames.push_back(frame);
 		}
 	}
@@ -188,7 +204,7 @@ bool ProcessSymbols::LoadKernelModules() const {
 		m->ModuleSize = module.ImageSize;
 		::GetDeviceDriverBaseName(m->Base, name, _countof(name));
 		m->Path = dir + L"\\" + name;
-		if(address = s_SymLoadModuleEx(m_hProcess, nullptr, m->Path.c_str(), m->Name.c_str(), (DWORD64)m->Base, m->ModuleSize, nullptr, 0)) {
+		if (address = s_SymLoadModuleEx(m_hProcess, nullptr, m->Path.c_str(), m->Name.c_str(), (DWORD64)m->Base, m->ModuleSize, nullptr, 0)) {
 			assert(address == (DWORD64)m->Base);
 			m_Modules.insert({ address, move(m) });
 		}

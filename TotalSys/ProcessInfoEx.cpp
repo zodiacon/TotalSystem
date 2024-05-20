@@ -6,6 +6,7 @@
 #include "TotalSysSettings.h"
 #include <ShellScalingApi.h>
 #include "UI.h"
+#include "DriverHelper.h"
 
 #pragma comment(lib, "Version.lib")
 
@@ -13,9 +14,14 @@ using namespace std;
 using namespace WinLL;
 
 ProcessInfoEx::ProcessInfoEx(uint32_t pid) : ProcessInfo(pid) {
-	m_Process.Open(pid, ProcessAccessMask::QueryLimitedInformation);
-	if (m_Process)
-		m_Symbols.Load(m_Process.Handle());
+	if (pid) {
+		m_Process.Attach(DriverHelper::OpenProcess(pid, ProcessAccessMask::VmRead | ProcessAccessMask::QueryInformation));
+		if (!m_Process)
+			m_Process.Attach(DriverHelper::OpenProcess(pid, ProcessAccessMask::QueryLimitedInformation));
+
+		if (m_Process)
+			m_Symbols.Load(m_Process.Handle());
+	}
 }
 
 std::pair<const ImVec4, const ImVec4> ProcessInfoEx::Colors(DefaultProcessManager& pm) const {

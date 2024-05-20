@@ -64,17 +64,20 @@ HANDLE DriverHelper::DupHandle(HANDLE hObject, ULONG pid, ACCESS_MASK access, DW
 }
 
 HANDLE DriverHelper::OpenProcess(DWORD pid, ACCESS_MASK access) {
+	HANDLE hProcess{ nullptr };
 	if (OpenDevice()) {
 		OpenProcessThreadData data;
 		data.AccessMask = access;
 		data.Id = pid;
-		HANDLE hProcess;
 		DWORD bytes;
 
-		return ::DeviceIoControl(s_hDevice, IOCTL_KOBJEXP_OPEN_PROCESS, &data, sizeof(data),
-			&hProcess, sizeof(hProcess), &bytes, nullptr) ? hProcess : nullptr;
+		::DeviceIoControl(s_hDevice, IOCTL_KOBJEXP_OPEN_PROCESS, &data, sizeof(data),
+			&hProcess, sizeof(hProcess), &bytes, nullptr);
 	}
-	return ::OpenProcess(access, FALSE, pid);
+	else {
+		hProcess = ::OpenProcess(access, FALSE, pid);
+	}
+	return hProcess;
 }
 
 HANDLE DriverHelper::OpenThread(DWORD tid, ACCESS_MASK access) {

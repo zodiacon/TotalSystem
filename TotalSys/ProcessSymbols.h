@@ -6,6 +6,10 @@
 
 typedef struct _SYMBOL_INFO SYMBOL_INFO, *PSYMBOL_INFO;
 
+struct StackFrame : STACKFRAME64 {
+	std::string Symbol;
+};
+
 class ProcessSymbols {
 public:
 	static bool Init();
@@ -27,7 +31,7 @@ private:
 	bool LoadModules() const;
 	bool LoadKernelModules() const;
 
-	HANDLE m_hProcess;
+	HANDLE m_hProcess{ nullptr };
 	mutable std::atomic<bool> m_ModulesEnumerated{ false };
 	mutable std::unordered_map<uint64_t, std::shared_ptr<WinLLX::ModuleInfo>> m_Modules;
 	inline static HMODULE s_hDbgHelp;
