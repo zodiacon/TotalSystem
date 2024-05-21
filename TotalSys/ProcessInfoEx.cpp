@@ -326,7 +326,8 @@ std::wstring ProcessInfoEx::GetCurrentDirectory() const {
 	auto dir = m_Process.GetCurrentDirectory();
 	if (::GetLastError() == ERROR_ACCESS_DENIED) {
 		Process p;
-		if (!p.Open(Id, ProcessAccessMask::VmRead | ProcessAccessMask::QueryLimitedInformation))
+		p.Attach(DriverHelper::OpenProcess(Id, ProcessAccessMask::VmRead | ProcessAccessMask::QueryLimitedInformation));
+		if(!p)
 			return L"";
 
 		dir = p.GetCurrentDirectory();
@@ -335,3 +336,11 @@ std::wstring ProcessInfoEx::GetCurrentDirectory() const {
 
 	return dir;
 }
+
+std::string ProcessInfoEx::GetSidAsString() const {
+	Token t;
+	t.Attach(DriverHelper::OpenToken(Id));
+
+	return t ? t.GetUserSid().AsString() : "";
+}
+

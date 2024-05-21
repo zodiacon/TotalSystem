@@ -643,6 +643,25 @@ namespace WinLL {
 		bool Terminate(uint32_t exitCode = 0);
 	};
 
+	class Sid {
+	public:
+		Sid() = default;
+		explicit Sid(PSID sid, bool copy = true);
+
+		operator bool() const;
+
+		std::string AsString() const;
+		std::wstring AsWString() const;
+		const PSID Get() const;
+
+	private:
+		union {
+			SE_SID m_Sid;
+			PSID m_pSid{ nullptr };
+		};
+		bool m_Owner;
+	};
+
 	class Token : public KernelObject {
 	public:
 		using KernelObject::KernelObject;
@@ -651,8 +670,7 @@ namespace WinLL {
 
 		[[nodiscard]] wstring GetUserName(bool includeDomain = false) const;
 		[[nodiscard]] VirtualizationState GetVirtualizationState() const;
-
-		//Sid GetUserSid() const;
+		[[nodiscard]] Sid GetUserSid() const;
 	};
 
 	class File : public DispatcherObject {

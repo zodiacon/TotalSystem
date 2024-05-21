@@ -18,6 +18,9 @@ public:
 	[[nodiscard]] static std::string GetModuleName(ProcessInfoEx* p, uint64_t baseAddress);
 	[[nodiscard]] bool IsSuspended() const;
 	[[nodiscard]] std::wstring const& GetDescription() const;
+	bool Suspend() const;
+	bool Resume() const;
+	bool Terminate(uint32_t code = 0) const;
 
 private:
 	mutable std::wstring m_Service{ L" " };

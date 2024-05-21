@@ -2,7 +2,7 @@
 #include "DriverHelper.h"
 #include <WinLowLevel.h>
 
-#define DRIVER_CURRENT_VERSION 0x0104
+#define DRIVER_CURRENT_VERSION 0x0106
 
 #define IOCTL_KOBJEXP_OPEN_OBJECT				CTL_CODE(0x8000, 0x800, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_KOBJEXP_DUP_HANDLE				CTL_CODE(0x8000, 0x801, METHOD_BUFFERED, FILE_ANY_ACCESS)
@@ -14,6 +14,9 @@
 #define IOCTL_KOBJEXP_GET_VERSION				CTL_CODE(0x8000, 0x807, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_KOBJEXP_GET_OBJECT_ADDRESS		CTL_CODE(0x8000, 0x808, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_KOBJEXP_OPEN_THREAD				CTL_CODE(0x8000, 0x809, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_KOBJEXP_OPEN_WINSTA_BY_NAME		CTL_CODE(0x8000, 0x80a, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_KOBJEXP_OPEN_MUTEX_BY_NAME		CTL_CODE(0x8000, 0x80b, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_KOBJEXP_OPEN_PROCESS_TOKEN		CTL_CODE(0x8000, 0x80c, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 struct OpenObjectData {
 	void* Address;
@@ -81,17 +84,40 @@ HANDLE DriverHelper::OpenProcess(DWORD pid, ACCESS_MASK access) {
 }
 
 HANDLE DriverHelper::OpenThread(DWORD tid, ACCESS_MASK access) {
+	HANDLE hThread{ nullptr };
 	if (OpenDevice()) {
 		OpenProcessThreadData data;
 		data.AccessMask = access;
 		data.Id = tid;
-		HANDLE hThread;
 		DWORD bytes;
 
-		return ::DeviceIoControl(s_hDevice, IOCTL_KOBJEXP_OPEN_THREAD, &data, sizeof(data),
-			&hThread, sizeof(hThread), &bytes, nullptr) ? hThread : nullptr;
+		::DeviceIoControl(s_hDevice, IOCTL_KOBJEXP_OPEN_THREAD, &data, sizeof(data),
+			&hThread, sizeof(hThread), &bytes, nullptr);
 	}
-	return ::OpenThread(access, FALSE, tid);
+	if(!hThread)
+		::OpenThread(access, FALSE, tid);
+	return hThread;
+}
+
+HANDLE DriverHelper::OpenToken(DWORD pid, ACCESS_MASK access) {
+	HANDLE hToken{ nullptr };
+	if (OpenDevice()) {
+		OpenProcessThreadData data;
+		data.AccessMask = access;
+		data.Id = pid;
+		DWORD bytes;
+
+		::DeviceIoControl(s_hDevice, IOCTL_KOBJEXP_OPEN_PROCESS_TOKEN, &data, sizeof(data),
+			&hToken, sizeof(hToken), &bytes, nullptr);
+	}
+	if (!hToken) {
+		auto hProcess = ::OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
+		if (hProcess) {
+			::OpenProcessToken(hProcess, access, &hToken);
+			::CloseHandle(hProcess);
+		}
+	}
+	return hToken;
 }
 
 PVOID DriverHelper::GetObjectAddress(HANDLE hObject) {

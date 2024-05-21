@@ -2,7 +2,7 @@
 #include "ThreadInfoEx.h"
 #include "ProcessInfoEx.h"
 #include "ProcessSymbols.h"
-#include "UI.h"
+#include "DriverHelper.h"
 
 using namespace WinLL;
 
@@ -53,16 +53,31 @@ std::string ThreadInfoEx::GetModuleName(ProcessInfoEx* p, uint64_t baseAddress) 
 }
 
 bool ThreadInfoEx::IsSuspended() const {
-	Thread t;
-	return t.Open(Id) && t.GetSuspendCount() > 0;
+	Thread t(DriverHelper::OpenThread(Id, ThreadAccessMask::QueryLimitedInformation));
+	return t && t.GetSuspendCount() > 0;
 }
 
 std::wstring const& ThreadInfoEx::GetDescription() const {
 	if (::GetTickCount64() > m_TargetDesc) {
 		m_TargetDesc = ::GetTickCount64() + 1000;
-		Thread t;
-		if (t.Open(Id))
+		Thread t(DriverHelper::OpenThread(Id, ThreadAccessMask::QueryLimitedInformation));
+		if (t)
 			m_Desc = t.GetDescription();
 	}
 	return m_Desc;
+}
+
+bool ThreadInfoEx::Suspend() const {
+	Thread t(DriverHelper::OpenThread(Id, ThreadAccessMask::SuspendResume));
+	return t ? t.Suspend() : false;
+}
+
+bool ThreadInfoEx::Resume() const {
+	Thread t(DriverHelper::OpenThread(Id, ThreadAccessMask::SuspendResume));
+	return t ? t.Resume() : false;
+}
+
+bool ThreadInfoEx::Terminate(uint32_t code) const {
+	Thread t(DriverHelper::OpenThread(Id, ThreadAccessMask::Terminate));
+	return t ? t.Terminate(code) : false;
 }

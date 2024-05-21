@@ -49,6 +49,7 @@ public:
 	[[nodiscard]] std::wstring const& GetCommandLine() const;
 	[[nodiscard]] WinLL::PriorityClass GetPriorityClass() const;
 	[[nodiscard]] std::wstring GetCurrentDirectory() const;
+	[[nodiscard]] std::string GetSidAsString() const;
 
 private:
 	[[nodiscard]] bool AreAllThreadsSuspended() const;

@@ -21,7 +21,7 @@ MainWindow::MainWindow(HWND hWnd) : m_hWnd(hWnd) {
 
 void MainWindow::Build() {
 	auto viewport = GetMainViewport();
-	DockSpaceOverViewport(viewport, ImGuiDockNodeFlags_None);
+	DockSpaceOverViewport(0, nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
 
 	static SimpleMessageBox about;
 

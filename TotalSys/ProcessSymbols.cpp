@@ -98,9 +98,7 @@ std::wstring const& ProcessSymbols::GetModuleName(uint64_t baseAddress) const {
 std::vector<STACKFRAME64> ProcessSymbols::EnumThreadStack(uint32_t pid, uint32_t tid) const {
 	Thread t;
 	auto access = ThreadAccessMask::GetContext | ThreadAccessMask::QueryInformation | ThreadAccessMask::SuspendResume;
-	if (!t.Open(tid, access)) {
-		t.Attach(DriverHelper::OpenThread(tid, access));
-	}
+	t.Attach(DriverHelper::OpenThread(tid, access));
 	if (!t)
 		return {};
 

@@ -4,6 +4,34 @@
 namespace WinLL {
 	using namespace std;
 
+	Sid::Sid(PSID sid, bool copy) : m_Owner(copy) {
+		if (copy)
+			::CopySid(sizeof(m_Sid), &m_Sid, sid);
+		else
+			m_pSid = sid;
+	}
+
+	Sid::operator bool() const {
+		if (m_pSid == nullptr && !m_Owner)
+			return false;
+
+		return ::IsValidSid(Get());
+	}
+
+	const PSID Sid::Get() const {
+		return m_Owner ? (PSID)&m_Sid.Sid : m_pSid;
+	}
+
+	string Sid::AsString() const {
+		PSTR ssid;
+		string result;
+		if (::ConvertSidToStringSidA(Get(), &ssid)) {
+			result = ssid;
+			::LocalFree(ssid);
+		}
+		return result;
+	}
+
 	bool Token::Open(TokenAccessMask access, uint32_t pid) {
 		wil::unique_handle hProcess;
 		if (pid) {
@@ -32,6 +60,16 @@ namespace WinLL {
 			return includeDomain ? wstring(domain) + L"\\" + name : name;
 		}
 		return L"";
+	}
+
+	Sid Token::GetUserSid() const {
+		BYTE buffer[512];
+		ULONG len;
+		if (NT_SUCCESS(::NtQueryInformationToken(Handle(), TokenUser, buffer, sizeof(buffer), &len))) {
+			auto pti = reinterpret_cast<TOKEN_USER*>(buffer);
+			return Sid(pti->User.Sid);
+		}
+		return Sid();
 	}
 
 	VirtualizationState Token::GetVirtualizationState() const {

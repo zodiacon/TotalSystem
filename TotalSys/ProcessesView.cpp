@@ -310,13 +310,13 @@ void ProcessesView::InitColumns() {
 		PopFont();
 		}, ImGuiTableColumnFlags_DefaultHide, 150, },
 	{ Column::CycleCount, "Cycles", [](auto& p) {
-		auto cycles = p->GetProcess().GetCycleCount();
+		auto cycles = p->CycleTime;
 		if(cycles) {
 			PushFont(Globals::MonoFont());
-			Text("%17ws", FormatHelper::FormatNumber(cycles).c_str());
+			Text(" %22ws ", FormatHelper::FormatNumber(cycles).c_str());
 			PopFont();
 		}
-		}, ImGuiTableColumnFlags_DefaultHide, 130 },
+		}, ImGuiTableColumnFlags_DefaultHide, 160 },
 	};
 
 	m_Columns.insert(m_Columns.end(), begin(columns), end(columns));
@@ -508,7 +508,7 @@ std::string ProcessesView::GetColumnText(Column col, ProcessInfoEx* p) const {
 		case Column::Protection: return FormatHelper::ProtectionToString(p->GetProtection());
 		case Column::CommandLine: return FormatHelper::UnicodeToUtf8(p->GetCommandLine().c_str());
 		case Column::ExePath: return FormatHelper::UnicodeToUtf8(p->GetExecutablePath().c_str());
-		case Column::CycleCount: return FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->GetProcess().GetCycleCount()).c_str());
+		case Column::CycleCount: return FormatHelper::UnicodeToUtf8(FormatHelper::FormatNumber(p->CycleTime).c_str());
 	}
 	return "";
 }
@@ -556,7 +556,8 @@ void ProcessesView::DoSort(int col, bool asc) noexcept {
 			case Column::ReadOperationsCount: return SortHelper::Sort(p1->ReadOperationCount, p2->ReadOperationCount, asc);
 			case Column::WriteOperationsCount: return SortHelper::Sort(p1->WriteOperationCount, p2->WriteOperationCount, asc);
 			case Column::OtherOperationsCount: return SortHelper::Sort(p1->OtherOperationCount, p2->OtherOperationCount, asc);
-			case Column::CycleCount: return SortHelper::Sort(p1->GetProcess().GetCycleCount() , p2->GetProcess().GetCycleCount(), asc);
+			case Column::CycleCount: 
+				return SortHelper::Sort(p1->CycleTime, p2->CycleTime, asc);
 		}
 		return false;
 		});
@@ -888,7 +889,9 @@ void ProcessesView::BuildLowerPane() noexcept {
 				auto dir = FormatHelper::UnicodeToUtf8(m_SelectedProcess->GetCurrentDirectory().c_str());
 				InputTextReadonly("Current Directory", dir);
 				auto user = GetColumnText(Column::UserName, m_SelectedProcess.get());
-				InputTextReadonly("User", user);
+				InputTextReadonly("User", user); SameLine(0, 30);
+				auto sid = m_SelectedProcess->GetSidAsString();
+				InputTextReadonly("SID", sid);
 				Text("Created: %s", GetColumnText(Column::CreateTime, m_SelectedProcess.get()).c_str());
 				SameLine(0, 30); Text("CPU Time: %s", GetColumnText(Column::CPUTime, m_SelectedProcess.get()).c_str());
 				SameLine(0, 30); Text("Cycles: %s", GetColumnText(Column::CycleCount, m_SelectedProcess.get()).c_str());

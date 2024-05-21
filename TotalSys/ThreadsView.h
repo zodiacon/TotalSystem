@@ -44,10 +44,11 @@ private:
 
 	void DoSort(int column, bool asc);
 	void CommonRefresh();
+	void ShowThreadStack();
 
 	inline static D3D11Image s_StateIcons[10];
 	std::vector<std::shared_ptr<ThreadInfoEx>> m_Threads;
-	std::shared_ptr<WinLL::ThreadInfo> m_SelectedThread;
+	std::shared_ptr<ThreadInfoEx> m_SelectedThread;
 	std::shared_ptr<ProcessInfoEx> m_Process;
 	DefaultProcessManager m_ProcMgr;
 	DefaultProcessManager* m_ActualProcMgr;

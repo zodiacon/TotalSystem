@@ -13,6 +13,7 @@
 #include "ThreadStackWindow.h"
 #include "MainWindow.h"
 #include "UI.h"
+#include "DriverHelper.h"
 
 using namespace ImGui;
 using namespace std;
@@ -43,7 +44,19 @@ void ThreadsView::Build() {
 				BuildUpdateIntervalMenu();
 				ImGui::EndMenu();
 			}
-			if (BeginMenu("Thread")) {
+			if (m_SelectedThread != nullptr && BeginMenu("Thread")) {
+				if (MenuItem("Stack")) {
+					ShowThreadStack();
+				}
+				if (MenuItem("Suspend")) {
+					m_SelectedThread->Suspend();
+				}
+				if (MenuItem("Resume")) {
+					m_SelectedThread->Resume();
+				}
+				if (MenuItem("Terminate")) {
+					m_SelectedThread->Terminate();
+				}
 				ImGui::EndMenu();
 			}
 			EndMenuBar();
@@ -305,40 +318,19 @@ void ThreadsView::BuildTable(std::shared_ptr<ProcessInfoEx> p) {
 void ThreadsView::BuildToolBar() {
 	auto selected = m_SelectedThread != nullptr;
 	if (ButtonEnabled("Stack", selected)) {
-		if (m_Process == nullptr)
-			m_Process = m_ProcMgr.GetProcessById(m_SelectedThread->ProcessId);
-		assert(m_Process);
-		UI::SubmitWorkWithResult([=]() -> void* {
-			auto frames = m_Process->GetSymbols().EnumThreadStack(m_Process->Id, m_SelectedThread->Id);
-			if (!frames.empty()) {
-				auto win = new ThreadStackWindow(m_Process, m_SelectedThread, frames);
-				win->Open();
-				return win;
-			}
-			return nullptr;
-			},
-			[=](auto result) {
-				if (result)
-					Globals::RootWindow().AddWindow(unique_ptr<ThreadStackWindow>((ThreadStackWindow*)result));
-			});
+		ShowThreadStack();
 	}
 	SameLine();
 	if (ButtonEnabled("Suspend", selected)) {
-		Thread t;
-		if (t.Open(m_SelectedThread->Id, ThreadAccessMask::SuspendResume))
-			t.Suspend();
+		m_SelectedThread->Suspend();
 	}
 	SameLine();
 	if (ButtonEnabled("Resume", selected)) {
-		Thread t;
-		if (t.Open(m_SelectedThread->Id, ThreadAccessMask::SuspendResume))
-			t.Resume();
+		m_SelectedThread->Resume();
 	}
 	SameLine();
 	if (ButtonEnabled("Kill", selected)) {
-		Thread t;
-		if (t.Open(m_SelectedThread->Id, ThreadAccessMask::Terminate))
-			t.Terminate();
+		m_SelectedThread->Terminate();
 	}
 	if (m_AllThreads) {
 		SameLine();
@@ -421,6 +413,26 @@ void ThreadsView::CommonRefresh() {
 	if (m_Specs)
 		m_Specs->SpecsDirty = true;
 
+}
+
+void ThreadsView::ShowThreadStack() {
+	assert(m_SelectedThread);
+	if (m_Process == nullptr)
+		m_Process = m_ProcMgr.GetProcessById(m_SelectedThread->ProcessId);
+	assert(m_Process);
+	UI::SubmitWorkWithResult([=]() -> void* {
+		auto frames = m_Process->GetSymbols().EnumThreadStack(m_Process->Id, m_SelectedThread->Id);
+		if (!frames.empty()) {
+			auto win = new ThreadStackWindow(m_Process, m_SelectedThread, frames);
+			win->Open();
+			return win;
+		}
+		return nullptr;
+		},
+		[=](auto result) {
+			if (result)
+				Globals::RootWindow().AddWindow(unique_ptr<ThreadStackWindow>((ThreadStackWindow*)result));
+		});
 }
 
 PCSTR ThreadsView::StateToString(ThreadState state) {
