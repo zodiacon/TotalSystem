@@ -51,7 +51,7 @@ HANDLE DriverHelper::OpenHandle(void* pObject, ACCESS_MASK access) {
 }
 
 HANDLE DriverHelper::DupHandle(HANDLE hObject, ULONG pid, ACCESS_MASK access, DWORD flags) {
-	HANDLE hTarget = nullptr;
+	HANDLE hTarget{ nullptr };
 	if (OpenDevice()) {
 		DupHandleData data;
 		data.AccessMask = access;
@@ -111,7 +111,7 @@ HANDLE DriverHelper::OpenToken(DWORD pid, ACCESS_MASK access) {
 			&hToken, sizeof(hToken), &bytes, nullptr);
 	}
 	if (!hToken) {
-		auto hProcess = ::OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
+		auto hProcess = OpenProcess(pid, PROCESS_QUERY_INFORMATION);
 		if (hProcess) {
 			::OpenProcessToken(hProcess, access, &hToken);
 			::CloseHandle(hProcess);

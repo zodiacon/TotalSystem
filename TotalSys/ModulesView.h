@@ -12,6 +12,8 @@ struct ModuleInfoEx : WinLLX::ModuleInfo, TransientObject {
 
 class ModulesView : public ViewBase {
 public:
+	ModulesView();
+	void InitColumns();
 	bool Track(uint32_t pid);
 	void BuildTable();
 	bool Refresh(uint32_t pid, bool now = false);
@@ -26,12 +28,13 @@ private:
 	};
 
 	struct ColumnInfo {
+		Column Type;
 		PCSTR Header;
 		std::function<void(std::shared_ptr<ModuleInfoEx>&)> Callback{ };
 		ImGuiTableColumnFlags Flags{ ImGuiTableColumnFlags_None };
 		float Width{ 0.0f };
 	};
-
+	std::vector<ColumnInfo> m_Columns;
 	WinLLX::ProcessModuleTracker<ModuleInfoEx> m_Tracker;
 	std::shared_ptr<ModuleInfoEx> m_SelectedModule;
 	SortedFilteredVector<std::shared_ptr<ModuleInfoEx>> m_Modules;

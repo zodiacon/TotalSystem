@@ -111,3 +111,25 @@ HANDLE ObjectHelper::DupHandle(HANDLE h, DWORD pid, ACCESS_MASK access, DWORD fl
 	return hDup;
 }
 
+wstring ObjectHelper::NativePathToDosPath(wstring const& path) {
+	static unordered_map<wstring, wstring> drives;
+	if (drives.empty()) {
+		WCHAR letter[] = L"X:";
+		WCHAR path[MAX_PATH];
+		for (int c = 2; c < 26; c++) {
+			letter[0] = c + 'A';
+			if (::QueryDosDevice(letter, path, _countof(path)))
+				drives.insert({ path, letter });
+		}
+	}
+
+	auto bs = path.find(L'\\', 8);
+	if (bs == wstring::npos)
+		return path;
+
+	if (auto it = drives.find(path.substr(0, bs)); it != drives.end())
+		return it->second + path.substr(bs);
+
+	return path;
+}
+

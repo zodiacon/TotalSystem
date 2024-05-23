@@ -15,7 +15,6 @@
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "ntdll.lib")
 
-// Data
 ID3D11Device* g_pd3dDevice = nullptr;
 static ID3D11DeviceContext* g_pd3dDeviceContext = nullptr;
 static IDXGISwapChain* g_pSwapChain = nullptr;
@@ -45,11 +44,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 
 	// Create application window
 	ImGui_ImplWin32_EnableDpiAwareness();
-	WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, hInstance, nullptr, nullptr, nullptr, nullptr, L"Total System", nullptr };
+	auto hIcon = (HICON)LoadImage(hInstance, MAKEINTRESOURCE(IDI_PROCMGR), IMAGE_ICON, 32, 32, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE);
+	auto hIconSm = (HICON)LoadImage(hInstance, MAKEINTRESOURCE(IDI_PROCMGR), IMAGE_ICON, 16, 16, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE);
+	WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, hInstance, hIcon, nullptr, nullptr, nullptr, L"TotalSystemWindowClass", hIconSm };
 	::RegisterClassExW(&wc);
 	HWND hwnd = g_hMainWnd = ::CreateWindowW(wc.lpszClassName, L"Total System", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, wc.hInstance, nullptr);
-	SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadImage(hInstance, MAKEINTRESOURCE(IDI_PROCMGR), IMAGE_ICON, 32, 32, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE));
-	SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadImage(hInstance, MAKEINTRESOURCE(IDI_PROCMGR), IMAGE_ICON, 16, 16, LR_CREATEDIBSECTION | LR_COPYFROMRESOURCE));
 
 	auto hDone = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	::TrySubmitThreadpoolCallback([](auto, auto p) {
@@ -81,19 +80,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 		// Setup Dear ImGui context
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
-		auto ctx = ImGui::GetCurrentContext();
 
 		auto& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 		auto inifile = FormatHelper::UnicodeToUtf8(winifile.c_str());
-
-		//if(::IsDebuggerPresent())
-		//	::DeleteFile(winifile.c_str());
-
 		io.IniFilename = inifile.c_str();
 
 		// Setup Dear ImGui style
-		ImGui::StyleColorsDark();
+		Globals::IsDarkMode() ? ImGui::StyleColorsDark() : ImGui::StyleColorsLight();
 
 		ImGuiStyle& style = ImGui::GetStyle();
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
@@ -135,6 +129,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 		MainWindow::SetTheme();
 
 		// Main loop
+
 		bool done = false;
 		while (!done) {
 			// Poll and handle messages (inputs, window resize, etc.)
@@ -162,7 +157,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
 
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+
 			mainWindow.Build();
+
+			ImGui::PopStyleVar();
 
 			// Rendering
 			ImGui::Render();

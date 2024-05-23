@@ -25,7 +25,7 @@ ProcessesView::ProcessesView() : m_ThreadsView(&m_ProcMgr) {
 }
 
 void ProcessesView::InitColumns() {
-	static const ColumnInfo columns[]{
+	const ColumnInfo columns[]{
 	{ Column::ProcessName, "Name", [this](auto& p) {
 		Image(p->Icon(), ImVec2(16, 16)); SameLine();
 		PushFont(Globals::VarFont());
@@ -556,8 +556,7 @@ void ProcessesView::DoSort(int col, bool asc) noexcept {
 			case Column::ReadOperationsCount: return SortHelper::Sort(p1->ReadOperationCount, p2->ReadOperationCount, asc);
 			case Column::WriteOperationsCount: return SortHelper::Sort(p1->WriteOperationCount, p2->WriteOperationCount, asc);
 			case Column::OtherOperationsCount: return SortHelper::Sort(p1->OtherOperationCount, p2->OtherOperationCount, asc);
-			case Column::CycleCount: 
-				return SortHelper::Sort(p1->CycleTime, p2->CycleTime, asc);
+			case Column::CycleCount: return SortHelper::Sort(p1->CycleTime, p2->CycleTime, asc);
 		}
 		return false;
 		});
@@ -594,10 +593,11 @@ void ProcessesView::BuildTable() noexcept {
 			SetWindowSize(ImVec2(0, size.y / 2), ImGuiCond_Always);
 			m_DoSize = false;
 		}
-		if (IsKeyPressed(ImGuiKey_Space)) {
+		if (Shortcut(ImGuiKey_Space)) {
 			TogglePause();
 			m_ThreadsView.TogglePause();
 		}
+
 		if (BeginTable("ProcessesTable", (int)m_Columns.size(),
 			ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable |
 			ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersOuterV)) {
@@ -789,7 +789,7 @@ void ProcessesView::BuildToolBar() noexcept {
 
 	SameLine();
 	SetNextItemWidth(120);
-	if (IsKeyChordPressed(ImGuiKey_F | ImGuiMod_Ctrl))
+	if (Shortcut(ImGuiKey_F | ImGuiMod_Ctrl))
 		SetKeyboardFocusHere();
 
 	if (InputTextWithHint("##Filter", "Filter (Ctrl+F)", m_FilterText, _countof(m_FilterText),
@@ -812,7 +812,7 @@ void ProcessesView::BuildToolBar() noexcept {
 		m_ThreadsView.SetUpdateInterval(GetUpdateInterval());
 
 	SameLine();
-	if (ButtonEnabled("Copy", m_SelectedProcess != nullptr) || IsKeyChordPressed(ImGuiKey_C | ImGuiMod_Ctrl)) {
+	if (ButtonEnabled("Copy", m_SelectedProcess != nullptr) || Shortcut(ImGuiKey_C | ImGuiMod_Ctrl)) {
 		std::string text;
 		for (auto& c : m_Columns)
 			if (c.StateFlags & ImGuiTableColumnFlags_IsEnabled)

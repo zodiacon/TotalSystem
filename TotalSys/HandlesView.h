@@ -19,6 +19,7 @@ public:
 	static void Init();
 	HandlesView();
 	~HandlesView();
+	void InitColumns();
 
 	bool Track(uint32_t pid, PCWSTR type = L"");
 	void BuildTable() noexcept;
@@ -32,15 +33,17 @@ public:
 private:
 	void DoSort(int col, bool asc) noexcept;
 	void PromptCloseHandle(HandleInfoEx* hi) const;
-	void DoCopy(HandleInfoEx* hi, int c) const noexcept;
+	std::string DoCopy(HandleInfoEx* hi, int c) const noexcept;
 	bool DoContextMenu(HandleInfoEx* hi, int c) const noexcept;
 	bool Filter(std::shared_ptr<HandleInfoEx> const& h) const;
 
 	enum class Column {
 		Handle, Type, Name, PID, ProcessName, Access, Address, Attributes, DecodedAccess, Details,
+		_Count
 	};
 
 	struct ColumnInfo {
+		Column Type;
 		PCSTR Header;
 		std::function<void(std::shared_ptr<HandleInfoEx>&)> Callback{ };
 		ImGuiTableColumnFlags Flags{ ImGuiTableColumnFlags_None };
@@ -49,6 +52,7 @@ private:
 
 private:
 	WinLLX::ProcessHandleTracker<HandleInfoEx> m_Tracker;
+	std::vector<ColumnInfo> m_Columns;
 	std::shared_ptr<HandleInfoEx> m_SelectedHandle;
 	SortedFilteredVector<std::shared_ptr<HandleInfoEx>> m_Handles;
 	ImGuiTableSortSpecs* m_Specs{ nullptr };

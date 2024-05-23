@@ -36,6 +36,7 @@ private:
 	};
 
 	struct ColumnInfo {
+		Column Type;
 		PCSTR Header;
 		std::function<void(std::shared_ptr<ThreadInfoEx>& ti)> Callback{ };
 		ImGuiTableColumnFlags Flags{ ImGuiTableColumnFlags_None };
@@ -45,6 +46,7 @@ private:
 	void DoSort(int column, bool asc);
 	void CommonRefresh();
 	void ShowThreadStack();
+	void InitColumns();
 
 	inline static D3D11Image s_StateIcons[10];
 	std::vector<std::shared_ptr<ThreadInfoEx>> m_Threads;
@@ -53,6 +55,7 @@ private:
 	DefaultProcessManager m_ProcMgr;
 	DefaultProcessManager* m_ActualProcMgr;
 	ImGuiTableSortSpecs* m_Specs{ nullptr };
+	std::vector<ColumnInfo> m_Columns;
 	bool m_AllThreads{ false };
 };
 

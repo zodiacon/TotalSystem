@@ -42,22 +42,22 @@ namespace WinLLX {
 		requires std::is_base_of_v<ModuleInfo, TModule>
 	class ProcessModuleTracker final {
 	public:
-		explicit ProcessModuleTracker(HANDLE hProcess = nullptr) : m_Handle(hProcess), m_Pid(::GetProcessId(hProcess)) {
+		bool TrackProcess(HANDLE hProcess) {
+			m_Handle.reset(hProcess);
+			m_Pid = ::GetProcessId(hProcess);
 			BOOL isWow = FALSE;
 			::IsWow64Process(m_Handle.get(), &isWow);
 			m_IsWow64 = isWow;
+			m_ModuleMap.clear();
+			m_Modules.clear();
+			return true;
 		}
 
 		bool TrackProcess(uint32_t pid) {
 			m_Pid = pid;
-			m_Handle.reset(::OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | SYNCHRONIZE, FALSE, pid));
-			if (m_Handle) {
-				BOOL isWow = FALSE;
-				::IsWow64Process(m_Handle.get(), &isWow);
-				m_IsWow64 = isWow;
-				m_ModuleMap.clear();
-				m_Modules.clear();
-				return true;
+			auto hProcess = ::OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | SYNCHRONIZE, FALSE, pid);
+			if (hProcess) {
+				return TrackProcess(hProcess);
 			}
 			return false;
 		}

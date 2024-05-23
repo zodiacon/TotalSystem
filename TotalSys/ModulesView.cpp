@@ -6,28 +6,23 @@
 #include "SortHelper.h"
 #include "resource.h"
 #include "IconHelper.h"
+#include "DriverHelper.h"
 
 using namespace ImGui;
+using namespace WinLL;
 using namespace WinLLX;
+using namespace std;
 
 static auto textSize = 512;
 static auto text = std::make_unique<char[]>(textSize);
 
-bool ModulesView::Track(uint32_t pid) {
-	if (m_Tracker.GetPid() == pid)
-		return true;
-
-	auto tracking = m_Tracker.TrackProcess(pid);
-	if (tracking) {
-		m_Modules.clear();
-		m_SelectedModule = nullptr;
-	}
-	return tracking;
+ModulesView::ModulesView() {
+	InitColumns();
 }
 
-void ModulesView::BuildTable() {
-	static const ColumnInfo columns[]{
-		{ "Name", [&](auto& m) {
+void ModulesView::InitColumns() {
+	const ColumnInfo columns[]{
+		{ Column::Name, "Name", [&](auto& m) {
 			sprintf_s(text.get(), textSize, "%ws", m->Name.c_str());
 			Image(s_Icons[m->Type == MapType::Data ? 1 : 0].Get(), ImVec2(16, 16)); SameLine();
 			PushFont(Globals::VarFont());
@@ -37,37 +32,37 @@ void ModulesView::BuildTable() {
 			PopFont();
 			}, 0, 200.0f },
 
-		{ "Type", [](auto& m) {
+		{ Column::Type, "Type", [](auto& m) {
 			PushFont(Globals::VarFont());
 			TextUnformatted(m->Type == MapType::Image ? "Image" : "Data");
 			PopFont();
 		}, ImGuiTableColumnFlags_NoResize, 70.0f },
 
-		{ "Size", [](auto& m) {
+		{ Column::Size, "Size", [](auto& m) {
 			PushFont(Globals::MonoFont());
 			Text("0x%08X", m->ModuleSize);
 			PopFont();
 		}, 0, 90.0f },
 
-		{ "Base Address", [](auto& m) {
+		{ Column::BaseAddress, "Base Address", [](auto& m) {
 			PushFont(Globals::MonoFont());
 			Text("0x%p", m->Base);
 			PopFont();
 		}, ImGuiTableColumnFlags_NoResize },
 
-		{ "Image Base", [](auto& m) {
+		{ Column::ImageBase, "Image Base", [](auto& m) {
 			if (m->ImageBase) {
 				PushFont(Globals::MonoFont());
 				Text("0x%p", m->ImageBase);
 				PopFont();
 			}
 		}, ImGuiTableColumnFlags_NoResize },
-		{ "Full Path", [&](auto& m) {
+		{ Column::Path, "Path", [&](auto& m) {
 			PushFont(Globals::VarFont());
 			Text("%ws", m->Path.c_str());
 			PopFont();
 			}, 0, 400 },
-		{ "Characteristics", [](auto& m) {
+		{ Column::Characteristics, "Characteristics", [](auto& m) {
 			PushFont(Globals::MonoFont());
 			Text("0x%04X", (uint16_t)m->Characteristics);
 			PopFont();
@@ -77,17 +72,32 @@ void ModulesView::BuildTable() {
 				Text("(%s)", FormatHelper::DllCharacteristicsToString((uint16_t)m->Characteristics).c_str());
 				PopFont();
 			}
-			}, 0, 260 },
+			}, 0, 200 },
 	};
+	m_Columns.insert(m_Columns.end(), begin(columns), end(columns));
+}
 
-	if (BeginTable("Modules", _countof(columns), ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
+bool ModulesView::Track(uint32_t pid) {
+	if (m_Tracker.GetPid() == pid)
+		return true;
+
+	m_Modules.clear();
+	auto tracking = m_Tracker.TrackProcess(
+		DriverHelper::OpenProcess(pid, ProcessAccessMask::QueryInformation | ProcessAccessMask::VmRead | ProcessAccessMask::Syncronize));
+	m_SelectedModule = nullptr;
+	return tracking;
+}
+
+void ModulesView::BuildTable() {
+	auto columns = (int)m_Columns.size();
+	if (BeginTable("Modules", columns, ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
 		ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersOuterV)) {
 		TableSetupScrollFreeze(1, 1);
 
 		auto& settings = Globals::Settings();
 		int c = 0;
 		PushFont(Globals::VarFont());
-		for (auto& ci : columns)
+		for (auto& ci : m_Columns)
 			TableSetupColumn(ci.Header, ci.Flags, ci.Width, c++);
 		PopFont();
 
@@ -116,9 +126,9 @@ void ModulesView::BuildTable() {
 				else if (m->ImageBase && m->ImageBase != m->Base) {
 					TableSetBgColor(ImGuiTableBgTarget_RowBg0, ColorConvertFloat4ToU32(settings.GetRelocatedColor()));
 				}
-				for (int c = 0; c < _countof(columns); c++) {
+				for (int c = 0; c < columns; c++) {
 					if (TableSetColumnIndex(c)) {
-						columns[c].Callback(m);
+						m_Columns[c].Callback(m);
 						if (c == 0 && IsItemFocused())
 							m_SelectedModule = m;
 					}
@@ -131,7 +141,7 @@ void ModulesView::BuildTable() {
 }
 
 bool ModulesView::Refresh(uint32_t pid, bool now) {
-	if (NeedUpdate() || now) {
+	if (now || NeedUpdate()) {
 		Track(pid);
 		auto empty = m_Modules.empty();
 		m_Tracker.Update();
@@ -151,8 +161,6 @@ bool ModulesView::Refresh(uint32_t pid, bool now) {
 
 		if (empty) {
 			m_Modules = m_Tracker.GetModules();
-			if (m_Specs)
-				m_Specs->SpecsDirty = true;
 		}
 		else {
 			for (auto& mi : m_Tracker.GetNewModules()) {
