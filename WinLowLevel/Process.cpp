@@ -142,11 +142,11 @@ namespace WinLL {
 			PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, 0))
 			return false;
 
-		WCHAR filename[MAX_PATH], sysPath[MAX_PATH];
+		WCHAR filename[MAX_PATH];
 		BOOL wow64 = FALSE;
 		::IsWow64Process(hProcess.get(), &wow64);
-		::GetSystemDirectory(sysPath, MAX_PATH);
-		::wcscat_s(sysPath, L"\\mscoree.dll");
+		auto dir = SystemInformation::GetSystemDirectory();
+		dir += L"\\mscoree.dll";
 
 		HMODULE hModule[64];
 		DWORD needed;
@@ -158,7 +158,7 @@ namespace WinLL {
 		for (int i = 0; i < count; i++) {
 			if (::GetModuleFileNameEx(hProcess.get(), hModule[i], filename, MAX_PATH) == 0)
 				continue;
-			if (::_wcsicmp(filename, sysPath) == 0)
+			if (::_wcsicmp(filename, dir.c_str()) == 0)
 				return true;
 		}
 		return false;

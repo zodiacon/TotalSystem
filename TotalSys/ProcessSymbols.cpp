@@ -187,7 +187,7 @@ bool ProcessSymbols::LoadKernelModules() const {
 
 	auto p = (RTL_PROCESS_MODULES*)buffer.get();
 	WCHAR name[32];
-	auto dir = SystemInformation::GetSystemDir();
+	auto dir = SystemInformation::GetSystemDirectory();
 	auto count = p->NumberOfModules;
 	DWORD64 address = 0;
 	for (ULONG i = 0; i < min(count, ULONG(3)); i++) {

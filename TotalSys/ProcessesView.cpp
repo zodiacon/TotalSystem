@@ -973,7 +973,7 @@ bool ProcessesView::BuildPriorityClassMenu(ProcessInfo& pi) {
 bool ProcessesView::GotoFileLocation(ProcessInfoEx const& pi) {
 	wstring path;
 	if (pi.Id <= 4) {
-		path = SystemInformation::GetSystemDir() + L"\\ntoskrnl.exe";
+		path = SystemInformation::GetSystemDirectory() + L"\\ntoskrnl.exe";
 	}
 	if (path.empty()) {
 		path = pi.GetExecutablePath();

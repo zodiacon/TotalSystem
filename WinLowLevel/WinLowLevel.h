@@ -16,6 +16,10 @@
 #undef GetCurrentDirectory
 #endif
 
+#ifdef GetSystemDirectory
+#undef GetSystemDirectory
+#endif
+
 #include <wil\resource.h>
 #include <span>
 
@@ -217,8 +221,22 @@ namespace WinLL {
 		[[nodiscard]] static const WindowsVersion& GetWindowsVersion();
 		[[nodiscard]] static const BasicSystemInfo& GetBasicSystemInfo();
 		[[nodiscard]] static uint64_t GetBootTime();
-		[[nodiscard]] static std::wstring GetSystemDir();
+		[[nodiscard]] static std::wstring GetSystemDirectory();
 	};
+
+	//template<typename T> requires std::is_trivially_copy_assignable_v<T>
+	//struct EnumBase {
+	//	EnumBase(T const value = static_cast<T>(0)) : Value(value) {}
+	//	operator T() const {
+	//		return Value;
+	//	}
+	//	template<typename U>
+	//	[[nodiscard]] bool HasFlag(U flag) const {
+	//		return ((T)flag & Value) == flag;
+	//	}
+
+	//	T Value;
+	//};
 
 	struct AccessMask {
 		AccessMask(ULONG access = 0) : Access(access) {}
@@ -334,6 +352,19 @@ namespace WinLL {
 		};
 	};
 
+	struct JobAccessMask : DispatcherAccessMask {
+		using DispatcherAccessMask::DispatcherAccessMask;
+		enum : uint32_t {
+			Query = JOB_OBJECT_QUERY,
+			Terminate = JOB_OBJECT_TERMINATE,
+			AssignProcess = JOB_OBJECT_ASSIGN_PROCESS,
+			Impersonate = JOB_OBJECT_IMPERSONATE,
+			SetAttributes = JOB_OBJECT_SET_ATTRIBUTES,
+			SetSecurityAttributes = JOB_OBJECT_SET_SECURITY_ATTRIBUTES,
+			All = JOB_OBJECT_ALL_ACCESS,
+		};
+	};
+
 	enum class DuplicateHandleOptions : uint32_t {
 		None = 0,
 		SameAccess = DUPLICATE_SAME_ACCESS,
@@ -371,7 +402,7 @@ namespace WinLL {
 		}
 
 		bool IsSameObject(KernelObject const& other) const;
-		wstring GetName() const;
+		std::wstring GetName() const;
 
 	protected:
 		wil::unique_any_handle_null<decltype(&::NtClose), ::NtClose> m_hObject;
@@ -662,6 +693,12 @@ namespace WinLL {
 		bool m_Owner;
 	};
 
+	enum class TokenType {
+		Invalid,
+		Primary = TokenPrimary,
+		Impersonation = TokenImpersonation,
+	};
+
 	class Token : public KernelObject {
 	public:
 		using KernelObject::KernelObject;
@@ -671,6 +708,9 @@ namespace WinLL {
 		[[nodiscard]] wstring GetUserName(bool includeDomain = false) const;
 		[[nodiscard]] VirtualizationState GetVirtualizationState() const;
 		[[nodiscard]] Sid GetUserSid() const;
+		[[nodiscard]] uint32_t GetSessionId() const;
+		[[nodiscard]] int64_t GetLogonSessionId() const;
+		[[nodiscard]] TokenType GetType() const;
 	};
 
 	class File : public DispatcherObject {

@@ -553,11 +553,8 @@ void ThreadsView::DoSort(int column, bool asc) {
 			case Column::MemoryPriority: return SortHelper::Sort(t1->GetMemoryPriority(), t2->GetMemoryPriority(), asc);
 			case Column::IOPriority: return SortHelper::Sort(t1->GetIoPriority(), t2->GetIoPriority(), asc);
 			case Column::Service: return SortHelper::Sort(t1->GetServiceName(), t2->GetServiceName(), asc);
+			case Column::SuspendCount: return SortHelper::Sort(t1->GetSuspendCount(), t2->GetSuspendCount(), asc);
 			case Column::Desc: return SortHelper::Sort(t1->GetDescription(), t2->GetDescription(), asc);
-			//case Column::ComFlags: return SortHelper::SortNumbers(GetThreadInfoEx(t1.get()).GetComFlags(), GetThreadInfoEx(t2.get()).GetComFlags(), asc);
-			//case Column::ComApartment: return SortHelper::SortStrings(
-			//	FormatHelper::ComApartmentToString(GetThreadInfoEx(t1.get()).GetComFlags()),
-			//	FormatHelper::ComApartmentToString(GetThreadInfoEx(t2.get()).GetComFlags()), asc);
 		}
 		return false;
 		});

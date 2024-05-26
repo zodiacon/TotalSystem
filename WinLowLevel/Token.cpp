@@ -72,6 +72,27 @@ namespace WinLL {
 		return Sid();
 	}
 
+	uint32_t Token::GetSessionId() const {
+		uint32_t session = -1;
+		ULONG len;
+		::NtQueryInformationToken(Handle(), TokenSessionId, &session, sizeof(session), &len);
+		return session;
+	}
+
+	int64_t Token::GetLogonSessionId() const {
+		TOKEN_STATISTICS stats{};
+		ULONG len;
+		::NtQueryInformationToken(Handle(), TokenStatistics, &stats, sizeof(stats), &len);
+		return *(int64_t*)&stats.AuthenticationId;
+	}
+
+	TokenType Token::GetType() const {
+		auto type{ TokenType::Invalid };
+		ULONG len;
+		::NtQueryInformationToken(Handle(), ::TokenType, &type, sizeof(type), &len);
+		return type;
+	}
+
 	VirtualizationState Token::GetVirtualizationState() const {
 		ULONG virt = 0;
 		DWORD len;

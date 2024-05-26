@@ -91,6 +91,13 @@ string ObjectHelper::GetObjectDetails(HandleInfoEx* hi, std::wstring const& type
 				bi.AllocationAttributes, FormatHelper::SectionAttributesToString(bi.AllocationAttributes));
 		}
 	}
+	else if (type == L"Token") {
+		Token token(h);
+		details = format("Type: {}, User: {}, Session: {}, Logon Id: 0x{:X}",
+			token.GetType() == TokenType::Primary ? "Primary" : "Impersonation",
+			FormatHelper::UnicodeToUtf8(token.GetUserName().c_str()),
+			token.GetSessionId(), token.GetLogonSessionId());
+	}
 	::CloseHandle(h);
 	return details;
 }
