@@ -680,6 +680,7 @@ namespace WinLL {
 		explicit Sid(PSID sid, bool copy = true);
 
 		operator bool() const;
+		operator PSID() const;
 
 		std::string AsString() const;
 		std::wstring AsWString() const;

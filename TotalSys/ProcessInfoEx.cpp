@@ -7,6 +7,7 @@
 #include <ShellScalingApi.h>
 #include "UI.h"
 #include "DriverHelper.h"
+#include "PEHelper.h"
 
 #pragma comment(lib, "Version.lib")
 
@@ -196,27 +197,11 @@ bool ProcessInfoEx::AreAllThreadsSuspended() const {
 		if(static_pointer_cast<ThreadInfoEx>(t)->IsSuspended())
 			++suspended;
 	}
-	//
-	// heuristic that should be good enough for immersive processes
-	//
 	return suspended == GetThreads().size();
 }
 
 wstring ProcessInfoEx::GetVersionObject(const wstring& name) const {
-	BYTE buffer[1 << 12];
-	wstring result;
-	const auto& exe = GetExecutablePath();
-	if (::GetFileVersionInfo(exe.c_str(), 0, sizeof(buffer), buffer)) {
-		WORD* langAndCodePage;
-		UINT len;
-		if (::VerQueryValue(buffer, L"\\VarFileInfo\\Translation", (void**)&langAndCodePage, &len)) {
-			auto text = format(L"\\StringFileInfo\\{:04x}{:04x}\\{}", langAndCodePage[0], langAndCodePage[1], name);
-			WCHAR* desc;
-			if (::VerQueryValue(buffer, text.c_str(), (void**)&desc, &len))
-				result = desc;
-		}
-	}
-	return result;
+	return PEHelper::GetVersionObject(GetExecutablePath(), name);
 }
 
 int ProcessInfoEx::GetBitness() const {

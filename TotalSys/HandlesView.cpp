@@ -83,7 +83,7 @@ void HandlesView::InitColumns() {
 
 		{ Column::PID, "PID", [](auto& h) {
 			PushFont(Globals::MonoFont());
-			Text(Globals::Settings().HexIds() ? "0x%08" : "%8u", h->ProcessId);
+			Text(Globals::Settings().HexIds() ? "0x%08X" : "%8u", h->ProcessId);
 			PopFont();
 		}, m_Tracker.GetPid() <= 0 ? 0 : ImGuiTableColumnFlags_DefaultHide, 80 },
 
@@ -247,17 +247,16 @@ void HandlesView::Build() {
 void HandlesView::BuildToolBar() noexcept {
 	bool selected = m_SelectedHandle != nullptr;
 	PushFont(Globals::VarFont());
-	if (!m_AllHandles) {
-		SetNextItemWidth(110);
-		if (Shortcut(ImGuiKey_H | ImGuiMod_Ctrl))
-			SetKeyboardFocusHere();
-		if (InputTextWithHint("##Filter", "Filter (Ctrl+H)", m_FilterText, _countof(m_FilterText),
-			ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll)) {
-			m_FilterChanged = true;
-		}
-
-		SameLine();
+	if (Shortcut(ImGuiKey_H | ImGuiMod_Ctrl))
+		SetKeyboardFocusHere();
+	SetNextItemWidth(110);
+	static DWORD64 lastTime = ::GetTickCount64();
+	if (InputTextWithHint("##Filter", "Filter (Ctrl+H)", m_FilterText, _countof(m_FilterText),
+		ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll) && ::GetTickCount64() - lastTime > 250) {
+		m_FilterChanged = true;
 	}
+
+	SameLine();
 	if (Checkbox("Named Objects", &m_NamedObjects)) {
 		m_FilterChanged = true;
 		m_UpdateNow = true;
@@ -285,7 +284,6 @@ bool HandlesView::Refresh(uint32_t pid, bool now) noexcept {
 				m_Tracker.Update();
 			},
 			[&]() {
-
 				auto empty = m_Handles.empty();
 				if (empty) {
 					m_Handles = m_Tracker.GetNewHandles();
@@ -396,7 +394,7 @@ bool HandlesView::DoContextMenu(HandleInfoEx* h, int c) const noexcept {
 		}
 		if (MenuItem("Copy")) {
 			auto text = DoCopy(h, c);
-			if(!text.empty())
+			if (!text.empty())
 				SetClipboardText(text.c_str());
 		}
 		PopFont();

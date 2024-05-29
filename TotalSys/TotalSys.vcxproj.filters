@@ -114,6 +114,9 @@
     <ClInclude Include="DriverHelper.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="PEHelper.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TotalSys.cpp">
@@ -201,6 +204,9 @@
       <Filter>Threads</Filter>
     </ClCompile>
     <ClCompile Include="DriverHelper.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="PEHelper.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
   </ItemGroup>
@@ -308,6 +314,9 @@
     </Image>
     <Image Include="Icons\windowstation.ico">
       <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="Icons\Systemfile.ico">
+      <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
 </Project>

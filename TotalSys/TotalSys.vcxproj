@@ -257,6 +257,7 @@
     <ClInclude Include="ModulesView.h" />
     <ClInclude Include="ObjectHelper.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PEHelper.h" />
     <ClInclude Include="ProcessColor.h" />
     <ClInclude Include="ProcessesView.h" />
     <ClInclude Include="ProcessHelper.h" />
@@ -295,6 +296,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseSigned|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="PEHelper.cpp" />
     <ClCompile Include="ProcessColor.cpp" />
     <ClCompile Include="ProcessesView.cpp" />
     <ClCompile Include="ProcessHelper.cpp" />
@@ -338,6 +340,7 @@
     <Image Include="Icons\semaphore.ico" />
     <Image Include="Icons\Standby.ico" />
     <Image Include="Icons\symboliclink.ico" />
+    <Image Include="Icons\Systemfile.ico" />
     <Image Include="Icons\Terminated.ico" />
     <Image Include="Icons\thread.ico" />
     <Image Include="Icons\timer.ico" />

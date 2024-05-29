@@ -236,6 +236,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="FileHelper.h" />
+    <ClInclude Include="KernelModuleTracker.h" />
     <ClInclude Include="Keys.h" />
     <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="pch.h" />
@@ -251,6 +252,7 @@
   <ItemGroup>
     <ClCompile Include="Event.cpp" />
     <ClCompile Include="FileHelper.cpp" />
+    <ClCompile Include="KernelModuleTracker.cpp" />
     <ClCompile Include="KernelObject.cpp" />
     <ClCompile Include="ObjectManager.cpp" />
     <ClCompile Include="pch.cpp">

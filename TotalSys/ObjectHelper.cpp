@@ -9,11 +9,13 @@ using namespace std;
 using namespace WinLL;
 
 string ObjectHelper::GetObjectDetails(HandleInfoEx* hi, std::wstring const& type, ProcessManager<>* pm) {
-	auto h = DupHandle(ULongToHandle(hi->HandleValue), hi->ProcessId);
-	if (!h)
+	auto hDup = DupHandle(ULongToHandle(hi->HandleValue), hi->ProcessId);
+	if (!hDup)
 		return "";
 
 	string details;
+	auto h = hDup.get();
+	thread_local static char buffer[256];
 	if (type == L"Mutant") {
 		MUTANT_BASIC_INFORMATION info;
 		MUTANT_OWNER_INFORMATION owner;
@@ -55,24 +57,9 @@ string ObjectHelper::GetObjectDetails(HandleInfoEx* hi, std::wstring const& type
 	}
 	else if (type == L"Process") {
 		auto pid = ::GetProcessId(h);
-		wstring name, d;
-		if (pm) {
-			auto p = pm->GetProcessById(pid);
-			if (!p) {
-				pm->Update();
-				p = pm->GetProcessById(pid);
-			}
-			if (p)
-				name = p->GetImageName();
-		}
-		if (name.empty()) {
-			Process p;
-			if (p.Open(pid, ProcessAccessMask::QueryLimitedInformation)) {
-				name = p.GetImageName();
-			}
-		}
+		auto name = GetProcessImageName(pid, pm);
+
 		KERNEL_USER_TIMES times;
-		thread_local static char buffer[256];
 		if (NT_SUCCESS(NtQueryInformationProcess(h, ProcessTimes, &times, sizeof(times), nullptr))) {
 			sprintf_s(buffer, "PID: %u (%ws) Created: %s Exited: %s", pid, name.c_str(),
 				FormatHelper::FormatDateTime(times.CreateTime.QuadPart).c_str(),
@@ -81,6 +68,13 @@ string ObjectHelper::GetObjectDetails(HandleInfoEx* hi, std::wstring const& type
 		else {
 			sprintf_s(buffer, "PID: %u (%ws)", pid, name.c_str());
 		}
+		details = buffer;
+	}
+	else if (type == L"Thread") {
+		auto tid = ::GetThreadId(h);
+		auto pid = ::GetProcessIdOfThread(h);
+		auto name = GetProcessImageName(pid, pm);
+		sprintf_s(buffer, "TID: %u PID: %u (%ws)", tid, pid, name.c_str());
 		details = buffer;
 	}
 	else if (type == L"Section") {
@@ -98,23 +92,30 @@ string ObjectHelper::GetObjectDetails(HandleInfoEx* hi, std::wstring const& type
 			FormatHelper::UnicodeToUtf8(token.GetUserName().c_str()),
 			token.GetSessionId(), token.GetLogonSessionId());
 	}
-	::CloseHandle(h);
+	else if (type == L"SymbolicLink") {
+		BYTE target[512];
+		auto uc = (UNICODE_STRING*)target;
+		ULONG len = sizeof(target);
+		if (NT_SUCCESS(NtQuerySymbolicLinkObject(h, uc, &len))) {
+			sprintf_s(buffer, "Target: %wZ", uc);
+			return buffer;
+		}
+	}
 	return details;
 }
 
 bool ObjectHelper::CloseHandle(HandleInfoEx* hi) {
 	auto hDup = DupHandle(ULongToHandle(hi->HandleValue), hi->ProcessId, 0, DUPLICATE_CLOSE_SOURCE);
 	if (hDup) {
-		::CloseHandle(hDup);
 		return true;
 	}
 	return false;
 }
 
-HANDLE ObjectHelper::DupHandle(HANDLE h, DWORD pid, ACCESS_MASK access, DWORD flags) {
+wil::unique_handle ObjectHelper::DupHandle(HANDLE h, DWORD pid, ACCESS_MASK access, DWORD flags) {
 	auto hDup = WinLLX::ObjectManager::DupHandle(h, pid, access, flags);
 	if (!hDup)
-		hDup = DriverHelper::DupHandle(h, pid, access, flags);
+		hDup.reset(DriverHelper::DupHandle(h, pid, access, flags));
 	return hDup;
 }
 
@@ -138,5 +139,25 @@ wstring ObjectHelper::NativePathToDosPath(wstring const& path) {
 		return it->second + path.substr(bs);
 
 	return path;
+}
+
+std::wstring ObjectHelper::GetProcessImageName(uint32_t pid, WinLL::ProcessManager<>* pm) {
+	wstring name;
+	if (pm) {
+		auto p = pm->GetProcessById(pid);
+		if (!p) {
+			pm->Update();
+			p = pm->GetProcessById(pid);
+		}
+		if (p)
+			name = p->GetImageName();
+	}
+	if (name.empty()) {
+		Process p;
+		if (p.Open(pid, ProcessAccessMask::QueryLimitedInformation)) {
+			name = p.GetImageName();
+		}
+	}
+	return name;
 }
 

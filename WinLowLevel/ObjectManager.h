@@ -126,11 +126,10 @@ namespace WinLLX {
 					auto hDup = DupHandle((HANDLE)handle.HandleValue, (DWORD)handle.UniqueProcessId);
 					if (hDup) {
 						OBJECT_BASIC_INFORMATION info;
-						if (NT_SUCCESS(NtQueryObject(hDup, ObjectBasicInformation, &info, sizeof(info), nullptr))) {
+						if (NT_SUCCESS(NtQueryObject(hDup.get(), ObjectBasicInformation, &info, sizeof(info), nullptr))) {
 							object->HandleCount = info.HandleCount - 1;	// subtract our own handle
 							object->PointerCount = info.PointerCount;
 						}
-						::CloseHandle(hDup);
 					}
 					objectMap.insert({ handle.Object, object });
 				}
@@ -193,7 +192,7 @@ namespace WinLLX {
 
 		const std::vector<std::shared_ptr<ObjectInfo>>& GetObjects() const;
 
-		static HANDLE DupHandle(HANDLE h, DWORD pid, ACCESS_MASK access = GENERIC_READ, DWORD flags = 0);
+		static wil::unique_handle DupHandle(HANDLE h, DWORD pid, ACCESS_MASK access = GENERIC_READ, DWORD flags = 0);
 		static NTSTATUS OpenObject(PCWSTR path, PCWSTR type, HANDLE& handle, DWORD access = READ_CONTROL);
 		static std::pair<HANDLE, DWORD> FindFirstHandle(PCWSTR name, USHORT index, DWORD pid = 0);
 

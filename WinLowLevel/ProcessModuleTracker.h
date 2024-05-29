@@ -38,9 +38,17 @@ namespace WinLLX {
 		MapType Type;
 	};
 
+	template<typename TModule> requires std::is_base_of_v<ModuleInfo, TModule>
+	struct ModuleTrackerBase abstract {
+		virtual bool Update() = 0;
+		virtual std::vector<std::shared_ptr<TModule>> const& GetModules() const = 0;
+		virtual std::vector<std::shared_ptr<TModule>> const& GetNewModules() const = 0;
+		virtual std::vector<std::shared_ptr<TModule>> const& GetUnloadedModules() const = 0;
+	};
+
 	template<typename TModule = ModuleInfo> 
 		requires std::is_base_of_v<ModuleInfo, TModule>
-	class ProcessModuleTracker final {
+	class ProcessModuleTracker final : public ModuleTrackerBase<TModule> {
 	public:
 		bool TrackProcess(HANDLE hProcess) {
 			m_Handle.reset(hProcess);
@@ -65,19 +73,19 @@ namespace WinLLX {
 		operator bool() const {
 			return m_Handle.is_valid();
 		}
-		uint32_t Update() {
+		bool Update() override {
 			return m_Handle ? EnumModulesWithVirtualQuery() : EnumModulesWithToolHelp();
 		}
 
-		const std::vector<std::shared_ptr<TModule>>& GetModules() const {
+		const std::vector<std::shared_ptr<TModule>>& GetModules() const override {
 			return m_Modules;
 		}
 
-		const std::vector<std::shared_ptr<TModule>>& GetNewModules() const {
+		const std::vector<std::shared_ptr<TModule>>& GetNewModules() const override {
 			return m_NewModules;
 		}
 
-		const std::vector<std::shared_ptr<TModule>>& GetUnloadedModules() const {
+		const std::vector<std::shared_ptr<TModule>>& GetUnloadedModules() const override {
 			return m_UnloadedModules;
 		}
 
@@ -93,7 +101,7 @@ namespace WinLLX {
 		}
 
 	private:
-		uint32_t EnumModulesWithVirtualQuery() {
+		bool EnumModulesWithVirtualQuery() {
 			bool first = m_Modules.empty();
 			if (first) {
 				m_Modules.reserve(128);
@@ -144,10 +152,10 @@ namespace WinLLX {
 				m_UnloadedModules.push_back(mi);
 			}
 
-			return static_cast<uint32_t>(m_Modules.size());
+			return true;
 		}
 
-		uint32_t EnumModulesWithToolHelp() {
+		bool EnumModulesWithToolHelp() {
 			wil::unique_handle hSnapshot(::CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, m_Pid));
 			if (!hSnapshot)
 				return 0;

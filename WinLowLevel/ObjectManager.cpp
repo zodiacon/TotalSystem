@@ -178,15 +178,12 @@ wil::unique_virtualalloc_ptr<SYSTEM_HANDLE_INFORMATION_EX> ObjectManager::EnumHa
 	return buffer;
 }
 
-HANDLE ObjectManager::DupHandle(HANDLE h, DWORD pid, ACCESS_MASK access, DWORD flags) {
-	HANDLE hDup{ nullptr };
+wil::unique_handle ObjectManager::DupHandle(HANDLE h, DWORD pid, ACCESS_MASK access, DWORD flags) {
+	wil::unique_handle hDup;
 	wil::unique_handle hProcess(::OpenProcess(PROCESS_DUP_HANDLE, FALSE, pid));
 	if (hProcess)
-		::DuplicateHandle(hProcess.get(), h, ::GetCurrentProcess(), &hDup, access, FALSE, flags);
-	if (hDup)
-		return hDup;
-
-	return nullptr;
+		::DuplicateHandle(hProcess.get(), h, ::GetCurrentProcess(), hDup.addressof(), access, FALSE, flags);
+	return hDup;
 }
 
 NTSTATUS ObjectManager::OpenObject(PCWSTR path, PCWSTR typeName, HANDLE& hObject, DWORD access) {
@@ -208,7 +205,7 @@ NTSTATUS ObjectManager::OpenObject(PCWSTR path, PCWSTR typeName, HANDLE& hObject
 		//
 		auto [handle, pid] = FindFirstHandle(path, GetType(typeName)->TypeIndex);
 		if (handle)
-			hObject = DupHandle(handle, pid, access, 0);
+			hObject = DupHandle(handle, pid, access, 0).release();
 	}
 	else if (type == L"Section")
 		status = NtOpenSection(&hObject, access, &attr);
@@ -380,11 +377,10 @@ std::shared_ptr<ObjectTypeInfo> ObjectManager::GetType(USHORT index) {
 }
 
 wstring ObjectManager::GetObjectName(HANDLE hObject, ULONG pid, USHORT type) {
-	HANDLE hDup = DupHandle(hObject, pid, READ_CONTROL);
+	auto hDup = DupHandle(hObject, pid, READ_CONTROL);
 	wstring name;
 	if (hDup) {
-		name = GetObjectName(hDup, type);
-		::CloseHandle(hDup);
+		name = GetObjectName(hDup.get(), type);
 	}
 
 	return name;

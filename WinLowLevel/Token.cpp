@@ -18,6 +18,10 @@ namespace WinLL {
 		return ::IsValidSid(Get());
 	}
 
+	Sid::operator PSID() const {
+		return Get();
+	}
+
 	const PSID Sid::Get() const {
 		return m_Owner ? (PSID)&m_Sid.Sid : m_pSid;
 	}
@@ -26,6 +30,16 @@ namespace WinLL {
 		PSTR ssid;
 		string result;
 		if (::ConvertSidToStringSidA(Get(), &ssid)) {
+			result = ssid;
+			::LocalFree(ssid);
+		}
+		return result;
+	}
+
+	wstring Sid::AsWString() const {
+		PWSTR ssid;
+		wstring result;
+		if (::ConvertSidToStringSidW(Get(), &ssid)) {
 			result = ssid;
 			::LocalFree(ssid);
 		}
