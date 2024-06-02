@@ -93,6 +93,7 @@ void ModulesView::InitColumns() {
 			}
 		}, 0, 150 },
 	};
+	m_Columns.clear();
 	m_Columns.insert(m_Columns.end(), begin(columns), end(columns));
 
 }
@@ -104,12 +105,12 @@ bool ModulesView::Track(uint32_t pid) {
 	if (pid < 4)
 		return false;
 
+	auto wasKernel = m_Pid == 4;
 	bool tracking = true;
 	m_Modules.clear();
 	m_Pid = pid;
 	m_TheTracker = nullptr;
 	if (pid == 4) {
-		m_KernelModules = true;
 		m_TheTracker = &m_KernelTracker;
 	}
 	else {
@@ -118,7 +119,7 @@ bool ModulesView::Track(uint32_t pid) {
 		if(tracking)
 			m_TheTracker = &m_Tracker;
 	}
-	if (m_Columns.empty())
+	if (m_Columns.empty() || wasKernel && IsKernel())
 		InitColumns();
 	m_SelectedModule = nullptr;
 	return tracking;
@@ -233,7 +234,7 @@ void ModulesView::Build() {
 }
 
 bool ModulesView::IsKernel() const {
-	return m_KernelModules;
+	return m_Pid == 4;
 }
 
 void ModulesView::DoSort(int col, bool asc) {

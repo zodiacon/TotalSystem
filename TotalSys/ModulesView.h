@@ -50,7 +50,6 @@ private:
 	WinLLX::ModuleTrackerBase<ModuleInfoEx>* m_TheTracker{ nullptr };
 	ImGuiTableSortSpecs* m_Specs{ nullptr };
 	uint32_t m_Pid{ 0 };
-	bool m_KernelModules{ false };
 	inline static D3D11Image s_Icons[3];
 };
 
