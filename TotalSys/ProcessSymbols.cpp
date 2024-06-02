@@ -164,7 +164,7 @@ bool ProcessSymbols::LoadModules() const {
 			LoadKernelModules();
 			m_ModulesEnumerated = true;
 			WinLLX::ProcessModuleTracker<> tracker;
-			if (!tracker.TrackProcess(::GetProcessId(m_hProcess)))
+			if (!tracker.TrackProcess(m_hProcess))
 				return true;
 
 			tracker.Update();

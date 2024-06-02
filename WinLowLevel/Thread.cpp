@@ -79,6 +79,10 @@ namespace WinLL {
 		return ::ResumeThread(Handle()) != -1;
 	}
 
+	bool Thread::SetPriority(ThreadPriority priority) {
+		return ::SetThreadPriority(Handle(), (int)priority);
+	}
+
 	bool Thread::Terminate(uint32_t exitCode) {
 		return ::TerminateThread(Handle(), exitCode);
 	}
@@ -91,6 +95,16 @@ namespace WinLL {
 		return ::GetProcessIdOfThread(Handle());
 	}
 
+	ThreadPriority Thread::GetPriority() const {
+		return ThreadPriority(::GetThreadPriority(Handle()));
+	}
+
+	CpuNumber Thread::GetIdealProcessor() const {
+		CpuNumber cpu{ (uint16_t)-1 };
+		::GetThreadIdealProcessorEx(Handle(), (PPROCESSOR_NUMBER) & cpu);
+		return cpu;
+	}
+
 	wstring Thread::GetDescription() const {
 		BYTE buffer[256];
 		if (NT_SUCCESS(NtQueryInformationThread(Handle(), ThreadNameInformation, buffer, sizeof(buffer), nullptr))) {
@@ -100,4 +114,7 @@ namespace WinLL {
 		return L"";
 	}
 
+	bool Thread::SetDescription(std::wstring const& desc) {
+		return S_OK == ::SetThreadDescription(Handle(), desc.c_str());
+	}
 }

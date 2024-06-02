@@ -194,6 +194,9 @@
       <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
       <UACUIAccess>false</UACUIAccess>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -217,6 +220,9 @@
       <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
       <UACUIAccess>false</UACUIAccess>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseSigned|x64'">
     <ClCompile>
@@ -246,6 +252,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AccessMaskDecoder.h" />
+    <ClInclude Include="DialogHelper.h" />
     <ClInclude Include="DriverHelper.h" />
     <ClInclude Include="FormatHelper.h" />
     <ClInclude Include="Globals.h" />
@@ -278,6 +285,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AccessMaskDecoder.cpp" />
+    <ClCompile Include="DialogHelper.cpp" />
     <ClCompile Include="DriverHelper.cpp" />
     <ClCompile Include="FormatHelper.cpp" />
     <ClCompile Include="Globals.cpp" />

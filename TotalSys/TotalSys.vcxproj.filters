@@ -90,9 +90,6 @@
     <ClInclude Include="SettingsBase.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="IniFile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SortedFilteredVector.h">
       <Filter>Helpers</Filter>
     </ClInclude>
@@ -115,6 +112,12 @@
       <Filter>Helpers</Filter>
     </ClInclude>
     <ClInclude Include="PEHelper.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="IniFile.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="DialogHelper.h">
       <Filter>Helpers</Filter>
     </ClInclude>
   </ItemGroup>
@@ -208,6 +211,9 @@
     </ClCompile>
     <ClCompile Include="PEHelper.cpp">
       <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="DialogHelper.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

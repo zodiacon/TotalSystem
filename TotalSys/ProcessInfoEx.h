@@ -44,7 +44,7 @@ public:
 	[[nodiscard]] WinLL::IoPriority GetIoPriority() const;
 	[[nodiscard]] WinLL::VirtualizationState GetVirtualizationState() const;
 	[[nodiscard]] ProcessSymbols const& GetSymbols() const;
-	std::string GetAddressSymbol(uint64_t address) const;
+	[[nodiscard]] std::string GetAddressSymbol(uint64_t address) const;
 	[[nodiscard]] std::string GetModuleName(uint64_t baseAddress) const;
 	[[nodiscard]] std::wstring const& GetCommandLine() const;
 	[[nodiscard]] WinLL::PriorityClass GetPriorityClass() const;

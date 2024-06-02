@@ -1,39 +1,12 @@
 #include "pch.h"
 #include "DriverHelper.h"
 #include <WinLowLevel.h>
+#include <SecurityHelper.h>
+#include "resource.h"
 
-#define DRIVER_CURRENT_VERSION 0x0106
+#include "..\\KTotalSys\\KTotalSysPublic.h"
 
-#define IOCTL_KOBJEXP_OPEN_OBJECT				CTL_CODE(0x8000, 0x800, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KOBJEXP_DUP_HANDLE				CTL_CODE(0x8000, 0x801, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KOBJEXP_OPEN_EVENT_BY_NAME		CTL_CODE(0x8000, 0x802, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KOBJEXP_OPEN_SEMAPHORE_BY_NAME	CTL_CODE(0x8000, 0x803, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KOBJEXP_OPEN_JOB_BY_NAME			CTL_CODE(0x8000, 0x804, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KOBJEXP_OPEN_DESKTOP_BY_NAME		CTL_CODE(0x8000, 0x805, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KOBJEXP_OPEN_PROCESS				CTL_CODE(0x8000, 0x806, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KOBJEXP_GET_VERSION				CTL_CODE(0x8000, 0x807, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KOBJEXP_GET_OBJECT_ADDRESS		CTL_CODE(0x8000, 0x808, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KOBJEXP_OPEN_THREAD				CTL_CODE(0x8000, 0x809, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KOBJEXP_OPEN_WINSTA_BY_NAME		CTL_CODE(0x8000, 0x80a, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KOBJEXP_OPEN_MUTEX_BY_NAME		CTL_CODE(0x8000, 0x80b, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KOBJEXP_OPEN_PROCESS_TOKEN		CTL_CODE(0x8000, 0x80c, METHOD_BUFFERED, FILE_ANY_ACCESS)
-
-struct OpenObjectData {
-	void* Address;
-	ACCESS_MASK Access;
-};
-
-struct DupHandleData {
-	ULONG Handle;
-	ULONG SourcePid;
-	ACCESS_MASK AccessMask;
-	ULONG Flags;
-};
-
-struct OpenProcessThreadData {
-	ULONG Id;
-	ACCESS_MASK AccessMask;
-};
+using namespace WinLL;
 
 HANDLE DriverHelper::OpenHandle(void* pObject, ACCESS_MASK access) {
 	if (!OpenDevice())
@@ -45,7 +18,7 @@ HANDLE DriverHelper::OpenHandle(void* pObject, ACCESS_MASK access) {
 
 	DWORD bytes;
 	HANDLE hObject;
-	return ::DeviceIoControl(s_hDevice, IOCTL_KOBJEXP_OPEN_OBJECT, &data, sizeof(data),
+	return ::DeviceIoControl(s_hDevice, IOCTL_KTOTALSYS_OPEN_OBJECT, &data, sizeof(data),
 		&hObject, sizeof(hObject), &bytes, nullptr)
 		? hObject : nullptr;
 }
@@ -60,7 +33,7 @@ HANDLE DriverHelper::DupHandle(HANDLE hObject, ULONG pid, ACCESS_MASK access, DW
 		data.Flags = flags;
 
 		DWORD bytes;
-		::DeviceIoControl(s_hDevice, IOCTL_KOBJEXP_DUP_HANDLE, &data, sizeof(data),
+		::DeviceIoControl(s_hDevice, IOCTL_KTOTALSYS_DUP_HANDLE, &data, sizeof(data),
 			&hTarget, sizeof(hTarget), &bytes, nullptr);
 	}
 	return hTarget;
@@ -74,12 +47,11 @@ HANDLE DriverHelper::OpenProcess(DWORD pid, ACCESS_MASK access) {
 		data.Id = pid;
 		DWORD bytes;
 
-		::DeviceIoControl(s_hDevice, IOCTL_KOBJEXP_OPEN_PROCESS, &data, sizeof(data),
+		::DeviceIoControl(s_hDevice, IOCTL_KTOTALSYS_OPEN_PROCESS, &data, sizeof(data),
 			&hProcess, sizeof(hProcess), &bytes, nullptr);
 	}
-	else {
+	if(!hProcess)
 		hProcess = ::OpenProcess(access, FALSE, pid);
-	}
 	return hProcess;
 }
 
@@ -91,7 +63,7 @@ HANDLE DriverHelper::OpenThread(DWORD tid, ACCESS_MASK access) {
 		data.Id = tid;
 		DWORD bytes;
 
-		::DeviceIoControl(s_hDevice, IOCTL_KOBJEXP_OPEN_THREAD, &data, sizeof(data),
+		::DeviceIoControl(s_hDevice, IOCTL_KTOTALSYS_OPEN_THREAD, &data, sizeof(data),
 			&hThread, sizeof(hThread), &bytes, nullptr);
 	}
 	if(!hThread)
@@ -107,7 +79,7 @@ HANDLE DriverHelper::OpenToken(DWORD pid, ACCESS_MASK access) {
 		data.Id = pid;
 		DWORD bytes;
 
-		::DeviceIoControl(s_hDevice, IOCTL_KOBJEXP_OPEN_PROCESS_TOKEN, &data, sizeof(data),
+		::DeviceIoControl(s_hDevice, IOCTL_KTOTALSYS_OPEN_PROCESS_TOKEN, &data, sizeof(data),
 			&hToken, sizeof(hToken), &bytes, nullptr);
 	}
 	if (!hToken) {
@@ -126,7 +98,7 @@ PVOID DriverHelper::GetObjectAddress(HANDLE hObject) {
 
 	PVOID address = nullptr;
 	DWORD bytes;
-	::DeviceIoControl(s_hDevice, IOCTL_KOBJEXP_GET_OBJECT_ADDRESS, &hObject, sizeof(hObject), &address, sizeof(address), &bytes, nullptr);
+	::DeviceIoControl(s_hDevice, IOCTL_KTOTALSYS_GET_OBJECT_ADDRESS, &hObject, sizeof(hObject), &address, sizeof(address), &bytes, nullptr);
 	return address;
 }
 
@@ -136,7 +108,7 @@ USHORT DriverHelper::GetVersion() {
 		return 0;
 
 	DWORD bytes;
-	::DeviceIoControl(s_hDevice, IOCTL_KOBJEXP_GET_VERSION, nullptr, 0, &version, sizeof(version), &bytes, nullptr);
+	::DeviceIoControl(s_hDevice, IOCTL_KTOTALSYS_GET_VERSION, nullptr, 0, &version, sizeof(version), &bytes, nullptr);
 	return version;
 }
 
@@ -173,7 +145,7 @@ bool DriverHelper::OpenDevice() {
 		return false;
 
 	if (!s_hDevice) {
-		s_hDevice = ::CreateFile(L"\\\\.\\KObjExp", GENERIC_WRITE | GENERIC_READ,
+		s_hDevice = ::CreateFile(L"\\\\.\\KTotalSys", GENERIC_WRITE | GENERIC_READ,
 			FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
 			OPEN_EXISTING, 0, nullptr);
 		if (s_hDevice == INVALID_HANDLE_VALUE) {
@@ -190,12 +162,11 @@ bool DriverHelper::OpenDevice() {
 }
 
 bool DriverHelper::LoadDriver(bool load) {
-
 	wil::unique_schandle hScm(::OpenSCManager(nullptr, nullptr, SC_MANAGER_ALL_ACCESS));
 	if (!hScm)
 		return false;
 
-	wil::unique_schandle hService(::OpenService(hScm.get(), L"KObjExp", SERVICE_ALL_ACCESS));
+	wil::unique_schandle hService(::OpenService(hScm.get(), L"KTotalSys", SERVICE_ALL_ACCESS));
 	if (!hService)
 		return false;
 
@@ -222,55 +193,54 @@ bool DriverHelper::LoadDriver(bool load) {
 	return false;
 }
 
-//bool DriverHelper::InstallDriver(bool justCopy) {
-//	if (!WinLL::SecurityHelper::IsRunningElevated())
-//		return false;
-//
-//	// locate the driver binary resource, extract to temp folder and install
-//
-//	auto hRes = ::FindResource(nullptr, MAKEINTRESOURCE(IDR_DRIVER), L"BIN");
-//	if (!hRes)
-//		return false;
-//
-//	auto hGlobal = ::LoadResource(nullptr, hRes);
-//	if (!hGlobal)
-//		return false;
-//
-//	auto size = ::SizeofResource(nullptr, hRes);
-//	void* pBuffer = ::LockResource(hGlobal);
-//
-//	WCHAR path[MAX_PATH];
-//	::GetSystemDirectory(path, MAX_PATH);
-//	::wcscat_s(path, L"\\Drivers\\KObjExp.sys");
-//	wil::unique_hfile hFile(::CreateFile(path, GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_SYSTEM, nullptr));
-//	if (!hFile)
-//		return false;
-//
-//	DWORD bytes = 0;
-//	::WriteFile(hFile.get(), pBuffer, size, &bytes, nullptr);
-//	if (bytes != size)
-//		return false;
-//
-//	if (justCopy)
-//		return true;
-//
-//	wil::unique_schandle hScm(::OpenSCManager(nullptr, nullptr, SC_MANAGER_ALL_ACCESS));
-//	if (!hScm)
-//		return false;
-//
-//	wil::unique_schandle hService(::CreateService(hScm.get(), L"KObjExp", nullptr, SERVICE_ALL_ACCESS, SERVICE_KERNEL_DRIVER,
-//		SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, path, nullptr, nullptr, nullptr, nullptr, nullptr));
-//	auto success = hService != nullptr;
-//	return success;
-//}
+bool DriverHelper::InstallDriver(bool justCopy) {
+	if (!SecurityHelper::IsRunningElevated())
+		return false;
 
-//bool DriverHelper::UpdateDriver() {
-//	if (!LoadDriver(false))
-//		return false;
-//	if (!InstallDriver(true))
-//		return false;
-//	if (!LoadDriver())
-//		return false;
-//
-//	return true;
-//}
+	auto hRes = ::FindResource(nullptr, MAKEINTRESOURCE(IDR_DRIVER), L"BIN");
+	if (!hRes)
+		return false;
+
+	auto hGlobal = ::LoadResource(nullptr, hRes);
+	if (!hGlobal)
+		return false;
+
+	auto size = ::SizeofResource(nullptr, hRes);
+	void* pBuffer = ::LockResource(hGlobal);
+
+	auto path = SystemInformation::GetSystemDirectory();
+	path += L"\\Drivers\\KTotalSys.sys";
+	wil::unique_hfile hFile(::CreateFile(path.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_SYSTEM, nullptr));
+	if (!hFile)
+		return false;
+
+	DWORD bytes = 0;
+	::WriteFile(hFile.get(), pBuffer, size, &bytes, nullptr);
+	if (bytes != size)
+		return false;
+
+	if (justCopy)
+		return true;
+
+	wil::unique_schandle hScm(::OpenSCManager(nullptr, nullptr, SC_MANAGER_ALL_ACCESS));
+	if (!hScm)
+		return false;
+
+	wil::unique_schandle hService(::CreateService(hScm.get(), L"KTotalSys", nullptr, SERVICE_ALL_ACCESS, SERVICE_KERNEL_DRIVER,
+		SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, path.c_str(), nullptr, nullptr, nullptr, nullptr, nullptr));
+	bool success = false;
+	if (hService)
+		success = ::StartService(hService.get(), 0, nullptr);
+	return success;
+}
+
+bool DriverHelper::UpdateDriver() {
+	if (!LoadDriver(false))
+		return false;
+	if (!InstallDriver(true))
+		return false;
+	if (!LoadDriver())
+		return false;
+
+	return true;
+}

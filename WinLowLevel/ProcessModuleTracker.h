@@ -51,13 +51,15 @@ namespace WinLLX {
 	class ProcessModuleTracker final : public ModuleTrackerBase<TModule> {
 	public:
 		bool TrackProcess(HANDLE hProcess) {
+			m_ModuleMap.clear();
+			m_Modules.clear();
+			if (!hProcess)
+				return false;
 			m_Handle.reset(hProcess);
 			m_Pid = ::GetProcessId(hProcess);
 			BOOL isWow = FALSE;
 			::IsWow64Process(m_Handle.get(), &isWow);
 			m_IsWow64 = isWow;
-			m_ModuleMap.clear();
-			m_Modules.clear();
 			return true;
 		}
 

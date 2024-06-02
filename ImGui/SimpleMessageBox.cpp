@@ -18,6 +18,15 @@ void SimpleMessageBox::SetFont(ImFont* font) {
 	m_Font = font;
 }
 
+void SimpleMessageBox::SetImage(ImTextureID image, float width, float height) {
+	m_Image = image;
+	if (width > 0) {
+		if (height == 0)
+			height = width;
+		m_ImageSize = ImVec2(width, height);
+	}
+}
+
 void SimpleMessageBox::Empty() {
 	m_Title.clear();
 	m_Text.clear();
@@ -48,6 +57,8 @@ MessageBoxResult SimpleMessageBox::ShowModal() {
 	if (m_Font)
 		PushFont(m_Font);
 	if (BeginPopupModal(m_Title.c_str(), &open, ImGuiWindowFlags_AlwaysAutoResize)) {
+		if (m_Image)
+			Image(m_Image, m_ImageSize);
 		auto winWidth = GetWindowSize().x;
 		Text(m_Text.c_str());
 		Dummy(ImVec2(0, 6));

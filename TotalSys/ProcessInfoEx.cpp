@@ -237,7 +237,7 @@ WinLL::IoPriority ProcessInfoEx::GetIoPriority() const {
 VirtualizationState ProcessInfoEx::GetVirtualizationState() const {
 	Token token;
 	if (!token.Open(TokenAccessMask::Query, Id)) {
-		return VirtualizationState::Unknown;
+		return VirtualizationState::Error;
 	}
 
 	return token.GetVirtualizationState();

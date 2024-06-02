@@ -77,11 +77,10 @@ namespace WinLL {
 	}
 
 	Sid Token::GetUserSid() const {
-		BYTE buffer[512];
+		SE_TOKEN_USER user;
 		ULONG len;
-		if (NT_SUCCESS(::NtQueryInformationToken(Handle(), TokenUser, buffer, sizeof(buffer), &len))) {
-			auto pti = reinterpret_cast<TOKEN_USER*>(buffer);
-			return Sid(pti->User.Sid);
+		if (NT_SUCCESS(::NtQueryInformationToken(Handle(), TokenUser, &user, sizeof(user), &len))) {
+			return Sid(&user.Sid);
 		}
 		return Sid();
 	}
@@ -89,15 +88,12 @@ namespace WinLL {
 	uint32_t Token::GetSessionId() const {
 		uint32_t session = -1;
 		ULONG len;
-		::NtQueryInformationToken(Handle(), TokenSessionId, &session, sizeof(session), &len);
+		::NtQueryInformationToken(Handle(), ::TokenSessionId, &session, sizeof(session), &len);
 		return session;
 	}
 
 	int64_t Token::GetLogonSessionId() const {
-		TOKEN_STATISTICS stats{};
-		ULONG len;
-		::NtQueryInformationToken(Handle(), TokenStatistics, &stats, sizeof(stats), &len);
-		return *(int64_t*)&stats.AuthenticationId;
+		return GetStatistics().AuthenticationId;
 	}
 
 	TokenType Token::GetType() const {
@@ -107,19 +103,26 @@ namespace WinLL {
 		return type;
 	}
 
+	TokenStatistics Token::GetStatistics() const {
+		TokenStatistics stats{};
+		ULONG len;
+		::NtQueryInformationToken(Handle(), ::TokenStatistics, &stats, sizeof(stats), &len);
+		return stats;
+	}
+
 	VirtualizationState Token::GetVirtualizationState() const {
 		ULONG virt = 0;
 		DWORD len;
-		if (!::GetTokenInformation(Handle(), TokenVirtualizationAllowed, &virt, sizeof(virt), &len))
-			return VirtualizationState::Unknown;
+		if (!NT_SUCCESS(::NtQueryInformationToken(Handle(), TokenVirtualizationAllowed, &virt, sizeof(virt), &len)))
+			return VirtualizationState::Error;
 
 		if (!virt)
 			return VirtualizationState::NotAllowed;
 
-		if (::GetTokenInformation(Handle(), TokenVirtualizationEnabled, &virt, sizeof(virt), &len))
+		if (NT_SUCCESS(::NtQueryInformationToken(Handle(), TokenVirtualizationEnabled, &virt, sizeof(virt), &len)))
 			return virt ? VirtualizationState::Enabled : VirtualizationState::Disabled;
 
-		return VirtualizationState::Unknown;
+		return VirtualizationState::Error;
 	}
 
 }

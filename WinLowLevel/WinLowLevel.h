@@ -525,7 +525,7 @@ namespace WinLL {
 	};
 
 	enum class VirtualizationState {
-		Unknown,
+		Error,
 		NotAllowed,
 		Enabled,
 		Disabled
@@ -700,6 +700,27 @@ namespace WinLL {
 		Impersonation = TokenImpersonation,
 	};
 
+	enum class SecurityImpersonationLevel {
+		Anonymous = SecurityAnonymous,
+		Identification = SecurityIdentification,
+		Impersonation = SecurityImpersonation,
+		Delegation = SecurityDelegation
+	};
+
+	struct TokenStatistics {
+		int64_t TokenId;
+		int64_t AuthenticationId;
+		uint64_t ExpirationTime;
+		TokenType TokenType;
+		SecurityImpersonationLevel ImpersonationLevel;
+		uint32_t DynamicCharged;
+		uint32_t DynamicAvailable;
+		uint32_t GroupCount;
+		uint32_t PrivilegeCount;
+		int64_t ModifiedId;
+	};
+	static_assert(sizeof(TokenStatistics) == sizeof(TOKEN_STATISTICS));
+
 	class Token : public KernelObject {
 	public:
 		using KernelObject::KernelObject;
@@ -712,6 +733,7 @@ namespace WinLL {
 		[[nodiscard]] uint32_t GetSessionId() const;
 		[[nodiscard]] int64_t GetLogonSessionId() const;
 		[[nodiscard]] TokenType GetType() const;
+		[[nodiscard]] TokenStatistics GetStatistics() const;
 	};
 
 	class File : public DispatcherObject {

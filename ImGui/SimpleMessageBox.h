@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include "imgui.h"
 
 struct ImFont;
 
@@ -25,6 +26,8 @@ public:
 	SimpleMessageBox(std::string title, std::string text, MessageBoxButtons buttons = MessageBoxButtons::OK);
 	void Init(std::string title, std::string text, MessageBoxButtons buttons = MessageBoxButtons::OK);
 	void SetFont(ImFont* font);
+	void SetImage(ImTextureID image, float width = 0, float height = 0);
+
 	MessageBoxResult ShowModal();
 
 	bool IsEmpty() const;
@@ -34,5 +37,7 @@ private:
 	std::string m_Title, m_Text;
 	ImFont* m_Font{ nullptr };
 	MessageBoxButtons m_Buttons;
+	ImTextureID m_Image;
+	ImVec2 m_ImageSize{ 32, 32 };
 	bool m_Open{ true };
 };

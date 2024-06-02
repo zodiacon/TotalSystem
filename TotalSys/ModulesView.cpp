@@ -107,6 +107,7 @@ bool ModulesView::Track(uint32_t pid) {
 	bool tracking = true;
 	m_Modules.clear();
 	m_Pid = pid;
+	m_TheTracker = nullptr;
 	if (pid == 4) {
 		m_KernelModules = true;
 		m_TheTracker = &m_KernelTracker;
@@ -114,7 +115,8 @@ bool ModulesView::Track(uint32_t pid) {
 	else {
 		tracking = m_Tracker.TrackProcess(
 			DriverHelper::OpenProcess(pid, ProcessAccessMask::QueryInformation | ProcessAccessMask::VmRead | ProcessAccessMask::Syncronize));
-		m_TheTracker = &m_Tracker;
+		if(tracking)
+			m_TheTracker = &m_Tracker;
 	}
 	if (m_Columns.empty())
 		InitColumns();
@@ -175,7 +177,9 @@ void ModulesView::BuildTable() {
 
 bool ModulesView::Refresh(uint32_t pid, bool now) {
 	if (now || NeedUpdate()) {
-		Track(pid);
+		if (!Track(pid) || !m_TheTracker)
+			return false;
+
 		auto empty = m_Modules.empty();
 		m_TheTracker->Update();
 

@@ -3,8 +3,13 @@
 #include <string_view>
 #include <wil\com.h>
 #include <d3d11.h>
+#include "imgui.h"
 
-class D3D11Image {
+struct ImageBase abstract {
+	virtual operator ImTextureID() const = 0;
+};
+
+class D3D11Image : public ImageBase {
 public:
 	D3D11Image() = default;
 	D3D11Image(D3D11Image const&) = delete;
@@ -16,6 +21,7 @@ public:
 	static D3D11Image FromFile(const std::wstring_view path);
 
 	ID3D11ShaderResourceView* Get() const;
+	operator ImTextureID() const override;
 	operator bool() const;
 
 private:

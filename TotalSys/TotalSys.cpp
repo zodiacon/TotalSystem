@@ -11,6 +11,7 @@
 #include "FormatHelper.h"
 #include <Knownfolders.h>
 #include "TotalSysSettings.h"
+#include "DriverHelper.h"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "ntdll.lib")
@@ -41,6 +42,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 
 	::SetPriorityClass(::GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 	::SetThreadPriority(::GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
+
+	if (!DriverHelper::LoadDriver())
+		DriverHelper::InstallDriver();
 
 	// Create application window
 	ImGui_ImplWin32_EnableDpiAwareness();

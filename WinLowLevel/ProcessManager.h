@@ -22,7 +22,7 @@
 
 namespace WinLL {
 	using namespace std;
-	template<typename TProcessInfo = ProcessInfo, typename TThreadInfo = ThreadInfo>
+	template<typename TProcessInfo = ProcessInfo, typename TThreadInfo = ThreadInfo> 
 	class ProcessManager {
 		static_assert(is_base_of_v<ProcessInfo, TProcessInfo>);
 		static_assert(is_base_of_v<ThreadInfo, TThreadInfo>);
@@ -379,11 +379,11 @@ namespace WinLL {
 		ThreadMap m_ThreadsByKey;
 
 		LARGE_INTEGER m_prevTicks{};
-		inline static uint32_t s_TotalProcessors;
-		inline static bool s_IsElevated;
 		uint32_t m_CurrentPid{ 0 };
 
 		wil::unique_virtualalloc_ptr<BYTE> m_Buffer;
 		ULONG m_BufferSize;
+		inline static uint32_t s_TotalProcessors;
+		inline static bool s_IsElevated;
 	};
 }

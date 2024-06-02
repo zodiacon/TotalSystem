@@ -54,6 +54,10 @@ ID3D11ShaderResourceView* D3D11Image::Get() const {
 	return m_spImage.get();
 }
 
+D3D11Image::operator ImTextureID() const {
+	return Get();
+}
+
 D3D11Image::operator bool() const {
 	return m_spImage.get() != nullptr;
 }

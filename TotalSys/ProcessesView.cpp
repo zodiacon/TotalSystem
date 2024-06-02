@@ -12,6 +12,7 @@
 #include "TotalSysSettings.h"
 #include "ProcessHelper.h"
 #include "MainWindow.h"
+#include "DialogHelper.h"
 
 #pragma comment(lib, "Shlwapi.lib")
 
@@ -41,7 +42,6 @@ void ProcessesView::InitColumns() {
 		if (BeginPopupContextItem(item.c_str())) {
 			if (IsRunning()) {
 				TogglePause();
-				m_ThreadsView.TogglePause();
 				m_WasRunning = true;
 			}
 			m_SelectedProcess = p;
@@ -54,7 +54,6 @@ void ProcessesView::InitColumns() {
 			if (!IsPopupOpen(item.c_str())) {
 				if (m_WasRunning) {
 					TogglePause();
-					m_ThreadsView.TogglePause();
 					m_WasRunning = false;
 				}
 			}
@@ -324,6 +323,8 @@ void ProcessesView::InitColumns() {
 
 void ProcessesView::Build() noexcept {
 	if (IsOpen()) {
+		m_MsgBox.ShowModal();
+
 		PushFont(Globals::VarFont());
 		auto view = GetMainViewport();
 		SetNextWindowSize(view->WorkSize, ImGuiCond_FirstUseEver);
@@ -765,6 +766,17 @@ void ProcessesView::BuildProcessMenu(ProcessInfoEx& pi) noexcept {
 	if (MenuItem("Open file location")) {
 		GotoFileLocation(pi);
 	}
+	if (BeginMenu("Advanced")) {
+		if (MenuItem("Inject DLL...")) {
+			auto filename = DialogHelper::GetOpenFileName(nullptr, L"Select DLL to Inject", { FileDialogFilterItem(L"DLL Files", L"*.dll") });
+			if (!filename.empty()) {
+				if (!ProcessHelper::InjectDll(m_SelectedProcess->Id, filename)) {
+					m_MsgBox.Init("DLL Injection", "Failed to inject DLL");
+				}
+			}
+		}
+		ImGui::EndMenu();
+	}
 	//Separator();
 	//if (MenuItem("Properties...")) {
 	//	GetOrAddProcessProperties(p);
@@ -777,15 +789,13 @@ void ProcessesView::BuildToolBar() noexcept {
 	if (ImageButton("LowerPane", Globals::ImageManager().GetImage(Globals::Settings().ShowLowerPane() ? IDI_WINDOW : IDI_SPLIT), ImVec2(16, 16))) {
 		ToggleLowerPane();
 	}
-	if (IsItemHovered())
-		SetTooltip(((Globals::Settings().ShowLowerPane() ? "Hide" : "Show") + string(" Lower Pane")).c_str());
+	SetItemTooltip(((Globals::Settings().ShowLowerPane() ? "Hide" : "Show") + string(" Lower Pane")).c_str());
 	SameLine();
 	if (ImageButton("Pause", Globals::ImageManager().GetImage(IsRunning() ? IDI_PAUSE : IDI_RUNNING), ImVec2(16, 16))) {
 		TogglePause();
 		m_ThreadsView.TogglePause();
 	}
-	if (IsItemHovered())
-		SetTooltip(IsRunning() ? "Pause" : "Resume");
+	SetItemTooltip(IsRunning() ? "Pause" : "Resume");
 
 	SameLine();
 	SetNextItemWidth(120);
@@ -797,15 +807,13 @@ void ProcessesView::BuildToolBar() noexcept {
 		m_FilterChanged = true;
 	}
 	m_FilterFocused = IsItemFocused();
-	if (IsItemHovered())
-		SetTooltip("Filter by name/ID");
+	SetItemTooltip("Filter by name/ID");
 
 	SameLine(0, 20);
 	if (ButtonEnabled("Kill", m_SelectedProcess != nullptr, ImVec2(40, 0))) {
 		TryKillProcess(*m_SelectedProcess);
 	}
-	if (IsItemHovered())
-		SetTooltip("Terminate Process");
+	SetItemTooltip("Terminate Process");
 	SameLine();
 
 	if (BuildUpdateIntervalToolBar())

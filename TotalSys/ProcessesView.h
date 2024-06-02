@@ -73,6 +73,7 @@ private:
 	int m_SelectedIndex{ -1 };
 	int m_CurrentIndex{ -1 };
 	std::vector<ColumnInfo> m_Columns;
+	SimpleMessageBox m_MsgBox;
 	bool m_WasRunning : 1 { false }, m_FilterChanged : 1 { false };
 	bool m_DoSize : 1{ false }, m_UpdateNow : 1 { false }, m_FilterFocused : 1 { false };
 	bool m_ThreadsActive : 1 { false }, m_ModulesActive : 1 { false }, m_HandlesActive : 1 { false };
