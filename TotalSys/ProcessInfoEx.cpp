@@ -20,8 +20,9 @@ ProcessInfoEx::ProcessInfoEx(uint32_t pid) : ProcessInfo(pid) {
 		if (!m_Process)
 			m_Process.Attach(DriverHelper::OpenProcess(pid, ProcessAccessMask::QueryLimitedInformation));
 
-		if (m_Process)
+		if (m_Process) {
 			m_Symbols.Load(m_Process.Handle());
+		}
 	}
 }
 

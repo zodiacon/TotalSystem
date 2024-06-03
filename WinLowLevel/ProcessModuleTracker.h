@@ -56,6 +56,7 @@ namespace WinLLX {
 			if (!hProcess)
 				return false;
 			m_Handle.reset(hProcess);
+			m_Owner = false;
 			m_Pid = ::GetProcessId(hProcess);
 			BOOL isWow = FALSE;
 			::IsWow64Process(m_Handle.get(), &isWow);
@@ -70,6 +71,11 @@ namespace WinLLX {
 				return TrackProcess(hProcess);
 			}
 			return false;
+		}
+
+		~ProcessModuleTracker() {
+			if (!m_Owner)
+				m_Handle.release();
 		}
 
 		operator bool() const {
@@ -250,7 +256,7 @@ namespace WinLLX {
 		std::unordered_map<std::wstring, std::shared_ptr<TModule>> m_ModuleMap;
 		uint32_t m_Pid;
 		wil::unique_handle m_Handle;
-		bool m_IsWow64;
+		bool m_IsWow64, m_Owner{ true };
 
 	};
 

@@ -275,6 +275,9 @@ void HandlesView::BuildToolBar() noexcept {
 bool HandlesView::Refresh(uint32_t pid, bool now) noexcept {
 	if (!m_Updating && (NeedUpdate() || now || m_UpdateNow)) {
 		m_UpdateNow = false;
+		if (m_Updating)
+			return false;
+
 		if (pid == 0)
 			m_ProcMgr.Update();
 		Track(pid);

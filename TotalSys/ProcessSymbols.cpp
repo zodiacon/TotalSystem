@@ -141,7 +141,7 @@ std::vector<STACKFRAME64> ProcessSymbols::EnumThreadStack(uint32_t pid, uint32_t
 		lock_guard locker(s_Lock);
 		for(;;) {	
 			if (!s_StackWalk(IMAGE_FILE_MACHINE_AMD64,
-				m_hProcess, t.Handle(), &frame, &ctx, read,
+				m_hProcess, t.Handle(), &frame, &ctx, nullptr,
 				s_SymFunctionTableAccess64, s_SymGetModuleBase64, nullptr))
 				break;
 
