@@ -18,4 +18,6 @@
 #include <wil\resource.h>
 #include <wil\com.h>
 #include <imgui.h>
+#include <implot.h>
+
 

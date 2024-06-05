@@ -193,6 +193,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
       <UACUIAccess>false</UACUIAccess>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -256,10 +258,12 @@
     <ClInclude Include="DriverHelper.h" />
     <ClInclude Include="FormatHelper.h" />
     <ClInclude Include="Globals.h" />
+    <ClInclude Include="GraphBuilder.h" />
     <ClInclude Include="HandlesView.h" />
     <ClInclude Include="IconHelper.h" />
     <ClInclude Include="IconManager.h" />
     <ClInclude Include="IniFile.h" />
+    <ClInclude Include="Interfaces.h" />
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="ModulesView.h" />
     <ClInclude Include="ObjectHelper.h" />
@@ -269,6 +273,7 @@
     <ClInclude Include="ProcessesView.h" />
     <ClInclude Include="ProcessHelper.h" />
     <ClInclude Include="ProcessInfoEx.h" />
+    <ClInclude Include="ProcessPerformance.h" />
     <ClInclude Include="ProcessSymbols.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SettingsBase.h" />
@@ -289,6 +294,7 @@
     <ClCompile Include="DriverHelper.cpp" />
     <ClCompile Include="FormatHelper.cpp" />
     <ClCompile Include="Globals.cpp" />
+    <ClCompile Include="GraphBuilder.cpp" />
     <ClCompile Include="HandlesView.cpp" />
     <ClCompile Include="IconHelper.cpp" />
     <ClCompile Include="IconManager.cpp" />

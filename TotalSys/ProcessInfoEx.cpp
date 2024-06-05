@@ -99,6 +99,18 @@ bool ProcessInfoEx::SuspendResume() {
 	return m_Suspended ? p.Suspend() : p.Resume();
 }
 
+void ProcessInfoEx::UpdatePerf() {
+	m_CPUPerf.Add(CPU / 10000.0f);
+	m_CommitPerf.Add(PagefileUsage >> 20);
+	m_WorkingSetPerf.Add(WorkingSetSize >> 20);
+	if(m_IOPerf.IsEmpty())
+		m_IOPerf.Add({ ReadTransferCount >> 10, WriteTransferCount >> 10, OtherTransferCount >> 10 });
+	else {
+		auto& oldIo = m_IOPerf.Peek();
+		m_IOPerf.Add({ (ReadTransferCount >> 10) - oldIo[0], (WriteTransferCount >> 10) - oldIo[1], (OtherTransferCount >> 10) - oldIo[2] });
+	}
+}
+
 WinLL::Process& ProcessInfoEx::GetProcess() {
 	return m_Process;
 }
@@ -107,7 +119,17 @@ WinLL::Process const& ProcessInfoEx::GetProcess() const {
 	return m_Process;
 }
 
+ProcessPerformance<float> const& ProcessInfoEx::GetCPUPerf() const {
+	return m_CPUPerf;
+}
 
+ProcessPerformance<size_t> const& ProcessInfoEx::GetCommitPerf() const {
+	return m_CommitPerf;
+}
+
+ProcessPerformance<size_t> const& ProcessInfoEx::GetWorkingSetPerf() const {
+	return m_WorkingSetPerf;
+}
 
 const std::wstring& ProcessInfoEx::GetExecutablePath() const {
 	if (m_ExecutablePath.empty() && Id > 4 && m_Process) {

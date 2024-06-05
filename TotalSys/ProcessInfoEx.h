@@ -6,6 +6,7 @@
 #include <WinLowLevel.h>
 #include "ProcessSymbols.h"
 #include <mutex>
+#include "ProcessPerformance.h"
 
 enum class ProcessAttributes {
 	NotComputed = -1,
@@ -27,9 +28,14 @@ public:
 	std::pair<const ImVec4, const ImVec4> Colors(DefaultProcessManager& pm) const;
 	ProcessAttributes Attributes(DefaultProcessManager const& pm) const;
 	bool SuspendResume();
+	void UpdatePerf();
 
 	WinLL::Process& GetProcess();
 	WinLL::Process const& GetProcess() const;
+	ProcessPerformance<float> const& GetCPUPerf() const;
+	ProcessPerformance<size_t> const& GetCommitPerf() const;
+	ProcessPerformance<size_t> const& GetWorkingSetPerf() const;
+
 	[[nodiscard]] bool IsSuspended() const;
 	[[nodiscard]] const std::wstring& GetExecutablePath() const;
 	[[nodiscard]] ID3D11ShaderResourceView* Icon() const;
@@ -70,5 +76,10 @@ private:
 	mutable std::unordered_map<uint64_t, std::string> m_Addresses;
 	mutable std::mutex s_Lock;
 	mutable std::wstring m_CommandLine;
+
+	ProcessPerformance<float> m_CPUPerf;
+	ProcessPerformance<size_t> m_WorkingSetPerf;
+	ProcessPerformance<size_t> m_CommitPerf;
+	ProcessPerformance<std::vector<int64_t>> m_IOPerf;
 };
 

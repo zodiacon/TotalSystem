@@ -59,6 +59,7 @@ private:
 
 private:
 	void InitColumns();
+	void BuildPerfGraphs(ProcessInfoEx const* pi);
 
 	DefaultProcessManager m_ProcMgr;
 	ImGuiTableSortSpecs* m_Specs{ nullptr };

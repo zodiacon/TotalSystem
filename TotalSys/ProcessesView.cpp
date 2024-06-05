@@ -310,7 +310,7 @@ void ProcessesView::InitColumns() {
 		}, ImGuiTableColumnFlags_DefaultHide, 150, },
 	{ Column::CycleCount, "Cycles", [](auto& p) {
 		auto cycles = p->CycleTime;
-		if(cycles) {
+		if (cycles) {
 			PushFont(Globals::MonoFont());
 			Text(" %22ws ", FormatHelper::FormatNumber(cycles).c_str());
 			PopFont();
@@ -319,6 +319,56 @@ void ProcessesView::InitColumns() {
 	};
 
 	m_Columns.insert(m_Columns.end(), begin(columns), end(columns));
+}
+
+void ProcessesView::BuildPerfGraphs(ProcessInfoEx const* pi) {
+	using namespace ImPlot;
+	auto xaxisFlags = ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_LockMin | ImPlotAxisFlags_LockMax;
+	auto yaxisFlags = ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoMenus;
+	auto size = GetWindowSize();
+	size = ImVec2(size.x - 20, 150);
+
+	if(BeginAlignedPlots("perf")) {
+		{
+			auto& perf = pi->GetCPUPerf();
+			SetNextAxisLimits(0, perf.GetLimit(), ImGuiCond_Always);
+			if (BeginPlot("CPU (%)", size, ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoMouseText)) {
+				SetNextFillStyle(StandardColors::LightBlue);
+				SetNextLineStyle();
+				SetupAxes("Time", "CPU", xaxisFlags, yaxisFlags);
+				SetupFinish();
+				if (IsPlotHovered()) {
+					auto pos = GetPlotMousePos();
+					auto x = (uint32_t)pos.x, y = (uint32_t)pos.y;
+					if (x >= 0 && x < perf.GetSize())
+						SetTooltip("%.2f %%", perf.Get(x));
+				}
+				PlotShaded("##CPU", perf.GetData(), perf.GetSize());
+				EndPlot();
+			}
+		}
+		{
+			auto& perf = pi->GetCommitPerf();
+			SetNextAxisLimits(0, perf.GetLimit(), ImGuiCond_Always);
+			if (BeginPlot("Private Bytes (MB)", size, ImPlotFlags_NoFrame | ImPlotFlags_NoMenus | ImPlotFlags_NoMouseText | ImPlotFlags_NoBoxSelect)) {
+				SetupAxes("Time", "Commit", xaxisFlags, yaxisFlags);
+				SetNextFillStyle(StandardColors::Blue);
+				PlotShaded("##Commit", perf.GetData(), perf.GetSize());
+				//auto& perf2 = pi->GetWorkingSetPerf();
+				//SetNextFillStyle(StandardColors::DarkGreen);
+				//PlotShaded("##WS", perf2.GetData(), perf2.GetSize());
+
+				if (IsPlotHovered()) {
+					auto pos = GetPlotMousePos();
+					auto x = (uint32_t)pos.x, y = (uint32_t)pos.y;
+					if (x >= 0 && x < perf.GetSize())
+						SetTooltip("PB: %llu MB", perf.Get(x));
+				}
+				EndPlot();
+			}
+		}
+		EndAlignedPlots();
+	}
 }
 
 void ProcessesView::Build() noexcept {
@@ -380,6 +430,7 @@ bool ProcessesView::Refresh(bool now) noexcept {
 		auto count = static_cast<int>(m_Processes.size());
 		for (int i = 0; i < count; i++) {
 			auto& p = m_Processes[i];
+			p->UpdatePerf();
 			if (p->Update()) {
 				// process terminated
 				if (p == m_SelectedProcess)
@@ -589,6 +640,8 @@ void ProcessesView::BuildTable() noexcept {
 	if (!Globals::Settings().ShowLowerPane())
 		m_DoSize = false;
 
+	auto update = Refresh();
+
 	if (BeginChild("upper", ImVec2(), Globals::Settings().ShowLowerPane() ? ImGuiChildFlags_ResizeY : 0, ImGuiWindowFlags_NoScrollbar)) {
 		if (m_DoSize) {
 			SetWindowSize(ImVec2(0, size.y / 2), ImGuiCond_Always);
@@ -610,7 +663,6 @@ void ProcessesView::BuildTable() noexcept {
 				TableSetupColumn(ci.Header, ci.Flags, ci.Width, c++);
 			TableHeadersRow();
 
-			auto update = Refresh();
 			auto specs = m_Specs = TableGetSortSpecs();
 			if (specs->SpecsDirty) {
 				specs->SpecsDirty = false;
@@ -864,7 +916,7 @@ void ProcessesView::BuildLowerPane() noexcept {
 		if (m_SelectedProcess) {
 			PushFont(Globals::VarFont());
 			if (BeginTabBar("lowertabs", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_Reorderable)) {
-				SameLine(550);
+				SameLine(700);
 				Text("PID: %u (%ws)", m_SelectedProcess->Id, m_SelectedProcess->GetImageName().c_str()); SameLine();
 			}
 			if (BeginTabItem("General")) {
@@ -876,7 +928,7 @@ void ProcessesView::BuildLowerPane() noexcept {
 				SameLine(0, 40); InputTextReadonly("PID", pid);
 				auto parent = GetColumnText(Column::ParentPid, m_SelectedProcess.get());
 				SameLine(0, 40); InputTextReadonly("Parent", parent);
-				SameLine(0, 40); 
+				SameLine(0, 40);
 				if (Button("Kill", ImVec2(50, 0))) {
 					TryKillProcess(*m_SelectedProcess);
 				}
@@ -919,6 +971,10 @@ void ProcessesView::BuildLowerPane() noexcept {
 				m_HandlesView.Track(m_SelectedProcess->Id);
 				m_HandlesView.BuildToolBar();
 				m_HandlesView.BuildTable();
+				EndTabItem();
+			}
+			if (BeginTabItem("Performance")) {
+				BuildPerfGraphs(m_SelectedProcess.get());
 				EndTabItem();
 			}
 			if ((m_SelectedProcess->Attributes(m_ProcMgr) & ProcessAttributes::InJob) == ProcessAttributes::InJob) {

@@ -84,6 +84,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 		// Setup Dear ImGui context
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
+		ImPlot::CreateContext();
 
 		auto& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
@@ -185,6 +186,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 		// Cleanup
 		ImGui_ImplDX11_Shutdown();
 		ImGui_ImplWin32_Shutdown();
+
+		ImPlot::DestroyContext();
 		ImGui::DestroyContext();
 	}
 

@@ -126,7 +126,8 @@
       <AdditionalDependencies>%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib;wdmsec.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>signtool sign /i DigiCert /fd sha256 $(TargetPath)</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
