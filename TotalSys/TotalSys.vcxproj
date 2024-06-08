@@ -258,7 +258,6 @@
     <ClInclude Include="DriverHelper.h" />
     <ClInclude Include="FormatHelper.h" />
     <ClInclude Include="Globals.h" />
-    <ClInclude Include="GraphBuilder.h" />
     <ClInclude Include="HandlesView.h" />
     <ClInclude Include="IconHelper.h" />
     <ClInclude Include="IconManager.h" />
@@ -294,7 +293,6 @@
     <ClCompile Include="DriverHelper.cpp" />
     <ClCompile Include="FormatHelper.cpp" />
     <ClCompile Include="Globals.cpp" />
-    <ClCompile Include="GraphBuilder.cpp" />
     <ClCompile Include="HandlesView.cpp" />
     <ClCompile Include="IconHelper.cpp" />
     <ClCompile Include="IconManager.cpp" />

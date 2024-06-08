@@ -35,6 +35,9 @@ public:
 	ProcessPerformance<float> const& GetCPUPerf() const;
 	ProcessPerformance<size_t> const& GetCommitPerf() const;
 	ProcessPerformance<size_t> const& GetWorkingSetPerf() const;
+	ProcessPerformance<size_t> const& GetPrivateWorkingSetPerf() const;
+	ProcessPerformance<int64_t> const& GetIoReadPerf() const;
+	ProcessPerformance<int64_t> const& GetIoWritePerf() const;
 
 	[[nodiscard]] bool IsSuspended() const;
 	[[nodiscard]] const std::wstring& GetExecutablePath() const;
@@ -78,8 +81,10 @@ private:
 	mutable std::wstring m_CommandLine;
 
 	ProcessPerformance<float> m_CPUPerf;
-	ProcessPerformance<size_t> m_WorkingSetPerf;
+	ProcessPerformance<size_t> m_PrivateWorkingSetPerf;
 	ProcessPerformance<size_t> m_CommitPerf;
-	ProcessPerformance<std::vector<int64_t>> m_IOPerf;
+	ProcessPerformance<size_t> m_WorkingSetPerf;
+	ProcessPerformance<int64_t> m_IOReadPerf, m_IOWritePerf;
+	int64_t m_ReadTransferCount{ -1 }, m_WriteTransferCount{ -1 };
 };
 

@@ -123,9 +123,6 @@
     <ClInclude Include="ProcessPerformance.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphBuilder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Interfaces.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -222,9 +219,6 @@
       <Filter>Helpers</Filter>
     </ClCompile>
     <ClCompile Include="DialogHelper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphBuilder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

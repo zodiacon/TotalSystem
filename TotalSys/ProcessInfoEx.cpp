@@ -102,13 +102,16 @@ bool ProcessInfoEx::SuspendResume() {
 void ProcessInfoEx::UpdatePerf() {
 	m_CPUPerf.Add(CPU / 10000.0f);
 	m_CommitPerf.Add(PagefileUsage >> 20);
+	m_PrivateWorkingSetPerf.Add(WorkingSetPrivateSize >> 20);
 	m_WorkingSetPerf.Add(WorkingSetSize >> 20);
-	if(m_IOPerf.IsEmpty())
-		m_IOPerf.Add({ ReadTransferCount >> 10, WriteTransferCount >> 10, OtherTransferCount >> 10 });
-	else {
-		auto& oldIo = m_IOPerf.Peek();
-		m_IOPerf.Add({ (ReadTransferCount >> 10) - oldIo[0], (WriteTransferCount >> 10) - oldIo[1], (OtherTransferCount >> 10) - oldIo[2] });
+	if (m_ReadTransferCount < 0) {
+		m_ReadTransferCount = ReadTransferCount >> 10;
+		m_WriteTransferCount = WriteTransferCount >> 10;
 	}
+	m_IOReadPerf.Add((ReadTransferCount >> 10) - m_ReadTransferCount);
+	m_IOWritePerf.Add((WriteTransferCount >> 10) - m_WriteTransferCount);
+	m_ReadTransferCount = ReadTransferCount >> 10;
+	m_WriteTransferCount = WriteTransferCount >> 10;
 }
 
 WinLL::Process& ProcessInfoEx::GetProcess() {
@@ -129,6 +132,18 @@ ProcessPerformance<size_t> const& ProcessInfoEx::GetCommitPerf() const {
 
 ProcessPerformance<size_t> const& ProcessInfoEx::GetWorkingSetPerf() const {
 	return m_WorkingSetPerf;
+}
+
+ProcessPerformance<size_t> const& ProcessInfoEx::GetPrivateWorkingSetPerf() const {
+	return m_PrivateWorkingSetPerf;
+}
+
+ProcessPerformance<int64_t> const& ProcessInfoEx::GetIoReadPerf() const {
+	return m_IOReadPerf;
+}
+
+ProcessPerformance<int64_t> const& ProcessInfoEx::GetIoWritePerf() const {
+	return m_IOWritePerf;
 }
 
 const std::wstring& ProcessInfoEx::GetExecutablePath() const {
@@ -217,7 +232,7 @@ bool ProcessInfoEx::AreAllThreadsSuspended() const {
 		if (t->State != ThreadState::Waiting)
 			return false;
 
-		if(static_pointer_cast<ThreadInfoEx>(t)->IsSuspended())
+		if (static_pointer_cast<ThreadInfoEx>(t)->IsSuspended())
 			++suspended;
 	}
 	return suspended == GetThreads().size();
@@ -229,7 +244,7 @@ wstring ProcessInfoEx::GetVersionObject(const wstring& name) const {
 
 int ProcessInfoEx::GetBitness() const {
 	if (m_Bitness == 0) {
-		static SYSTEM_INFO si {};
+		static SYSTEM_INFO si{};
 		if (si.dwNumberOfProcessors == 0)
 			::GetNativeSystemInfo(&si);
 		if (m_Process) {
@@ -335,7 +350,7 @@ std::wstring ProcessInfoEx::GetCurrentDirectory() const {
 	if (::GetLastError() == ERROR_ACCESS_DENIED) {
 		Process p;
 		p.Attach(DriverHelper::OpenProcess(Id, ProcessAccessMask::VmRead | ProcessAccessMask::QueryLimitedInformation));
-		if(!p)
+		if (!p)
 			return L"";
 
 		dir = p.GetCurrentDirectory();

@@ -324,9 +324,9 @@ void ProcessesView::InitColumns() {
 void ProcessesView::BuildPerfGraphs(ProcessInfoEx const* pi) {
 	using namespace ImPlot;
 	auto xaxisFlags = ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_LockMin | ImPlotAxisFlags_LockMax;
-	auto yaxisFlags = ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoMenus;
+	auto yaxisFlags = ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_LockMin;
 	auto size = GetWindowSize();
-	size = ImVec2(size.x - 20, 150);
+	size = ImVec2(-1, 150);
 
 	if(BeginAlignedPlots("perf")) {
 		{
@@ -350,19 +350,51 @@ void ProcessesView::BuildPerfGraphs(ProcessInfoEx const* pi) {
 		{
 			auto& perf = pi->GetCommitPerf();
 			SetNextAxisLimits(0, perf.GetLimit(), ImGuiCond_Always);
-			if (BeginPlot("Private Bytes (MB)", size, ImPlotFlags_NoFrame | ImPlotFlags_NoMenus | ImPlotFlags_NoMouseText | ImPlotFlags_NoBoxSelect)) {
+			if (BeginPlot("Memory (MB)", size, ImPlotFlags_NoFrame | ImPlotFlags_NoMenus | ImPlotFlags_NoMouseText | ImPlotFlags_NoBoxSelect)) {
 				SetupAxes("Time", "Commit", xaxisFlags, yaxisFlags);
+				SetupLegend(ImPlotLocation_Center, ImPlotLegendFlags_Outside);
+
 				SetNextFillStyle(StandardColors::Blue);
-				PlotShaded("##Commit", perf.GetData(), perf.GetSize());
-				//auto& perf2 = pi->GetWorkingSetPerf();
-				//SetNextFillStyle(StandardColors::DarkGreen);
-				//PlotShaded("##WS", perf2.GetData(), perf2.GetSize());
+				PlotShaded("Private Bytes", perf.GetData(), perf.GetSize());
+				auto& perf2 = pi->GetPrivateWorkingSetPerf();
+				
+				SetNextFillStyle(StandardColors::Green);
+				PlotShaded("Private WS", perf2.GetData(), perf2.GetSize());
+
+				auto& perf3 = pi->GetWorkingSetPerf();
+				SetNextLineStyle(StandardColors::DarkRed, 2);
+				PlotLine("Working Set", perf3.GetData(), perf3.GetSize());
 
 				if (IsPlotHovered()) {
 					auto pos = GetPlotMousePos();
 					auto x = (uint32_t)pos.x, y = (uint32_t)pos.y;
 					if (x >= 0 && x < perf.GetSize())
-						SetTooltip("PB: %llu MB", perf.Get(x));
+						SetTooltip("PB: %llu MB\nPWS: %llu MB\nWS: %llu MB", 
+							perf.Get(x), perf2.Get(x), perf3.Get(x));
+				}
+				EndPlot();
+			}
+		}
+		{
+			auto& perf = pi->GetIoReadPerf();
+			SetNextAxisLimits(0, perf.GetLimit(), ImGuiCond_Always);
+			if (BeginPlot("I/O (KB)", size, ImPlotFlags_NoFrame | ImPlotFlags_NoMenus | ImPlotFlags_NoMouseText | ImPlotFlags_NoBoxSelect)) {
+				SetupAxes("Time", "KB", xaxisFlags, yaxisFlags);
+				SetupLegend(ImPlotLocation_Center, ImPlotLegendFlags_Outside);
+
+				SetNextLineStyle(StandardColors::LightBlue, 2);
+				PlotLine("Read", perf.GetData(), perf.GetSize());
+				
+				auto& perf2 = pi->GetIoWritePerf();
+				SetNextLineStyle(StandardColors::Red, 2);
+				PlotLine("Write", perf2.GetData(), perf2.GetSize());
+
+				if (IsPlotHovered()) {
+					auto pos = GetPlotMousePos();
+					auto x = (uint32_t)pos.x, y = (uint32_t)pos.y;
+					if (x >= 0 && x < perf.GetSize())
+						SetTooltip("Read: %llu KB\nWrite: %llu KB",
+							perf.Get(x), perf2.Get(x));
 				}
 				EndPlot();
 			}

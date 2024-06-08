@@ -20,7 +20,6 @@ struct Globals abstract final {
 	static MainWindow& RootWindow();
 	static void SetMainWindow(MainWindow* win);
 	static void SetAsSystem(bool dark);
-	static bool ThreadPoolSaturated();
 
 private:
 	inline static ImFont* s_pMonoFont;

@@ -48,7 +48,7 @@ public:
 	}
 
 	T const& Peek() const {
-		return m_Data.front();
+		return m_Data.back();
 	}
 
 

@@ -285,6 +285,7 @@ namespace WinLL {
 			pi->PeakVirtualSize = info->PeakVirtualSize;
 			pi->VirtualSize = info->VirtualSize;
 			pi->WorkingSetSize = info->WorkingSetSize;
+			pi->WorkingSetPrivateSize = info->WorkingSetPrivateSize.QuadPart;
 			pi->PeakWorkingSetSize = info->PeakWorkingSetSize;
 			pi->PagefileUsage = info->PagefileUsage;
 			pi->OtherOperationCount = info->OtherOperationCount.QuadPart;
