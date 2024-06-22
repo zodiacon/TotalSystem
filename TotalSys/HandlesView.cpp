@@ -133,9 +133,13 @@ HandlesView::~HandlesView() {
 }
 
 bool HandlesView::Track(uint32_t pid, PCWSTR type) {
+	if (m_Tracker.GetPid() == pid)
+		return true;
+
 	auto tracking = m_Tracker.Track(pid, type);
 	if (tracking) {
 		m_Handles.clear();
+		m_SelectedHandle = nullptr;
 	}
 	return tracking;
 }

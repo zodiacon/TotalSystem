@@ -47,11 +47,6 @@ public:
 		return (uint32_t)m_Data.size();
 	}
 
-	T const& Peek() const {
-		return m_Data.back();
-	}
-
-
 private:
 	uint32_t m_Count{ 300 };
 	std::vector<T> m_Data;

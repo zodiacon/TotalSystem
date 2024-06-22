@@ -66,11 +66,14 @@ namespace WinLLX {
 
 		bool TrackProcess(uint32_t pid) {
 			m_Pid = pid;
-			auto hProcess = ::OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | SYNCHRONIZE, FALSE, pid);
+			auto hProcess = ::OpenProcess(PROCESS_QUERY_INFORMATION | SYNCHRONIZE, FALSE, pid);
 			if (hProcess) {
 				return TrackProcess(hProcess);
 			}
-			return false;
+			//
+			// return true even if we fail - ToolHelp can do some of the work
+			//
+			return true;
 		}
 
 		~ProcessModuleTracker() {
@@ -185,18 +188,19 @@ namespace WinLLX {
 
 			auto existing = m_ModuleMap;
 			do {
+				auto mi = FillModule(me);
+				auto& key = mi->Path;
 				if (first) {
-					auto mi = FillModule(me);
-					m_ModuleMap.insert({ mi->Path, mi });
+					m_ModuleMap.insert({ key, mi });
 					m_Modules.push_back(std::move(mi));
 				}
 				else {
-					auto it = m_ModuleMap.find(me.szExePath);
+					auto it = m_ModuleMap.find(key);
 					if (it == m_ModuleMap.end()) {
 						// new module
-						auto mi = FillModule(me);
-						m_Modules.push_back(mi);
 						m_NewModules.push_back(mi);
+						m_Modules.push_back(mi);
+						m_ModuleMap.insert({ key, mi });
 					}
 					else {
 						existing.erase(me.szExePath);
@@ -204,8 +208,10 @@ namespace WinLLX {
 				}
 			} while (::Module32Next(hSnapshot.get(), &me));
 
-			for (auto& [key, mi] : existing)
+			for (auto& [key, mi] : existing) {
+				m_ModuleMap.erase(key);
 				m_UnloadedModules.push_back(mi);
+			}
 
 			return static_cast<uint32_t>(m_Modules.size());
 		}
