@@ -317,12 +317,11 @@ bool HandlesView::Refresh(uint32_t pid, bool now) noexcept {
 
 std::wstring const& HandlesView::GetObjectName(HandleInfoEx* hi) const noexcept {
 	if (!hi->NameChecked) {
-		auto hDup = DriverHelper::DupHandle((HANDLE)(ULONG_PTR)hi->HandleValue, hi->ProcessId, GENERIC_READ, 0);
+		auto hDup = ObjectHelper::DupHandle((HANDLE)(ULONG_PTR)hi->HandleValue, hi->ProcessId, GENERIC_READ, 0);
 		if (hDup) {
-			hi->Name = WinLLX::ObjectManager::GetObjectName(hDup, hi->ObjectTypeIndex);
+			hi->Name = WinLLX::ObjectManager::GetObjectName(hDup.get(), hi->ObjectTypeIndex);
 			if (hi->Name.starts_with(L"\\Device\\"))
 				hi->Name = ObjectHelper::NativePathToDosPath(hi->Name);
-			::CloseHandle(hDup);
 		}
 		hi->NameChecked = true;
 	}
