@@ -35,7 +35,7 @@ ThreadsView::~ThreadsView() {
 void ThreadsView::InitColumns() {
 	static const ColumnInfo columns[]{
 		{ Column::State, "State", [&](auto& t) {
-			Image(GetStateImage(t->State).Get(), ImVec2(16, 16)); SameLine();
+			Image(GetStateImage(t->State), ImVec2(16, 16)); SameLine();
 			auto str = format("{} ({})##{}" ,StateToString(t->State), (int)t->State, t->Id);
 			PushFont(Globals::VarFont());
 			Selectable(str.c_str(), m_SelectedThread == t, ImGuiSelectableFlags_SpanAllColumns);

@@ -153,7 +153,7 @@ const std::wstring& ProcessInfoEx::GetExecutablePath() const {
 	return m_ExecutablePath;
 }
 
-ID3D11ShaderResourceView* ProcessInfoEx::Icon() const {
+ImTextureID ProcessInfoEx::Icon() const {
 	if (!m_Icon) {
 		static HICON hAppIcon = ::LoadIcon(nullptr, IDI_APPLICATION);
 
@@ -165,7 +165,7 @@ ID3D11ShaderResourceView* ProcessInfoEx::Icon() const {
 		if (hIcon != hAppIcon)
 			::DestroyIcon(hIcon);
 	}
-	return m_Icon.Get();
+	return m_Icon;
 }
 
 IntegrityLevel ProcessInfoEx::GetIntegrityLevel() const {

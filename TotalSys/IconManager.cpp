@@ -15,9 +15,9 @@ bool IconManager::AddIcon(UINT id, HICON hIcon) {
     return m_Icons.insert({ id, std::move(image) }).second;
 }
 
-void* IconManager::GetImage(UINT id) const {
+ImTextureID IconManager::GetImage(UINT id) const {
     if (auto it = m_Icons.find(id); it != m_Icons.end())
-        return it->second.Get();
+        return it->second;
     assert(false && "No image with given ID");
-    return nullptr;
+    return ImTextureID();
 }

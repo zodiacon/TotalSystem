@@ -58,9 +58,9 @@ void HandlesView::InitColumns() {
 			auto text = format("0x{:08X}##%X", h->HandleValue, h->ProcessId);
 			ImTextureID image;
 			if (auto it = s_Icons.find(GetObjectType(h.get())); it != s_Icons.end())
-				image = it->second.Get();
+				image = it->second;
 			else
-				image = s_Icons[L""].Get();
+				image = s_Icons[L""];
 			Image(image, ImVec2(16, 16)); SameLine();
 			if (Selectable(text.c_str(), m_SelectedHandle == h, ImGuiSelectableFlags_SpanAllColumns)) {
 				m_SelectedHandle = h;

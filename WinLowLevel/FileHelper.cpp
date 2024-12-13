@@ -15,7 +15,7 @@ std::wstring FileHelper::GetDosNameFromNtName(PCWSTR name) {
 				WCHAR driveName[] = L"X:";
 				driveName[0] = (WCHAR)(drive + 'A');
 				WCHAR path[MAX_PATH];
-				if (::QueryDosDevice(driveName, path, MAX_PATH)) {
+				if (::QueryDosDevice(driveName, path, _countof(path))) {
 					deviceNames.push_back({ path, driveName });
 				}
 			}

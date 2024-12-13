@@ -55,7 +55,7 @@ ID3D11ShaderResourceView* D3D11Image::Get() const {
 }
 
 D3D11Image::operator ImTextureID() const {
-	return Get();
+	return reinterpret_cast<ImTextureID>(Get());
 }
 
 D3D11Image::operator bool() const {

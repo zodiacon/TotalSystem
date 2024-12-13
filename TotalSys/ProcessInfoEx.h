@@ -41,7 +41,7 @@ public:
 
 	[[nodiscard]] bool IsSuspended() const;
 	[[nodiscard]] const std::wstring& GetExecutablePath() const;
-	[[nodiscard]] ID3D11ShaderResourceView* Icon() const;
+	[[nodiscard]] ImTextureID Icon() const;
 	[[nodiscard]] WinLL::IntegrityLevel GetIntegrityLevel() const;
 	[[nodiscard]] PVOID GetPeb() const;
 	[[nodiscard]] WinLL::ProcessProtection GetProtection() const;

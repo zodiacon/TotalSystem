@@ -5,7 +5,7 @@ VisualStudioVersion = 17.8.34112.27
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinLowLevel", "WinLowLevel\WinLowLevel.vcxproj", "{C6DEC756-D2E2-4965-AF79-AB24866ABB03}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImGui", "ImGui\ImGui.vcxproj", "{78965D11-656B-452B-A822-05D21C957F9F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImGuiExt", "ImGui\ImGui.vcxproj", "{78965D11-656B-452B-A822-05D21C957F9F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TotalSys", "TotalSys\TotalSys.vcxproj", "{A176C64F-C567-4D9B-8449-41D3D63ACFA0}"
 	ProjectSection(ProjectDependencies) = postProject

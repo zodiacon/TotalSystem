@@ -95,6 +95,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseSigned|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <TimeStampServer>http://timestamp.digicert.com</TimeStampServer>
+    <DiagnosticMode>true</DiagnosticMode>
+    <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
@@ -136,13 +139,14 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseSigned|x64'">
     <DriverSign>
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
-      <AdditionalOptions>sign /fd sha256 /i DigiCert $(TargetPath) </AdditionalOptions>
+      <AdditionalOptions>/i DigiCert /t http://timestamp.digicert.com </AdditionalOptions>
     </DriverSign>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib;wdmsec.lib</AdditionalDependencies>
+      <AdditionalOptions>/integritycheck %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>signtool sign /i DigiCert /fd sha256 $(TargetPath)</Command>
+      <Command>signtool sign /a /n Scorpio /t http://timestamp.digicert.com /fd sha256 $(TargetPath)</Command>
     </PostBuildEvent>
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>

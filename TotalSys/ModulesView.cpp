@@ -22,15 +22,15 @@ void ModulesView::InitColumns() {
 		{ Column::Name, "Name", [&](auto& m) {
 			PushFont(Globals::VarFont());
 			if (IsKernel()) {
-				Image(s_Icons[2].Get(), ImVec2(16, 16)); SameLine();
+				Image(s_Icons[2], ImVec2(16, 16)); SameLine();
 				if (Selectable(m->KName.c_str(), m_SelectedModule == m, ImGuiSelectableFlags_SpanAllColumns)) {
 					m_SelectedModule = m;
 				}
 			}
 			else {
 				sprintf_s(text.get(), textSize, "%ws", m->Name.c_str());
-				Image(s_Icons[m->Type == MapType::Data ? 1 : 0].Get(), ImVec2(16, 16)); SameLine();
-				if (Selectable(text[0] ? text.get() : "<Pagefile backed>", m_SelectedModule == m, ImGuiSelectableFlags_SpanAllColumns)) {
+				Image(s_Icons[m->Type == MapType::Data ? 1 : 0], ImVec2(16, 16)); SameLine();
+				if (Selectable(format("{}##{}", text[0] ? text.get() : "<Pagefile backed>", m->Base).c_str(), m_SelectedModule == m, ImGuiSelectableFlags_SpanAllColumns)) {
 					m_SelectedModule = m;
 				}
 			}

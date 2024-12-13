@@ -11,7 +11,7 @@ public:
 	bool Add(UINT id, int size = 16, HINSTANCE hRes = nullptr);
 	bool AddIcon(UINT id, HICON hIcon);
 
-	void* GetImage(UINT id) const;
+	ImTextureID GetImage(UINT id) const;
 
 private:
 	std::unordered_map<UINT, D3D11Image> m_Icons;
