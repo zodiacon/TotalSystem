@@ -20,7 +20,7 @@ namespace WinLLX {
 template<>
 struct ::std::hash<WinLLX::HandleKey> {
 	size_t operator()(const WinLLX::HandleKey& key) const {
-		return (size_t)key.HandleValue ^ ((uint32_t)key.TypeIndex << 16) ^ ((size_t)key.Pid << 32);
+		return (size_t)key.HandleValue ^ ((size_t)key.TypeIndex << 16) ^ ((size_t)key.Pid << 32);
 	}
 };
 

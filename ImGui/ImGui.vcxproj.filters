@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="imconfig.h">
+    <ClInclude Include="LocalImGuiConfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SimpleMessageBox.h">

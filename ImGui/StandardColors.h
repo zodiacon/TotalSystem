@@ -3,7 +3,7 @@
 #include "imgui.h"
 
 namespace ImGui {
-	struct StandardColors {
+	struct Colors {
 		inline static const ImVec4 Transparent{ 1, 1, 1, 0 };
 		inline static const ImVec4 AliceBlue{ 0.9411765f, 0.972549f, 1, 1 };
 		inline static const ImVec4 AntiqueWhite{ 0.98039216f, 0.92156863f, 0.84313726f, 1 };

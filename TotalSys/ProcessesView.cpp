@@ -26,7 +26,7 @@ ProcessesView::ProcessesView() : m_ThreadsView(&m_ProcMgr) {
 }
 
 void ProcessesView::InitColumns() {
-	const ColumnInfo columns[]{
+	static const ColumnInfo columns[]{
 	{ Column::ProcessName, "Name", [this](auto& p) {
 		Image(p->Icon(), ImVec2(16, 16)); SameLine();
 		PushFont(Globals::VarFont());
@@ -68,7 +68,7 @@ void ProcessesView::InitColumns() {
 		PushFont(Globals::VarFont());
 		auto username = GetColumnText(Column::UserName, p.get());
 		if (username.empty())
-			TextColored(StandardColors::LightGray, "<access denied>");
+			TextColored(Colors::LightGray, "<access denied>");
 		else
 			TextUnformatted(username.c_str());
 		PopFont();
@@ -333,7 +333,7 @@ void ProcessesView::BuildPerfGraphs(ProcessInfoEx const* pi) {
 			auto& perf = pi->GetCPUPerf();
 			SetNextAxisLimits(0, perf.GetLimit(), ImGuiCond_Always);
 			if (BeginPlot("CPU (%)", size, ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMenus | ImPlotFlags_NoMouseText)) {
-				SetNextFillStyle(StandardColors::LightBlue);
+				SetNextFillStyle(Colors::LightBlue);
 				SetNextLineStyle();
 				SetupAxes("Time", "CPU", xaxisFlags, yaxisFlags);
 				SetupFinish();
@@ -354,15 +354,15 @@ void ProcessesView::BuildPerfGraphs(ProcessInfoEx const* pi) {
 				SetupAxes("Time", "Commit", xaxisFlags, yaxisFlags);
 				SetupLegend(ImPlotLocation_Center, ImPlotLegendFlags_Outside);
 
-				SetNextFillStyle(StandardColors::Blue);
+				SetNextFillStyle(Colors::Blue);
 				PlotShaded("Private Bytes", perf.GetData(), perf.GetSize());
 				auto& perf2 = pi->GetPrivateWorkingSetPerf();
 				
-				SetNextFillStyle(StandardColors::Green);
+				SetNextFillStyle(Colors::Green);
 				PlotShaded("Private WS", perf2.GetData(), perf2.GetSize());
 
 				auto& perf3 = pi->GetWorkingSetPerf();
-				SetNextLineStyle(StandardColors::DarkRed, 2);
+				SetNextLineStyle(Colors::DarkRed, 2);
 				PlotLine("Working Set", perf3.GetData(), perf3.GetSize());
 
 				if (IsPlotHovered()) {
@@ -382,11 +382,11 @@ void ProcessesView::BuildPerfGraphs(ProcessInfoEx const* pi) {
 				SetupAxes("Time", "KB", xaxisFlags, yaxisFlags);
 				SetupLegend(ImPlotLocation_Center, ImPlotLegendFlags_Outside);
 
-				SetNextLineStyle(StandardColors::LightBlue, 2);
+				SetNextLineStyle(Colors::LightBlue, 2);
 				PlotLine("Read", perf.GetData(), perf.GetSize());
 				
 				auto& perf2 = pi->GetIoWritePerf();
-				SetNextLineStyle(StandardColors::Red, 2);
+				SetNextLineStyle(Colors::Red, 2);
 				PlotLine("Write", perf2.GetData(), perf2.GetSize());
 
 				if (IsPlotHovered()) {

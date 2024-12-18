@@ -7,30 +7,30 @@
 using namespace ImGui;
 
 TotalSysSettings::TotalSysSettings() {
-	auto& black = StandardColors::Black;
-	auto& white = StandardColors::White;
+	auto& black = Colors::Black;
+	auto& white = Colors::White;
 
 	m_ProcessColors[0] = {
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::DarkGreen, .9f), white),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::DarkRed, .9f), white),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::DarkOrange, .6f), white),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::DarkCyan, .6f), white),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::DarkSalmon, .6f), white),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::Fuchsia, .6f), white),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::Purple, .6f), white),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::Brown, .7f), white, false),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::DimGray, .9f), white, true),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::DarkGreen, .9f), white),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::DarkRed, .9f), white),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::DarkOrange, .6f), white),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::DarkCyan, .6f), white),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::DarkSalmon, .6f), white),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::Fuchsia, .6f), white),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::Purple, .6f), white),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::Brown, .7f), white, false),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::DimGray, .9f), white, true),
 	};
 	m_ProcessColors[1] = {
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::LightGreen, .9f), black),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::Red, .9f), black),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::Orange, .6f), black),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::Cyan, .6f), black),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::Salmon, .6f), black),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::Fuchsia, .6f), black),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::Magenta, .6f), black),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::Brown, .7f), black, false),
-		ProcessColor(FormatHelper::ColorWithAlpha(StandardColors::Gray, .8f), black, true),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::LightGreen, .9f), black),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::Red, .9f), black),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::Orange, .6f), black),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::Cyan, .6f), black),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::Salmon, .6f), black),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::Fuchsia, .6f), black),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::Magenta, .6f), black),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::Brown, .7f), black, false),
+		ProcessColor(FormatHelper::ColorWithAlpha(Colors::Gray, .8f), black, true),
 	};
 
 	InitSettings();

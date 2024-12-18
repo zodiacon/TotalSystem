@@ -223,7 +223,7 @@
   <ItemGroup>
     <ClInclude Include="StandardColors.h" />
     <ClInclude Include="d3d11Image.h" />
-    <ClInclude Include="imconfig.h" />
+    <ClInclude Include="LocalImGuiConfig.h" />
     <ClInclude Include="ImGuiExt.h" />
     <ClInclude Include="SimpleMessageBox.h" />
   </ItemGroup>

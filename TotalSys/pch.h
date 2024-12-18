@@ -1,5 +1,7 @@
 #pragma once
 
+#define IMGUI_USER_CONFIG "LocalImguiConfig.h"
+
 #define NOMINMAX
 
 #include <phnt_windows.h>

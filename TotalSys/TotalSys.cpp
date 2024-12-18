@@ -114,8 +114,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 		// - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
 		//io.Fonts->AddFontDefault();
 		auto fontsdir = FormatHelper::UnicodeToUtf8(FormatHelper::GetFolderPath(FOLDERID_Fonts).c_str());
-		Globals::SetMonoFont(io.Fonts->AddFontFromFileTTF((fontsdir + "\\consola.ttf").c_str(), 15.0f));
-		Globals::SetVarFont(io.Fonts->AddFontFromFileTTF((fontsdir + "\\Arial.ttf").c_str(), 16.0f));
+		Globals::SetMonoFont(io.Fonts->AddFontFromFileTTF((fontsdir + "\\consola.ttf").c_str(), 18.0f));
+		Globals::SetVarFont(io.Fonts->AddFontFromFileTTF((fontsdir + "\\Arial.ttf").c_str(), 18.0f));
 		//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
 		//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
 		//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
@@ -221,7 +221,9 @@ bool CreateDeviceD3D(HWND hWnd) {
 	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
 	UINT createDeviceFlags = 0;
-	//createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#ifdef _DEBUG
+//	createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
 	D3D_FEATURE_LEVEL featureLevel;
 	const D3D_FEATURE_LEVEL featureLevelArray[2] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0, };
 	HRESULT res = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);

@@ -55,7 +55,7 @@ void HandlesView::InitColumns() {
 	const ColumnInfo columns[]{
 		{ Column::Handle, "Handle", [&](auto& h) {
 			PushFont(Globals::MonoFont());
-			auto text = format("0x{:08X}##%X", h->HandleValue, h->ProcessId);
+			auto text = format("0x{:08X}##{:X}{:X}", h->HandleValue, h->ProcessId, h->HandleValue);
 			ImTextureID image;
 			if (auto it = s_Icons.find(GetObjectType(h.get())); it != s_Icons.end())
 				image = it->second;

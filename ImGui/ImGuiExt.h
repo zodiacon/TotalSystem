@@ -1,6 +1,7 @@
 #pragma once
+#define IMGUI_USER_CONFIG "LocalImguiConfig.h"
 
-#include "imgui.h"
+#include <imgui.h>
 #include <string>
 
 namespace ImGui {
