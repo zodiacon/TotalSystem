@@ -17,6 +17,7 @@ public:
 	void ShowLowerPane(bool show) noexcept;
 	bool ToggleLowerPane() noexcept;
 	bool Refresh(bool now = false) noexcept;
+	uint32_t GetProcessesCount() const;
 
 private:
 	enum class Column {

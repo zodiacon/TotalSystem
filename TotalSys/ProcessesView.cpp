@@ -409,7 +409,7 @@ void ProcessesView::Build() noexcept {
 
 		PushFont(Globals::VarFont());
 		auto view = GetMainViewport();
-		SetNextWindowSize(view->WorkSize, ImGuiCond_FirstUseEver);
+		//SetNextWindowSize(view->WorkSize, ImGuiCond_FirstUseEver);
 		if (Begin("Processes", GetOpenAddress(), ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar)) {
 			if (Globals::RootWindow().SaveSelected()) {
 				// handle Save...
@@ -528,6 +528,10 @@ bool ProcessesView::Refresh(bool now) noexcept {
 		return true;
 	}
 	return false;
+}
+
+uint32_t ProcessesView::GetProcessesCount() const {
+	return static_cast<uint32_t>(m_ProcMgr.GetProcessCount());
 }
 
 std::string ProcessesView::GetColumnText(Column col, ProcessInfoEx* p) const {

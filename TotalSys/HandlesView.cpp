@@ -81,9 +81,9 @@ void HandlesView::InitColumns() {
 			PopFont();
 		}, 0, 400.0f },
 
-		{ Column::PID, "PID", [](auto& h) {
+		{ Column::PID, "PID", [&](auto& h) {
 			PushFont(Globals::MonoFont());
-			Text(Globals::Settings().HexIds() ? "0x%08X" : "%8u", h->ProcessId);
+			Text(Globals::Settings().HexIds() ? " 0x%08X" : "%8u", h->ProcessId);
 			PopFont();
 		}, m_Tracker.GetPid() <= 0 ? 0 : ImGuiTableColumnFlags_DefaultHide, 80 },
 
@@ -153,7 +153,7 @@ void HandlesView::BuildTable() noexcept {
 	int columns = (int)m_Columns.size();
 	if (BeginTable(m_AllHandles ? "AllHandles" : "Handles", columns, ImGuiTableFlags_Sortable | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
 		ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersOuterV)) {
-		TableSetupScrollFreeze(0, 1);
+		TableSetupScrollFreeze(2, 1);
 
 		auto& settings = Globals::Settings();
 		int c = 0;

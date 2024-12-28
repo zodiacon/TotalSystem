@@ -114,8 +114,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR 
 		// - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
 		//io.Fonts->AddFontDefault();
 		auto fontsdir = FormatHelper::UnicodeToUtf8(FormatHelper::GetFolderPath(FOLDERID_Fonts).c_str());
-		Globals::SetMonoFont(io.Fonts->AddFontFromFileTTF((fontsdir + "\\consola.ttf").c_str(), 18.0f));
-		Globals::SetVarFont(io.Fonts->AddFontFromFileTTF((fontsdir + "\\Arial.ttf").c_str(), 18.0f));
+		Globals::SetMonoFont(io.Fonts->AddFontFromFileTTF((fontsdir + "\\consola.ttf").c_str(), 16.0f));
+		Globals::SetVarFont(io.Fonts->AddFontFromFileTTF((fontsdir + "\\Arial.ttf").c_str(), 16.0f));
 		//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
 		//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
 		//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());

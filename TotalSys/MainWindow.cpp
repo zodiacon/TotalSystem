@@ -19,9 +19,54 @@ MainWindow::MainWindow(HWND hWnd) : m_hWnd(hWnd) {
 	}
 }
 
+void BuildMainDockSpace(ImGuiViewport* viewport, unsigned dockspace_flags) {
+	// Submit a window filling the entire viewport
+	SetNextWindowPos(viewport->WorkPos);
+	ImVec2 size(viewport->WorkSize.x, viewport->WorkSize.y - GetFrameHeight() * 1.2f);
+	SetNextWindowSize(size);
+	SetNextWindowViewport(viewport->ID);
+
+	ImGuiWindowFlags host_window_flags = 0;
+	host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking;
+	host_window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+	if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+		host_window_flags |= ImGuiWindowFlags_NoBackground;
+
+	if (dockspace_flags & ImGuiDockNodeFlags_KeepAliveOnly)
+		host_window_flags |= ImGuiWindowFlags_NoMouseInputs;
+
+	PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+	Begin("maindockspace", nullptr, host_window_flags);
+	PopStyleVar(3);
+
+	// Submit the dockspace
+	auto id = GetID("DockSpace");
+	DockSpace(id, ImVec2(0.0f, 0.0f), dockspace_flags, nullptr);
+
+	End();
+}
+
 void MainWindow::Build() {
-	auto viewport = GetMainViewport();
-	DockSpaceOverViewport(0, nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
+	auto vp = GetMainViewport();
+
+	BuildMainDockSpace(vp, ImGuiDockNodeFlags_PassthruCentralNode);
+
+	// status bar
+
+	auto size = ImVec2(vp->WorkSize.x, GetFrameHeight() * 1.2f);
+	SetNextWindowDockID(1);
+
+	auto pos = ImVec2(vp->Pos.x, vp->Pos.y + vp->Size.y - size.y);
+	SetNextWindowPos(pos);
+	SetNextWindowSize(size);
+	SetNextWindowViewport(vp->ID);
+	
+	if (Begin("StatusBar", nullptr, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoDecoration)) {
+		BuildStatusBar();
+	}
+	End();
 
 	static SimpleMessageBox about;
 
@@ -113,8 +158,6 @@ void MainWindow::Build() {
 
 	about.ShowModal();
 
-	SetNextWindowPos(viewport->WorkPos, ImGuiCond_FirstUseEver);
-	SetNextWindowSize(viewport->WorkSize, ImGuiCond_FirstUseEver);
 	m_ProcessesView.Build();
 	m_ThreadsView.Build();
 	m_HandlesView.Build();
@@ -182,6 +225,19 @@ void MainWindow::SetTheme() {
 	else {
 		Globals::SetDarkMode(Globals::IsDarkMode());
 	}
+}
+
+void MainWindow::BuildStatusBar() {
+	PushFont(Globals::VarFont());
+	static PERFORMANCE_INFORMATION pi;
+	if (NeedUpdate()) {
+		::GetPerformanceInfo(&pi, sizeof(pi));
+		UpdateTick();
+	}
+	Text("Processes: %u Threads: %u Handles: %u Commit: %u GB / %u GB RAM: %u GB / %u GB Kernel Paged: %u MB Non-Paged: %u MB",
+		pi.ProcessCount, pi.ThreadCount, pi.HandleCount, pi.CommitTotal >> 18, pi.CommitLimit >> 18, 
+		(pi.PhysicalTotal - pi.PhysicalAvailable) >> 18, pi.PhysicalTotal >> 18, pi.KernelPaged >> 8, pi.KernelNonpaged >> 8);
+	PopFont();
 }
 
 

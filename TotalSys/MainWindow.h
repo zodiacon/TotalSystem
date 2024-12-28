@@ -4,7 +4,7 @@
 #include "Window.h"
 
 
-class MainWindow : public Window {
+class MainWindow : public ViewBase {
 public:
 	explicit MainWindow(HWND hWnd);
 	void Build() override;
@@ -15,6 +15,7 @@ public:
 	bool AddWindow(std::unique_ptr<Window> win);
 
 	static void SetTheme();
+	void BuildStatusBar();
 
 private:
 	HWND m_hWnd;
