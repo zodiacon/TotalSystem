@@ -164,7 +164,7 @@ namespace WinLLX {
 			handles.reserve(pid == 0 ? count : count / 16);
 			for (decltype(count) i = 0; i < count; i++) {
 				auto& handle = p->Handles[i];
-				if (pid && handle.UniqueProcessId != pid)
+				if (pid && HandleToULong(handle.UniqueProcessId) != pid)
 					continue;
 
 				if (filteredTypeIndex >= 0 && handle.ObjectTypeIndex != filteredTypeIndex)
@@ -172,16 +172,16 @@ namespace WinLLX {
 
 				std::wstring name;
 				if (!skipNames) {
-					name = GetObjectName((HANDLE)handle.HandleValue, (DWORD)handle.UniqueProcessId, handle.ObjectTypeIndex);
+					name = GetObjectName((HANDLE)handle.HandleValue, HandleToULong(handle.UniqueProcessId), handle.ObjectTypeIndex);
 					if (namedObjectsOnly && name.empty())
 						continue;
 				}
 				auto hi = std::make_shared<T>();
-				hi->HandleValue = (ULONG)handle.HandleValue;
+				hi->HandleValue = HandleToULong(handle.HandleValue);
 				hi->GrantedAccess = handle.GrantedAccess;
 				hi->Object = handle.Object;
 				hi->HandleAttributes = handle.HandleAttributes;
-				hi->ProcessId = (ULONG)handle.UniqueProcessId;
+				hi->ProcessId = HandleToULong(handle.UniqueProcessId);
 				hi->ObjectTypeIndex = handle.ObjectTypeIndex;
 				hi->Name = name;
 

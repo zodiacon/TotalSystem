@@ -4,7 +4,7 @@
 #include "WinLowLevel.h"
 
 namespace WinLL {
-	static_assert(sizeof(PerformanceInformation) == sizeof(SYSTEM_PERFORMANCE_INFORMATION));
+	static_assert(sizeof(PerformanceInformation) <= sizeof(SYSTEM_PERFORMANCE_INFORMATION));
 
 	PerformanceInformation SystemInformation::GetPerformanceInformation() {
 		PerformanceInformation info{};

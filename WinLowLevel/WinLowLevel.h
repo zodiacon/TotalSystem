@@ -188,6 +188,11 @@ namespace WinLL {
 		uint64_t CcDirtyPageThreshold; // since THRESHOLD
 		int64_t ResidentAvailablePages; // since THRESHOLD
 		uint64_t SharedCommittedPages; // since THRESHOLD
+		uint64_t MdlPagesAllocated; // since 24H2
+		uint64_t PfnDatabaseCommittedPages;
+		uint64_t SystemPageTableCommittedPages;
+		uint64_t ContiguousPagesAllocated;
+
 	};
 
 	struct WindowsVersion {
@@ -694,7 +699,7 @@ namespace WinLL {
 		bool m_Owner;
 	};
 
-	enum class TokenType {
+	enum class AccessTokenType {
 		Invalid,
 		Primary = TokenPrimary,
 		Impersonation = TokenImpersonation,
@@ -707,11 +712,11 @@ namespace WinLL {
 		Delegation = SecurityDelegation
 	};
 
-	struct TokenStatistics {
+	struct AccessTokenStatistics {
 		int64_t TokenId;
 		int64_t AuthenticationId;
 		uint64_t ExpirationTime;
-		TokenType TokenType;
+		AccessTokenType TokenType;
 		SecurityImpersonationLevel ImpersonationLevel;
 		uint32_t DynamicCharged;
 		uint32_t DynamicAvailable;
@@ -719,7 +724,7 @@ namespace WinLL {
 		uint32_t PrivilegeCount;
 		int64_t ModifiedId;
 	};
-	static_assert(sizeof(TokenStatistics) == sizeof(TOKEN_STATISTICS));
+	static_assert(sizeof(AccessTokenStatistics) == sizeof(TOKEN_STATISTICS));
 
 	class Token : public KernelObject {
 	public:
@@ -727,13 +732,13 @@ namespace WinLL {
 
 		bool Open(TokenAccessMask access, uint32_t pid = 0);
 
-		[[nodiscard]] wstring GetUserName(bool includeDomain = false) const;
+		[[nodiscard]] std::wstring GetUserName(bool includeDomain = false) const;
 		[[nodiscard]] VirtualizationState GetVirtualizationState() const;
 		[[nodiscard]] Sid GetUserSid() const;
 		[[nodiscard]] uint32_t GetSessionId() const;
 		[[nodiscard]] int64_t GetLogonSessionId() const;
-		[[nodiscard]] TokenType GetType() const;
-		[[nodiscard]] TokenStatistics GetStatistics() const;
+		[[nodiscard]] AccessTokenType GetType() const;
+		[[nodiscard]] AccessTokenStatistics GetStatistics() const;
 	};
 
 	class File : public DispatcherObject {

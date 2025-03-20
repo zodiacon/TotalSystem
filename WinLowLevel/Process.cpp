@@ -185,7 +185,7 @@ namespace WinLL {
 
 		BYTE buffer[256];
 		DWORD len;
-		if (!::GetTokenInformation(hToken.get(), TokenIntegrityLevel, buffer, 256, &len))
+		if (!::NtQueryInformationToken(hToken.get(), TokenIntegrityLevel, buffer, 256, &len))
 			return IntegrityLevel::Error;
 
 		auto integrity = reinterpret_cast<TOKEN_MANDATORY_LABEL*>(buffer);

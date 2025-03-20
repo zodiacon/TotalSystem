@@ -23,7 +23,7 @@ namespace WinLL {
 
 		TOKEN_ELEVATION te;
 		DWORD len;
-		if (::GetTokenInformation(hToken.get(), TokenElevation, &te, sizeof(te), &len)) {
+		if (::NtQueryInformationToken(hToken.get(), TokenElevation, &te, sizeof(te), &len)) {
 			runningElevated = te.TokenIsElevated ? true : false;
 		}
 		return runningElevated;

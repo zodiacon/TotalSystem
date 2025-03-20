@@ -12,14 +12,14 @@ using namespace std;
 
 MainWindow::MainWindow(HWND hWnd) : m_hWnd(hWnd) {
 	Globals::SetMainWindow(this);
-	UINT icons[]{ IDI_PAUSE, IDI_SPLIT, IDI_WINDOW, IDI_RUNNING };
+	UINT const icons[]{ IDI_PAUSE, IDI_SPLIT, IDI_WINDOW, IDI_RUNNING };
 
-	for (auto& icon : icons) {
+	for (auto icon : icons) {
 		Globals::ImageManager().Add(icon);
 	}
 }
 
-void BuildMainDockSpace(ImGuiViewport* viewport, unsigned dockspace_flags) {
+void BuildMainDockSpace(ImGuiViewport const* viewport, unsigned dockspace_flags) {
 	// Submit a window filling the entire viewport
 	SetNextWindowPos(viewport->WorkPos);
 	ImVec2 size(viewport->WorkSize.x, viewport->WorkSize.y - GetFrameHeight() * 1.2f);

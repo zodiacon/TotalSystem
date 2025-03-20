@@ -332,8 +332,8 @@ namespace WinLL {
 						thread->ProcessId = HandleToULong(baseInfo.ClientId.UniqueProcess);
 						thread->CreateTime = baseInfo.CreateTime.QuadPart;
 						thread->StartAddress = baseInfo.StartAddress;
-						thread->StackBase = tinfo->StackBase;
-						thread->StackLimit = tinfo->StackLimit;
+						thread->StackBase = (PVOID)tinfo->StackBase;
+						thread->StackLimit = (PVOID)tinfo->StackLimit;
 						thread->Win32StartAddress = tinfo->Win32StartAddress;
 						thread->TebBase = tinfo->TebBase;
 						thread->Key = key;

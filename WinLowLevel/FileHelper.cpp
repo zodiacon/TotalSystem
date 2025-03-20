@@ -1,9 +1,7 @@
 #include "pch.h"
 #include "FileHelper.h"
 
-using namespace WinLL;
-
-std::wstring FileHelper::GetDosNameFromNtName(PCWSTR name) {
+std::wstring WinLL::FileHelper::GetDosNameFromNtName(PCWSTR name) {
 	static std::vector<std::pair<std::wstring, std::wstring>> deviceNames;
 	static bool first = true;
 	if (first) {

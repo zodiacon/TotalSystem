@@ -256,15 +256,15 @@ std::pair<HANDLE, DWORD> ObjectManager::FindFirstHandle(PCWSTR name, USHORT inde
 	auto count = p->NumberOfHandles;
 	for (decltype(count) i = 0; i < count; i++) {
 		auto& handle = p->Handles[i];
-		if (pid && handle.UniqueProcessId != pid)
+		if (pid && HandleToULong(handle.UniqueProcessId) != pid)
 			continue;
 
 		if (index && handle.ObjectTypeIndex != index)
 			continue;
 
-		auto oname = GetObjectName((HANDLE)handle.HandleValue, (DWORD)handle.UniqueProcessId, handle.ObjectTypeIndex);
+		auto oname = GetObjectName(handle.HandleValue, HandleToULong(handle.UniqueProcessId), handle.ObjectTypeIndex);
 		if (oname == name)
-			return { (HANDLE)handle.HandleValue, (DWORD)handle.UniqueProcessId };
+			return { handle.HandleValue, HandleToULong(handle.UniqueProcessId) };
 	}
 
 	return {};
@@ -295,26 +295,26 @@ bool ObjectManager::EnumHandles(PCWSTR type, DWORD pid, bool namedObjectsOnly) {
 	m_handles.reserve(count);
 	for (decltype(count) i = 0; i < count; i++) {
 		auto& handle = p->Handles[i];
-		if (pid && handle.UniqueProcessId != pid)
+		if (pid && HandleToULong(handle.UniqueProcessId) != pid)
 			continue;
 
 		if (filteredTypeIndex >= 0 && handle.ObjectTypeIndex != filteredTypeIndex)
 			continue;
 
 		// skip current process
-		if (m_skipThisProcess && handle.UniqueProcessId == ::GetCurrentProcessId())
+		if (m_skipThisProcess && HandleToULong(handle.UniqueProcessId) == ::GetCurrentProcessId())
 			continue;
 
 		wstring name;
-		if (namedObjectsOnly && (name = GetObjectName((HANDLE)handle.HandleValue, (DWORD)handle.UniqueProcessId, handle.ObjectTypeIndex)).empty())
+		if (namedObjectsOnly && (name = GetObjectName(handle.HandleValue, HandleToULong(handle.UniqueProcessId), handle.ObjectTypeIndex)).empty())
 			continue;
 
 		auto hi = std::make_shared<HandleInfo>();
-		hi->HandleValue = (ULONG)handle.HandleValue;
+		hi->HandleValue = HandleToULong(handle.HandleValue);
 		hi->GrantedAccess = handle.GrantedAccess;
 		hi->Object = handle.Object;
 		hi->HandleAttributes = handle.HandleAttributes;
-		hi->ProcessId = (ULONG)handle.UniqueProcessId;
+		hi->ProcessId = HandleToULong(handle.UniqueProcessId);
 		hi->ObjectTypeIndex = handle.ObjectTypeIndex;
 		hi->Name = name;
 

@@ -88,7 +88,7 @@ namespace WinLL {
 	uint32_t Token::GetSessionId() const {
 		uint32_t session = -1;
 		ULONG len;
-		::NtQueryInformationToken(Handle(), ::TokenSessionId, &session, sizeof(session), &len);
+		::NtQueryInformationToken(Handle(), TokenSessionId, &session, sizeof(session), &len);
 		return session;
 	}
 
@@ -96,17 +96,17 @@ namespace WinLL {
 		return GetStatistics().AuthenticationId;
 	}
 
-	TokenType Token::GetType() const {
-		auto type{ TokenType::Invalid };
+	AccessTokenType Token::GetType() const {
+		auto type{ AccessTokenType::Invalid };
 		ULONG len;
 		::NtQueryInformationToken(Handle(), ::TokenType, &type, sizeof(type), &len);
 		return type;
 	}
 
-	TokenStatistics Token::GetStatistics() const {
-		TokenStatistics stats{};
+	AccessTokenStatistics Token::GetStatistics() const {
+		AccessTokenStatistics stats{};
 		ULONG len;
-		::NtQueryInformationToken(Handle(), ::TokenStatistics, &stats, sizeof(stats), &len);
+		::NtQueryInformationToken(Handle(), TokenStatistics, &stats, sizeof(stats), &len);
 		return stats;
 	}
 
