@@ -6,8 +6,8 @@
 
 #include <phnt_windows.h>
 #define PHNT_VERSION PHNT_THRESHOLD
-
 #include <phnt.h>
+
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -17,8 +17,6 @@
 #include <ranges>
 #include <format>
 #include <functional>
-#include <wil\resource.h>
-#include <wil\com.h>
 #include <imgui.h>
 #include <implot.h>
 

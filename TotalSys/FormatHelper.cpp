@@ -3,6 +3,7 @@
 #include <ShlObj.h>
 #include <Shobjidl.h>
 #include <ProcessModuleTracker.h>
+#include <atlcomcli.h>
 
 using namespace WinLL;
 using namespace WinLLX;
@@ -129,9 +130,10 @@ std::string FormatHelper::Format(const char* fmt, ...) {
 }
 
 wstring FormatHelper::GetFolderPath(GUID const& id) {
-	auto spMgr = wil::CoCreateInstance<IKnownFolderManager>(CLSID_KnownFolderManager);
+	CComPtr<IKnownFolderManager> spMgr;
+	spMgr.CoCreateInstance(CLSID_KnownFolderManager);
 	if (spMgr) {
-		wil::com_ptr<IKnownFolder> spFolder;
+		CComPtr<IKnownFolder> spFolder;
 		spMgr->GetFolder(id, &spFolder);
 		if (spFolder) {
 			PWSTR path;

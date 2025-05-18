@@ -1,11 +1,13 @@
 #include "pch.h"
 #include "DialogHelper.h"
 #include <shobjidl_core.h>
+#include <atlcomcli.h>
 
 using namespace std;
 
 wstring DialogHelper::GetOpenFileName(HWND hOwner, wstring_view title, initializer_list<FileDialogFilterItem> filter) {
-    auto spDlg = wil::CoCreateInstance<IFileOpenDialog>(CLSID_FileOpenDialog);
+    CComPtr<IFileOpenDialog> spDlg;
+    spDlg.CoCreateInstance(CLSID_FileOpenDialog);
     assert(spDlg);
     if (!spDlg)
         return L"";
@@ -23,7 +25,7 @@ wstring DialogHelper::GetOpenFileName(HWND hOwner, wstring_view title, initializ
 
     wstring result;
     if (S_OK == spDlg->Show(hOwner)) {
-        wil::com_ptr<IShellItem> spItem;
+        CComPtr<IShellItem> spItem;
         spDlg->GetResult(&spItem);
         if (spItem) {
             PWSTR path = nullptr;
