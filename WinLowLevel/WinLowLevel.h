@@ -385,7 +385,7 @@ namespace WinLL {
 
 	class Process;
 
-	class KernelObject abstract {
+	class KernelObject {
 	public:
 		explicit KernelObject(HANDLE hObject = nullptr);
 		virtual void Close();
@@ -447,7 +447,7 @@ namespace WinLL {
 		void TryLock();
 	};
 
-	class DispatcherObject abstract : public KernelObject {
+	class DispatcherObject : public KernelObject {
 	public:
 		using KernelObject::KernelObject;
 

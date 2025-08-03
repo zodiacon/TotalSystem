@@ -67,7 +67,7 @@ HANDLE DriverHelper::OpenThread(DWORD tid, ACCESS_MASK access) {
 			&hThread, sizeof(hThread), &bytes, nullptr);
 	}
 	if(!hThread)
-		::OpenThread(access, FALSE, tid);
+		hThread = ::OpenThread(access, FALSE, tid);
 	return hThread;
 }
 
